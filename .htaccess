@@ -1,0 +1,31 @@
+# ==============================================================================
+# Konfigurasi Apache (.htaccess) - Masjid Website
+# ==============================================================================
+
+# Cegah penampilan daftar isi folder secara terbuka (Directory Listing)
+Options -Indexes
+
+# Lindungi berkas sensitif dari akses langsung browser
+<FilesMatch "\.(sql|env|log|bak|git.*)$">
+    Require all denied
+</FilesMatch>
+
+# Blokir akses langsung ke folder internal tertentu jika diperlukan
+<IfModule mod_authz_core.c>
+    <Files "config/database.php">
+        # Tetap bisa di-include oleh skrip PHP lokal, tapi diblok jika diakses URL langsung
+    </Files>
+</IfModule>
+
+# Pengalihan Halaman Tidak Ditemukan (404 Handling)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Jika berkas atau folder yang diminta memang tidak ada di server
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ 404.php [L]
+</IfModule>
+
+# Fallback ErrorDocument standar
+ErrorDocument 404 404.php
