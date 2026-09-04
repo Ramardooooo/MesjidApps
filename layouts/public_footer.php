@@ -34,21 +34,36 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
                     <!-- Sosmed -->
                     <div class="flex items-center gap-2.5 pt-2">
                         <?php if (!empty($profil['instagram'])): ?>
-                            <a href="https://instagram.com/<?= e($profil['instagram']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-antique-500 hover:text-cypress-950 border border-white/10 flex items-center justify-center text-stone-300 transition-luxury">
+                            <a href="https://instagram.com/<?= e($profil['instagram']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-pink-500 hover:text-white border border-white/10 flex items-center justify-center text-stone-300 transition-luxury" title="Instagram">
                                 <i class="fa-brands fa-instagram text-sm"></i>
                             </a>
                         <?php endif; ?>
                         <?php if (!empty($profil['youtube'])): ?>
-                            <a href="https://youtube.com/@<?= e($profil['youtube']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-600 hover:text-white border border-white/10 flex items-center justify-center text-stone-300 transition-luxury">
+                            <a href="https://youtube.com/@<?= e($profil['youtube']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-600 hover:text-white border border-white/10 flex items-center justify-center text-stone-300 transition-luxury" title="YouTube">
                                 <i class="fa-brands fa-youtube text-sm"></i>
                             </a>
                         <?php endif; ?>
                         <?php if (!empty($profil['facebook'])): ?>
-                            <a href="https://facebook.com/<?= e($profil['facebook']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-blue-600 hover:text-white border border-white/10 flex items-center justify-center text-stone-300 transition-luxury">
+                            <a href="https://facebook.com/<?= e($profil['facebook']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-blue-600 hover:text-white border border-white/10 flex items-center justify-center text-stone-300 transition-luxury" title="Facebook">
                                 <i class="fa-brands fa-facebook-f text-sm"></i>
                             </a>
                         <?php endif; ?>
-                        <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $profil['whatsapp']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-emerald-950 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 flex items-center justify-center text-emerald-400 transition-luxury">
+                        <?php if (!empty($profil['tiktok'] ?? null)): ?>
+                            <a href="https://tiktok.com/@<?= e($profil['tiktok']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-slate-800 hover:text-white border border-white/10 flex items-center justify-center text-stone-300 transition-luxury" title="TikTok">
+                                <i class="fa-brands fa-tiktok text-sm"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if (!empty($profil['twitter'] ?? null)): ?>
+                            <a href="https://twitter.com/<?= e($profil['twitter']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-blue-400 hover:text-white border border-white/10 flex items-center justify-center text-stone-300 transition-luxury" title="X (Twitter)">
+                                <i class="fa-brands fa-x-twitter text-sm"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if (!empty($profil['telegram'] ?? null)): ?>
+                            <a href="https://t.me/<?= e($profil['telegram']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-blue-500 hover:text-white border border-white/10 flex items-center justify-center text-stone-300 transition-luxury" title="Telegram">
+                                <i class="fa-brands fa-telegram text-sm"></i>
+                            </a>
+                        <?php endif; ?>
+                        <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $profil['whatsapp']) ?>" target="_blank" class="w-9 h-9 rounded-xl bg-emerald-950 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 flex items-center justify-center text-emerald-400 transition-luxury" title="WhatsApp">
                             <i class="fa-brands fa-whatsapp text-sm"></i>
                         </a>
                     </div>
@@ -107,7 +122,7 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
                                 </div>
                                 <div class="flex items-center justify-between mt-1">
                                     <span class="font-mono text-antique-200 tracking-wider font-semibold text-xs"><?= e($rek['nomor_rekening']) ?></span>
-                                    <button type="button" onclick="navigator.clipboard.writeText('<?= e($rek['nomor_rekening']) ?>'); alert('Nomor rekening berhasil disalin!');" class="text-[10px] text-antique-400 hover:text-white px-1.5 py-0.5 rounded bg-cypress-900 border border-antique-500/30">
+                                    <button type="button" id="copyBtnFooter-<?= htmlspecialchars(md5($rek['id'])) ?>" onclick="copyToClipboardBtn('<?= e($rek['nomor_rekening']) ?>', '<?= htmlspecialchars(md5($rek['id'])) ?>', 'footer');" class="text-[10px] text-antique-400 hover:text-antique-200 px-1.5 py-0.5 rounded bg-cypress-900 border border-antique-500/30 transition-luxury">
                                         <i class="fa-regular fa-copy"></i> Salin
                                     </button>
                                 </div>
@@ -170,6 +185,49 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
         <i class="fa-brands fa-whatsapp text-2xl group-hover:rotate-12 transition-transform"></i>
         <span class="text-xs font-bold hidden sm:inline-block">Layanan Jamaah</span>
     </a>
+
+    <!-- Copy Button State Change Function - Generic -->
+    <script>
+    function copyToClipboardBtn(text, btnId, prefix = 'footer') {
+        navigator.clipboard.writeText(text).then(() => {
+           const btn = document.getElementById(`copyBtn${prefix.charAt(0).toUpperCase() + prefix.slice(1)}-${btnId}`);
+           if (btn) {
+               // Ganti text & icon
+               btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Tercopy!';
+                
+               // Adjust color based on context
+               if (prefix === 'footer') {
+                   btn.classList.add('bg-emerald-600', 'text-white');
+                   btn.classList.remove('bg-cypress-900', 'text-antique-400');
+               } else if (prefix === 'index') {
+                   btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'text-white');
+                   btn.classList.remove('bg-antique-500/10', 'hover:bg-antique-500', 'text-antique-300', 'hover:text-cypress-950');
+               } else if (prefix === 'kontak') {
+                   btn.classList.add('bg-emerald-600', 'text-white');
+                   btn.classList.remove('bg-cypress-950', 'text-antique-300');
+               }
+                
+               // Kembali ke semula setelah 2 detik
+               setTimeout(() => {
+                   btn.innerHTML = '<i class="fa-regular fa-copy mr-1"></i> Salin';
+                    
+                   if (prefix === 'footer') {
+                       btn.classList.remove('bg-emerald-600', 'text-white');
+                       btn.classList.add('bg-cypress-900', 'text-antique-400');
+                   } else if (prefix === 'index') {
+                       btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700', 'text-white');
+                       btn.classList.add('bg-antique-500/10', 'hover:bg-antique-500', 'text-antique-300', 'hover:text-cypress-950');
+                   } else if (prefix === 'kontak') {
+                       btn.classList.remove('bg-emerald-600', 'text-white');
+                       btn.classList.add('bg-cypress-950', 'text-antique-300');
+                   }
+               }, 2000);
+           }
+        }).catch(() => {
+           alert('Gagal menyalin nomor rekening');
+        });
+    }
+    </script>
 
 </body>
 </html>

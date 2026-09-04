@@ -58,17 +58,17 @@ require_once __DIR__ . '/layouts/public_header.php';
                 </div>
 
                 <h1 class="text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight leading-tight">
-                    Makmurkan Rumah Allah, <br class="hidden sm:inline">
+                    <?= e($sliders[0]['judul'] ?? 'Makmurkan Rumah Allah') ?><br class="hidden sm:inline">
                     <span class="gold-gradient-text font-classic">Alirkan Pahala Abadi</span>
                 </h1>
 
                 <p class="text-stone-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                    Mari bersama menegakkan syiar Islam, mendukung kegiatan taklim, dan menyalurkan kepedulian bagi anak-anak yatim serta dhuafa melalui sistem donasi masjid yang transparan, amanah, dan akuntabel.
+                    <?= e($sliders[0]['subjudul'] ?? 'Mari bersama menegakkan syiar Islam, mendukung kegiatan taklim, dan menyalurkan kepedulian bagi anak-anak yatim serta dhuafa melalui sistem donasi masjid yang transparan, amanah, dan akuntabel.') ?>
                 </p>
 
                 <!-- Action Buttons -->
                 <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                    <a href="home/donasi-online.php" class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 hover:from-antique-400 hover:to-antique-500 text-cypress-950 font-bold text-sm tracking-wide shadow-lg shadow-antique-500/25 transition-luxury flex items-center gap-2.5">
+                    <a href="<?= e($sliders[0]['link_url'] ?? 'home/donasi-online.php') ?>" class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 hover:from-antique-400 hover:to-antique-500 text-cypress-950 font-bold text-sm tracking-wide shadow-lg shadow-antique-500/25 transition-luxury flex items-center gap-2.5">
                         <i class="fa-solid fa-hand-holding-heart text-base"></i>
                         <span>Infaq / Donasi Sekarang</span>
                     </a>
@@ -87,69 +87,75 @@ require_once __DIR__ . '/layouts/public_header.php';
                 </div>
             </div>
 
-            <!-- Hero Interactive Widget: Jadwal Sholat & Info Cepat -->
+            <!-- Hero Slider Image -->
             <div class="lg:col-span-5">
-                <div class="bg-cypress-900/90 backdrop-blur-md rounded-3xl border border-antique-500/40 p-6 sm:p-7 shadow-2xl relative overflow-hidden">
+                <?php if (!empty($sliders[0]['gambar'])): ?>
+                    <div class="relative h-96 rounded-3xl overflow-hidden border border-antique-500/40 shadow-2xl">
+                        <img src="<?= e(upload_url($sliders[0]['gambar'])) ?>" alt="<?= e($sliders[0]['judul']) ?>" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-cypress-950/80 to-transparent"></div>
+                    </div>
+                <?php else: ?>
                     
                     <!-- Header Widget -->
-                    <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-lg bg-cypress-950 border border-antique-500/40 flex items-center justify-center text-antique-400">
-                                <i class="fa-regular fa-clock"></i>
+                    <div class="bg-cypress-900/90 backdrop-blur-md rounded-3xl border border-antique-500/40 p-6 sm:p-7 shadow-2xl relative overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-cypress-950 border border-antique-500/40 flex items-center justify-center text-antique-400">
+                                    <i class="fa-regular fa-clock"></i>
+                                </div>
+                                <div>
+                                    <span class="font-classic text-sm font-bold text-white block">Jadwal Shalat Hari Ini</span>
+                                    <span class="text-[10px] text-antique-300 block"><?= tanggal_indo(date('Y-m-d'), true) ?></span>
+                                </div>
                             </div>
-                            <div>
-                                <span class="font-classic text-sm font-bold text-white block">Jadwal Shalat Hari Ini</span>
-                                <span class="text-[10px] text-antique-300 block"><?= tanggal_indo(date('Y-m-d'), true) ?></span>
-                            </div>
-                        </div>
-                        <span class="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            WITA
-                        </span>
-                    </div>
-
-                    <!-- Grid Waktu Shalat -->
-                    <div class="grid grid-cols-5 gap-2 text-center">
-                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Subuh</span>
-                            <span class="text-xs sm:text-sm font-bold text-white block mt-1">05:08</span>
-                        </div>
-                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Dzuhur</span>
-                            <span class="text-xs sm:text-sm font-bold text-white block mt-1">12:28</span>
-                        </div>
-                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Ashar</span>
-                            <span class="text-xs sm:text-sm font-bold text-white block mt-1">15:40</span>
-                        </div>
-                        <div class="p-2.5 rounded-xl bg-antique-500/20 border border-antique-500/50 shadow-inner">
-                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Maghrib</span>
-                            <span class="text-xs sm:text-sm font-bold text-antique-300 block mt-1">18:30</span>
-                        </div>
-                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Isya</span>
-                            <span class="text-xs sm:text-sm font-bold text-white block mt-1">19:39</span>
-                        </div>
-                    </div>
-
-                    <!-- Highlight Quick Kas Mini -->
-                    <div class="mt-6 pt-5 border-t border-white/10 bg-cypress-950/60 -mx-6 -mb-6 p-6 rounded-b-3xl">
-                        <div class="flex items-center justify-between text-xs mb-2">
-                            <span class="text-stone-300 font-medium">Saldo Kas Transparan (Terbuka)</span>
-                            <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Audit Terkini</span>
-                        </div>
-                        <div class="flex items-baseline justify-between">
-                            <span class="text-2xl font-bold text-antique-300 font-classic">
-                                <?= format_rupiah($saldoKasPublik) ?>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                WITA
                             </span>
-                            <a href="home/transparansi.php" class="text-xs text-stone-300 hover:text-white flex items-center gap-1 underline underline-offset-4">
-                                <span>Detail</span>
-                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                            </a>
                         </div>
-                    </div>
 
-                </div>
-            </div>
+                        <!-- Grid Waktu Shalat -->
+                        <div class="grid grid-cols-5 gap-2 text-center">
+                            <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Subuh</span>
+                                <span class="text-xs sm:text-sm font-bold text-white block mt-1">05:08</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Dzuhur</span>
+                                <span class="text-xs sm:text-sm font-bold text-white block mt-1">12:28</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Ashar</span>
+                                <span class="text-xs sm:text-sm font-bold text-white block mt-1">15:40</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-antique-500/20 border border-antique-500/50 shadow-inner">
+                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Maghrib</span>
+                                <span class="text-xs sm:text-sm font-bold text-antique-300 block mt-1">18:30</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Isya</span>
+                                <span class="text-xs sm:text-sm font-bold text-white block mt-1">19:39</span>
+                            </div>
+                        </div>
+
+                        <!-- Highlight Quick Kas Mini -->
+                        <div class="mt-6 pt-5 border-t border-white/10 bg-cypress-950/60 -mx-6 -mb-6 p-6 rounded-b-3xl">
+                            <div class="flex items-center justify-between text-xs mb-2">
+                                <span class="text-stone-300 font-medium">Saldo Kas Transparan (Terbuka)</span>
+                                <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Audit Terkini</span>
+                            </div>
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-2xl font-bold text-antique-300 font-classic">
+                                    <?= format_rupiah($saldoKasPublik) ?>
+                                </span>
+                                <a href="home/transparansi.php" class="text-xs text-stone-300 hover:text-white flex items-center gap-1 underline underline-offset-4">
+                                    <span>Detail</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                <?php endif; ?>
 
         </div>
     </div>
@@ -358,7 +364,7 @@ require_once __DIR__ . '/layouts/public_header.php';
                                 <span class="font-mono text-sm text-antique-200 tracking-wider font-bold block"><?= e($rek['nomor_rekening']) ?></span>
                                 <span class="text-[10px] text-stone-400 block">a.n <?= e($rek['atas_nama']) ?></span>
                             </div>
-                            <button type="button" onclick="navigator.clipboard.writeText('<?= e($rek['nomor_rekening']) ?>'); alert('Nomor rekening <?= e($rek['nama_bank']) ?> berhasil disalin!');" class="px-3 py-1.5 rounded-lg bg-antique-500/10 hover:bg-antique-500 text-antique-300 hover:text-cypress-950 border border-antique-500/40 text-xs font-semibold transition shrink-0">
+                            <button type="button" id="copyBtnIndex-<?= htmlspecialchars(md5($rek['id'])) ?>" onclick="copyToClipboardBtn('<?= e($rek['nomor_rekening']) ?>', '<?= htmlspecialchars(md5($rek['id'])) ?>', 'index');" class="px-3 py-1.5 rounded-lg bg-antique-500/10 hover:bg-antique-500 text-antique-300 hover:text-cypress-950 border border-antique-500/40 text-xs font-semibold transition shrink-0">
                                 <i class="fa-regular fa-copy mr-1"></i> Salin
                             </button>
                         </div>

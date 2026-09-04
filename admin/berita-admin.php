@@ -8,6 +8,17 @@ $user   = $_SESSION['user'];
 $pesan  = '';
 $tipe   = '';
 
+// HANDLE AJAX REQUEST UNTUK GET BERITA
+if (isset($_GET['get_berita'])) {
+    header('Content-Type: application/json');
+    $id = (int)$_GET['get_berita'];
+    $stmt = $pdo->prepare("SELECT * FROM berita WHERE id = ?");
+    $stmt->execute([$id]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    echo json_encode($result ?: []);
+    exit;
+}
+
 // 1. TAMBAH BERITA
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah') {
     $judul     = trim($_POST['judul'] ?? '');
@@ -27,11 +38,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
             $thumb = upload_berkas('thumbnail', 'berita');
         }
 
-        $stmt = $pdo->prepare("INSERT INTO berita (judul, slug, isi, ringkasan, thumbnail, kategori, penulis_id, tanggal_publikasi, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$judul, $slug, $isi, $ringkasan, $thumb, $kategori, $user['id'], $tglPublik, $status]);
-
-        $pesan = "Berita '{$judul}' berhasil disimpan!";
-        $tipe  = 'success';
+        try {
+            $stmt = $pdo->prepare("INSERT INTO berita (judul, slug, isi, ringkasan, thumbnail, kategori, penulis_id, tanggal_publikasi, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            if ($stmt->execute([$judul, $slug, $isi, $ringkasan, $thumb, $kategori, $user['id'], $tglPublik, $status])) {
+                $pesan = "Berita '{$judul}' berhasil disimpan!";
+                $tipe  = 'success';
+            }
+        } catch (Exception $e) {
+            $pesan = 'Gagal menyimpan berita: ' . $e->getMessage();
+            $tipe  = 'error';
+        }
     }
 }
 
@@ -45,31 +61,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
     $ringkasan = trim($_POST['ringkasan'] ?? '');
     $isi       = trim($_POST['isi'] ?? '');
 
-    if ($id > 0 && !empty($judul) && !empty($isi)) {
-        $stmt = $pdo->prepare("UPDATE berita SET judul = ?, kategori = ?, tanggal_publikasi = ?, status = ?, ringkasan = ?, isi = ? WHERE id = ?");
-        $stmt->execute([$judul, $kategori, $tglPublik, $status, $ringkasan, $isi, $id]);
-
-        if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-            $thumb = upload_berkas('thumbnail', 'berita');
-            if ($thumb) {
-                $pdo->prepare("UPDATE berita SET thumbnail = ? WHERE id = ?")->execute([$thumb, $id]);
+    if ($id <= 0) {
+        $pesan = 'ID berita tidak valid.';
+        $tipe  = 'error';
+    } elseif (empty($judul) || empty($isi)) {
+        $pesan = 'Judul dan isi berita wajib diisi.';
+        $tipe  = 'error';
+    } else {
+        try {
+            $stmt = $pdo->prepare("UPDATE berita SET judul = ?, kategori = ?, tanggal_publikasi = ?, status = ?, ringkasan = ?, isi = ? WHERE id = ?");
+            if ($stmt->execute([$judul, $kategori, $tglPublik, $status, $ringkasan, $isi, $id])) {
+                if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
+                    $thumb = upload_berkas('thumbnail', 'berita');
+                    if ($thumb) {
+                        $pdo->prepare("UPDATE berita SET thumbnail = ? WHERE id = ?")->execute([$thumb, $id]);
+                    }
+                }
+                $pesan = "Berita '{$judul}' berhasil diperbarui!";
+                $tipe  = 'success';
             }
+        } catch (Exception $e) {
+            $pesan = 'Gagal memperbarui berita: ' . $e->getMessage();
+            $tipe  = 'error';
         }
-
-        $pesan = "Berita '{$judul}' berhasil diperbarui!";
-        $tipe  = 'success';
     }
 }
 
 // 3. HAPUS BERITA
 if (isset($_GET['hapus'])) {
     $idHapus = (int)$_GET['hapus'];
-    $pdo->prepare("DELETE FROM berita WHERE id = ?")->execute([$idHapus]);
-    header('Location: berita-admin.php?msg=deleted');
-    exit;
+    if ($idHapus > 0) {
+        try {
+            $pdo->prepare("DELETE FROM berita WHERE id = ?")->execute([$idHapus]);
+            header('Location: berita-admin.php?msg=deleted');
+            exit;
+        } catch (Exception $e) {
+            die("Gagal menghapus berita: " . $e->getMessage());
+        }
+    }
 }
 
-$beritaList = $pdo->query("SELECT b.*, u.nama_lengkap as penulis FROM berita b LEFT JOIN users u ON b.penulis_id = u.id ORDER BY b.id DESC")->fetchAll();
+$beritaList = $pdo->query("SELECT b.id, b.judul, b.kategori, b.tanggal_publikasi, b.status, b.views, b.thumbnail, b.isi, b.ringkasan, u.nama_lengkap as penulis FROM berita b LEFT JOIN users u ON b.penulis_id = u.id ORDER BY b.id DESC")->fetchAll();
 
 $pageTitle    = 'Kelola Berita & Warta · ' . $profil['nama_masjid'];
 $activeMenu   = 'berita-admin';
@@ -140,32 +172,32 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 </div>
                             </div>
                         </td>
-                        <td class="py-3.5 px-4 align-top whitespace-nowrap">
+                        <td class="py-3.5 px-4 align-middle whitespace-nowrap">
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-warm-100 text-warm-800 uppercase">
                                 <?= e($b['kategori']) ?>
                             </span>
                         </td>
-                        <td class="py-3.5 px-4 align-top whitespace-nowrap">
+                        <td class="py-3.5 px-4 align-middle whitespace-nowrap text-[11px]">
                             <?= tanggal_indo($b['tanggal_publikasi']) ?>
                         </td>
-                        <td class="py-3.5 px-4 align-top text-center whitespace-nowrap">
-                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase <?= $b['status'] === 'published' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-600' ?>">
+                        <td class="py-3.5 px-4 align-middle text-center whitespace-nowrap">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block <?= $b['status'] === 'published' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-600' ?>">
                                 <?= e($b['status']) ?>
                             </span>
                         </td>
-                        <td class="py-3.5 px-4 align-top text-center font-bold text-stone-600 whitespace-nowrap">
+                        <td class="py-3.5 px-4 align-middle text-center font-bold text-stone-600 whitespace-nowrap">
                             <?= $b['views'] ?>x
                         </td>
-                        <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
+                        <td class="py-3.5 px-4 align-middle text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-2">
-                                <a href="../home/berita-detail.php?id=<?= $b['id'] ?>" target="_blank" class="p-1.5 rounded-lg text-cypress-700 hover:bg-cypress-50" title="Pratinjau">
-                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                <a href="../home/berita-detail.php?id=<?= $b['id'] ?>" target="_blank" class="p-1.5 rounded-lg text-cypress-700 hover:bg-cypress-50 transition" title="Pratinjau">
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                                 </a>
-                                <button type="button" onclick='editBerita(<?= json_encode($b) ?>)' class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
-                                    <i class="fa-solid fa-pen-to-square"></i>
+                                <button type="button" onclick="bukaModalEditBerita(<?= $b['id'] ?>)" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition" title="Edit">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
                                 </button>
-                                <a href="berita-admin.php?hapus=<?= $b['id'] ?>" onclick="return confirm('Hapus artikel ini?');" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
-                                    <i class="fa-solid fa-trash-can"></i>
+                                <a href="berita-admin.php?hapus=<?= $b['id'] ?>" onclick="return confirm('Hapus artikel ini?');" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition" title="Hapus">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
                                 </a>
                             </div>
                         </td>
@@ -252,17 +284,21 @@ function bukaModalBerita() {
     document.getElementById('modalBerita').classList.remove('hidden');
 }
 
-function editBerita(b) {
-    document.getElementById('beritaAksi').value = 'edit';
-    document.getElementById('beritaId').value = b.id;
-    document.getElementById('modalBeritaTitle').textContent = 'Edit Berita #' + b.id;
-    document.getElementById('beritaJudul').value = b.judul;
-    document.getElementById('beritaKategori').value = b.kategori;
-    document.getElementById('beritaTgl').value = b.tanggal_publikasi;
-    document.getElementById('beritaStatus').value = b.status;
-    document.getElementById('beritaRingkas').value = b.ringkasan || '';
-    document.getElementById('beritaIsi').value = b.isi;
-    document.getElementById('modalBerita').classList.remove('hidden');
+function bukaModalEditBerita(id) {
+    fetch(`berita-admin.php?get_berita=${id}`)
+        .then(r => r.json())
+        .then(b => {
+            document.getElementById('beritaAksi').value = 'edit';
+            document.getElementById('beritaId').value = b.id;
+            document.getElementById('modalBeritaTitle').textContent = 'Edit Berita #' + b.id;
+            document.getElementById('beritaJudul').value = b.judul;
+            document.getElementById('beritaKategori').value = b.kategori;
+            document.getElementById('beritaTgl').value = b.tanggal_publikasi;
+            document.getElementById('beritaStatus').value = b.status;
+            document.getElementById('beritaRingkas').value = b.ringkasan || '';
+            document.getElementById('beritaIsi').value = b.isi;
+            document.getElementById('modalBerita').classList.remove('hidden');
+        });
 }
 
 function tutupModalBerita() {

@@ -114,7 +114,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                                 <span class="font-bold block"><?= e($r['nama_bank']) ?></span>
                                 <span class="font-mono text-antique-200 tracking-wider font-semibold"><?= e($r['nomor_rekening']) ?></span>
                             </div>
-                            <button type="button" onclick="navigator.clipboard.writeText('<?= e($r['nomor_rekening']) ?>'); alert('Nomor rekening disalin!');" class="text-[10px] text-antique-300 hover:text-white px-2 py-1 rounded bg-cypress-950 border border-antique-500/40">
+                            <button type="button" id="copyBtnKontak-<?= htmlspecialchars(md5($r['id'])) ?>" onclick="copyToClipboardBtn('<?= e($r['nomor_rekening']) ?>', '<?= htmlspecialchars(md5($r['id'])) ?>', 'kontak');" class="text-[10px] text-antique-300 hover:text-antique-200 px-2 py-1 rounded bg-cypress-950 border border-antique-500/40 transition-luxury">
                                 Salin
                             </button>
                         </div>

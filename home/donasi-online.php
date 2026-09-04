@@ -204,8 +204,8 @@ require_once __DIR__ . '/../layouts/public_header.php';
 
                 <!-- Box QR Code Mockup Cantik & Terbaca -->
                 <div class="bg-white p-4 rounded-2xl shadow-xl flex flex-col items-center border-4 border-antique-500">
-                    < src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=<?= urlencode('https://masjidnuruliman.id/donasi?n=' . $profil['nama_masjid']) ?>" alt="QRIS Masjid Nurul Iman" class="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg">
-                    <span class="text-[11px] font-bold text-imgstone-800 mt-2">Scan dengan aplikasi bank / e-wallet apa saja</span>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=<?= urlencode('https://masjidnuruliman.id/donasi?n=' . $profil['nama_masjid']) ?>" alt="QRIS Masjid Nurul Iman" class="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg">
+                    <span class="text-sm font-bold text-warm-900 mt-3">Scan dengan aplikasi bank / e-wallet apa saja</span>
                 </div>
 
                 <div class="text-xs text-stone-300 space-y-1 max-w-sm">
@@ -229,7 +229,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                                 <span class="font-mono text-sm font-bold text-cypress-700 tracking-wider block mt-0.5"><?= e($rek['nomor_rekening']) ?></span>
                                 <span class="text-[11px] text-warm-800/60 block">a.n <?= e($rek['atas_nama']) ?></span>
                             </div>
-                            <button type="button" onclick="navigator.clipboard.writeText('<?= e($rek['nomor_rekening']) ?>'); alert('Nomor rekening <?= e($rek['nama_bank']) ?> tersalin!');" class="px-3 py-1.5 rounded-lg bg-cypress-800 text-white text-xs font-semibold hover:bg-cypress-900 transition">
+                            <button type="button" id="copyBtn-<?= $idx ?>" onclick="copyToClipboard('<?= e($rek['nomor_rekening']) ?>', <?= $idx ?>);" class="px-3 py-1.5 rounded-lg bg-cypress-800 text-white text-xs font-semibold hover:bg-cypress-900 transition">
                                 <i class="fa-regular fa-copy mr-1"></i> Salin
                             </button>
                         </div>
@@ -325,6 +325,26 @@ function toggleAnonim(checked) {
         namaInput.value = '';
         namaInput.disabled = false;
     }
+}
+
+// Function untuk copy dengan button state change
+function copyToClipboard(text, index) {
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(`copyBtn-${index}`);
+        if (btn) {
+            // Ganti text & icon
+            btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Tercopy!';
+            btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            btn.classList.remove('bg-cypress-800', 'hover:bg-cypress-900');
+            
+            // Kembali ke semula setelah 2 detik
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-regular fa-copy mr-1"></i> Salin';
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                btn.classList.add('bg-cypress-800', 'hover:bg-cypress-900');
+            }, 2000);
+        }
+    });
 }
 </script>
 

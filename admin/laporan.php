@@ -1,5 +1,5 @@
 <?php
-// laporan.php - Pusat Laporan Keuangan Masjid (Scope 19, 20, 21, 23, 24)
+// laporan.php - Pusat Laporan Keuangan Masjid
 require_once __DIR__ . '/../config/database.php';
 cek_role(['admin', 'bendahara']);
 
@@ -85,7 +85,7 @@ foreach ($transaksiPeriode as $tp) {
 $saldoAkhirPeriode = $saldoAwalPeriode + $totalPemasukanPeriode - $totalPengeluaranPeriode;
 $surplusDefisit    = $totalPemasukanPeriode - $totalPengeluaranPeriode;
 
-// 4. Rekap Berdasarkan Kategori (Scope 20 & 21)
+// 4. Rekap Berdasarkan Kategori
 $stmtRekapIn = $pdo->prepare("SELECT k.nama_kategori, SUM(t.nominal) as total 
                               FROM transaksi_keuangan t 
                               JOIN kategori_transaksi k ON t.kategori_id = k.id 
@@ -103,7 +103,7 @@ $stmtRekapOut->execute([$tglMulai, $tglSelesai]);
 $rekapPengeluaran = $stmtRekapOut->fetchAll();
 
 // ==============================================================================
-// 5. FITUR EKSPOR EXCEL (CSV STANDAR EXCEL) (Scope 24)
+// 5. FITUR EKSPOR EXCEL (CSV STANDAR EXCEL)
 // ==============================================================================
 if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     header('Content-Type: text/csv; charset=utf-8');
@@ -148,7 +148,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     exit;
 }
 
-// Mode Cetak PDF / Print Ready (Scope 24)
+// Mode Cetak PDF / Print Ready
 $isPrint = isset($_GET['print']) && $_GET['print'] === '1';
 
 if ($isPrint) {
@@ -315,20 +315,20 @@ require_once __DIR__ . '/../layouts/sidebar.php';
 </div>
 
 <!-- ==============================================================================
-     TABS MODE LAPORAN (Scope 19, 20, 21, 23)
+     TABS MODE LAPORAN
      ============================================================================== -->
 <div class="bg-white p-3 rounded-2xl border border-antique-300/40 shadow-xs flex items-center gap-2 overflow-x-auto text-xs font-semibold">
     <a href="laporan.php?tipe=bulanan&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'bulanan' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
-        <i class="fa-solid fa-calendar-days mr-1.5"></i> Laporan Bulanan (Scope 20)
+        <i class="fa-solid fa-calendar-days mr-1.5"></i> Laporan Bulanan
     </a>
     <a href="laporan.php?tipe=mingguan&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&minggu=<?= $minggu ?>" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'mingguan' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
-        <i class="fa-solid fa-calendar-week mr-1.5"></i> Laporan Mingguan (Scope 19)
+        <i class="fa-solid fa-calendar-week mr-1.5"></i> Laporan Mingguan
     </a>
     <a href="laporan.php?tipe=aktivitas_dana&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'aktivitas_dana' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
-        <i class="fa-solid fa-scale-balanced mr-1.5"></i> Penerimaan &amp; Pengeluaran (Scope 21)
+        <i class="fa-solid fa-scale-balanced mr-1.5"></i> Penerimaan &amp; Pengeluaran
     </a>
     <a href="laporan.php?tipe=custom" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'custom' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
-        <i class="fa-solid fa-sliders mr-1.5"></i> Filter Kustom (Scope 23)
+        <i class="fa-solid fa-sliders mr-1.5"></i> Filter Kustom
     </a>
 </div>
 
@@ -344,7 +344,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 <label class="block font-bold text-warm-800 mb-1">Pilih Minggu / Pekan</label>
                 <select name="minggu" class="px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
                     <?php for ($w = 1; $w <= 5; $w++): ?>
-                        <option value="<?= $w ?>" <?= ($minggu === $w) ? 'selected' : '' ?>>Pekan Ke-<?= $w ?></option>
+                        <option value="<?= $w ?>" <?= ($minggu == $w) ? 'selected' : '' ?>>Pekan Ke-<?= $w ?></option>
                     <?php endfor; ?>
                 </select>
             </div>
@@ -354,8 +354,14 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Bulan</label>
                 <select name="bulan" class="px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
-                    <?php for ($m = 1; $m <= 12; $m++): ?>
-                        <option value="<?= $m ?>" <?= ($bulan === $m) ? 'selected' : '' ?>><?= $namaBulan[$m] ?></option>
+                    <option value="">-- Pilih Bulan --</option>
+                    <?php 
+                    $bulanList = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                    for ($m = 1; $m <= 12; $m++): 
+                    ?>
+                        <option value="<?= $m ?>" <?= ($bulan == $m) ? 'selected' : '' ?>>
+                            <?= $bulanList[$m] ?>
+                        </option>
                     <?php endfor; ?>
                 </select>
             </div>
@@ -364,7 +370,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 <label class="block font-bold text-warm-800 mb-1">Tahun</label>
                 <select name="tahun" class="px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
                     <?php for ($y = date('Y'); $y >= date('Y') - 3; $y--): ?>
-                        <option value="<?= $y ?>" <?= ($tahun === $y) ? 'selected' : '' ?>><?= $y ?></option>
+                        <option value="<?= $y ?>" <?= ($tahun == $y) ? 'selected' : '' ?>><?= $y ?></option>
                     <?php endfor; ?>
                 </select>
             </div>
@@ -418,7 +424,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
 
 <?php if ($tipeLaporan === 'aktivitas_dana'): ?>
     <!-- ==============================================================================
-         FORMAT LAPORAN PENERIMAAN & PENGELUARAN / AKTIVITAS DANA (Scope 21)
+         FORMAT LAPORAN PENERIMAAN & PENGELUARAN / AKTIVITAS DANA
          ============================================================================== -->
     <div class="bg-white rounded-3xl p-6 sm:p-10 border border-antique-300/50 shadow-sm space-y-8">
         <div class="border-b border-antique-200 pb-4 text-center">
@@ -486,7 +492,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
 <?php else: ?>
 
     <!-- ==============================================================================
-         REKAPITULASI KATEGORI (Scope 20) & TABEL DETAIL TRANSAKSI (Scope 19 & 20)
+         REKAPITULASI KATEGORI & TABEL DETAIL TRANSAKSI
          ============================================================================== -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         

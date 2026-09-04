@@ -24,18 +24,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
     $ig     = trim($_POST['instagram'] ?? '');
     $yt     = trim($_POST['youtube'] ?? '');
     $fb     = trim($_POST['facebook'] ?? '');
+    $tt     = trim($_POST['tiktok'] ?? '');
+    $tw     = trim($_POST['twitter'] ?? '');
+    $tg     = trim($_POST['telegram'] ?? '');
     $saldo  = (float)str_replace(['Rp', '.', ' ', ','], '', $_POST['saldo_awal_kas'] ?? '0');
 
-    $stmt = $pdo->prepare("UPDATE profil_masjid SET 
-        nama_masjid = ?, sebutan = ?, slogan = ?, sejarah = ?, visi = ?, misi = ?, 
-        alamat = ?, kota = ?, google_maps_embed = ?, whatsapp = ?, email = ?, 
-        instagram = ?, youtube = ?, facebook = ?, saldo_awal_kas = ? WHERE id = 1");
+    // Cek column mana saja yang ada di database (MySQL)
+    $cols = $pdo->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'profil_masjid' AND TABLE_SCHEMA = DATABASE()")->fetchAll();
+    $colNames = array_column($cols, 'COLUMN_NAME');
     
-    $stmt->execute([
+    // Build dynamic UPDATE based on available columns
+    $setClause = [
+        'nama_masjid = ?', 'sebutan = ?', 'slogan = ?', 'sejarah = ?', 'visi = ?', 'misi = ?',
+        'alamat = ?', 'kota = ?', 'google_maps_embed = ?', 'whatsapp = ?', 'email = ?',
+        'instagram = ?', 'youtube = ?', 'facebook = ?', 'saldo_awal_kas = ?'
+    ];
+    $values = [
         $nama, $sebut, $slogan, $sejarah, $visi, $misi,
         $alamat, $kota, $maps, $wa, $email,
         $ig, $yt, $fb, $saldo
-    ]);
+    ];
+    
+    // Tambah extra socmed columns jika ada
+    if (in_array('tiktok', $colNames)) {
+        $setClause[] = 'tiktok = ?';
+        $values[] = $tt;
+    }
+    if (in_array('twitter', $colNames)) {
+        $setClause[] = 'twitter = ?';
+        $values[] = $tw;
+    }
+    if (in_array('telegram', $colNames)) {
+        $setClause[] = 'telegram = ?';
+        $values[] = $tg;
+    }
+
+    $updateSql = "UPDATE profil_masjid SET " . implode(', ', $setClause) . " WHERE id = 1";
+    $stmt = $pdo->prepare($updateSql);
+    $stmt->execute($values);
 
     $pesan = "Profil masjid berhasil diperbarui!";
     $tipe  = 'success';
@@ -166,6 +192,37 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <div>
             <label class="block font-bold text-warm-800 mb-1">URL Google Maps Embed</label>
             <input type="text" name="google_maps_embed" value="<?= e($profil['google_maps_embed']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-mono text-[11px] focus:outline-none">
+        </div>
+
+        <h3 class="font-classic text-base font-bold text-warm-900 border-b border-antique-200 pb-3 pt-4">
+            Media Sosial
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+                <label class="block font-bold text-warm-800 mb-1">Instagram <i class="fa-brands fa-instagram text-pink-500"></i></label>
+                <input type="text" name="instagram" value="<?= e($profil['instagram'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+            </div>
+            <div>
+                <label class="block font-bold text-warm-800 mb-1">YouTube <i class="fa-brands fa-youtube text-red-600"></i></label>
+                <input type="text" name="youtube" value="<?= e($profil['youtube'] ?? '') ?>" placeholder="@channelname" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+            </div>
+            <div>
+                <label class="block font-bold text-warm-800 mb-1">Facebook <i class="fa-brands fa-facebook text-blue-600"></i></label>
+                <input type="text" name="facebook" value="<?= e($profil['facebook'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+            </div>
+            <div>
+                <label class="block font-bold text-warm-800 mb-1">TikTok <i class="fa-brands fa-tiktok text-black"></i></label>
+                <input type="text" name="tiktok" value="<?= e($profil['tiktok'] ?? '') ?>" placeholder="@username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+            </div>
+            <div>
+                <label class="block font-bold text-warm-800 mb-1">Twitter/X <i class="fa-brands fa-x-twitter text-black"></i></label>
+                <input type="text" name="twitter" value="<?= e($profil['twitter'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+            </div>
+            <div>
+                <label class="block font-bold text-warm-800 mb-1">Telegram <i class="fa-brands fa-telegram text-blue-500"></i></label>
+                <input type="text" name="telegram" value="<?= e($profil['telegram'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+            </div>
         </div>
 
         <div class="pt-4 border-t border-antique-200 flex justify-end">
