@@ -156,13 +156,13 @@ Sistem menggunakan **13 tabel** utama dengan engine InnoDB dan charset `utf8mb4`
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/username/mesjid-donasi-main.git
-cd mesjid-donasi-main
+git clone https://github.com/username/MesjidApps.git
+cd MesjidApps-main
 ```
 
 ### 2. Konfigurasi Web Server
 
-Jika menggunakan **Laragon**, cukup copy folder project ke `C:\laragon\www\` dan akses melalui `http://mesjid-donasi-main.test`.
+Jika menggunakan **Laragon**, cukup copy folder project ke `C:\laragon\www\` dan akses melalui `http://localhost/MesjidApps/`.
 
 Pastikan mod `rewrite` Apache aktif untuk `.htaccess`.
 
