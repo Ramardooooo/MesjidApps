@@ -95,7 +95,7 @@ $base = base_url();
                 </span>
                 <span class="inline-flex items-center gap-2">
                     <i class="fa-solid fa-location-dot text-antique-500"></i>
-                    <span><?= e($profil['kota']) ?></span>
+                   <span><?= e($profil['kota'] ?? '') ?></span>
                 </span>
             </div>
 

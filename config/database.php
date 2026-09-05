@@ -137,15 +137,16 @@ function get_profil_masjid() {
         $stmt = $pdo->query("SELECT * FROM profil_masjid WHERE id = 1 LIMIT 1");
         $profil = $stmt->fetch();
         if (!$profil) {
-            $profil = [
-                'nama_masjid' => 'Masjid Jami\' Nurul Iman',
-                'sebutan' => 'Pusat Dakwah & Ibadah',
-                'slogan' => 'Memakmurkan Masjid, Mensejahterakan Ummat',
-                'alamat' => 'Jl. Mesjid Raya No. 45, Banjarmasin',
-                'whatsapp' => '6281255557890',
-                'email' => 'info@masjidnuruliman.id',
-                'saldo_awal_kas' => 18500000,
-            ];
+                $profil = [
+                    'nama_masjid' => 'Masjid Jami\' Nurul Iman',
+                    'sebutan' => 'Pusat Dakwah & Ibadah',
+                    'slogan' => 'Memakmurkan Masjid, Mensejahterakan Ummat',
+                    'alamat' => 'Jl. Mesjid Raya No. 45, Banjarmasin',
+                    'kota' => 'Banjarmasin',
+                    'whatsapp' => '6281255557890',
+                    'email' => 'info@masjidnuruliman.id',
+                    'saldo_awal_kas' => 18500000,
+                ];
         }
     }
     return $profil;
