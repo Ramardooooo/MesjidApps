@@ -30,6 +30,12 @@ $nama      = $purpose === 'register'
     : ($_SESSION['pending_forgot']['nama'] ?? '');
 $otpSimulasi = $_SESSION['otp_simulasi'] ?? null;
 
+// Jika session pendukung hilang, kembalikan ke titik awal
+if ($email === '') {
+    header('Location: ' . ($purpose === 'register' ? 'register.php' : 'forgot-password.php'));
+    exit;
+}
+
 $pesan = '';
 $tipe  = '';
 
