@@ -46,30 +46,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pesan = 'Username atau email tersebut sudah terdaftar. Silakan gunakan akun lain atau login.';
             $tipe  = 'error';
         } else {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO users (username, email, no_hp, password, nama_lengkap, role, status) VALUES (?, ?, ?, ?, ?, 'donatur', 'aktif')");
-            $stmt->execute([$username, $email, $no_hp, $hash, $nama]);
-            $newId = $pdo->lastInsertId();
-
-            // Beri notifikasi sambutan
-            $stmtNotif = $pdo->prepare("INSERT INTO notifikasi (user_id, judul, pesan, tipe) VALUES (?, ?, ?, 'sistem')");
-            $stmtNotif->execute([
-                $newId,
-                'Selamat Datang di Portal Donatur!',
-                'Ahlan wa sahlan! Akun donatur Anda telah aktif. Anda dapat memantau riwayat donasi dan mengunduh kwitansi resmi di sini.'
-            ]);
-
-            // Auto-login
-            $_SESSION['user'] = [
-                'id'       => $newId,
-                'username' => $username,
+            // Simpan data pendaftaran sementara di session
+            $_SESSION['pending_register'] = [
                 'nama'     => $nama,
-                'role'     => 'donatur',
                 'email'    => $email,
+                'no_hp'    => $no_hp,
+                'username' => $username,
+                'password' => password_hash($password, PASSWORD_DEFAULT),
             ];
 
-            header('Location: ../donatur/portal-donatur.php?welcome=1');
-            exit;
+            // Generate & kirim OTP
+            try {
+                $otp = generate_otp($email, 'register');
+                send_otp_email($email, $nama, $otp, 'register');
+                header('Location: verify-otp.php?purpose=register');
+                exit;
+            } catch (\Exception $e) {
+                unset($_SESSION['pending_register']);
+                $pesan = 'Gagal mengirim kode OTP ke email Anda. Pastikan email benar dan coba lagi.';
+                $tipe  = 'error';
+            }
         }
     }
 }
