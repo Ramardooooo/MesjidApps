@@ -1,135 +1,70 @@
 # Masjid Jami' Nurul Iman
 
-**Sistem Informasi, Pembukuan & Platform Donasi Digital Masjid**
+Integrated information system, cash bookkeeping, and digital donation platform for Masjid Jami' Nurul Iman. Built with pure PHP (no framework), MySQL, and Tailwind CSS. Designed for transparent financial management, easier administration, and a modern experience for congregants.
 
-[![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?style=flat-square&logo=php&logoColor=white)](https://www.php.net)
-[![MySQL](https://img.shields.io/badge/MySQL-8.x-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Apache](https://img.shields.io/badge/Apache-2.4-D22128?style=flat-square&logo=apache&logoColor=white)](https://httpd.apache.org)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](#license)
+## Tech Stack
 
----
+- PHP 8.x
+- MySQL 8.x / MariaDB 10.5+
+- Tailwind CSS (CDN)
+- PHPMailer (email / OTP)
+- Apache (Laragon / XAMPP)
 
-## Tentang Proyek
+## Features
 
-Aplikasi web terintegrasi untuk pengelolaan masjid yang mencakup **website publik**, **sistem pembukuan kas**, **platform donasi online**, dan **portal donatur**. Dibangun dengan arsitektur modular PHP murni tanpa framework, dirancang untuk transparansi keuangan, kemudahan administrasi, dan pengalaman jamaah yang modern.
+- Public website - homepage, mosque profile, donation programs, news, video kajian, financial transparency, contact form
+- Admin panel - financial dashboard, news, donation programs, users, banners, donation accounts, transaction reports
+- Cash bookkeeping - income/expense records, transaction categories, upload proof of payment, period filters, printable reports
+- Online donations - QRIS and bank transfer, admin verification, automatic e-receipt, donor notifications
+- Donor portal - dashboard, donation history, profile updates, self-service receipt printing
+- Authentication - multi-role login (admin, bendahara, content_admin, donatur), registration, forgot/reset password via OTP
+- Cash transparency - public financial reports, open cash balance, income/expense charts
+- YouTube integration - embed kajian videos, live streaming, and activity documentation
 
----
-
-## Fitur Utama
-
-| Modul | Deskripsi |
-|-------|-----------|
-| **Website Publik** | Beranda, profil masjid, program donasi, berita/kegiatan, kajian YouTube, transparansi keuangan, kontak |
-| **Admin Panel** | Dashboard keuangan, manajemen berita, program donasi, pengguna, banner, rekening, laporan transaksi |
-| **Pembukuan Kas** | Pencatatan pemasukan/pengeluaran, kategori transaksi, bukti transaksi, filter periode, laporan cetak |
-| **Donasi Online** | Formulir donasi via QRIS & transfer bank, verifikasi admin, e-Kwitansi otomatis, notifikasi donatur |
-| **Portal Donatur** | Dashboard donatur, riwayat donasi, update profil, cetak kwitansi mandiri |
-| **Autentikasi** | Login multi-role (admin, bendahara, content_admin, donatur), registrasi, lupa/reset password |
-| **Transparansi Kas** | Laporan keuangan publik, saldo kas terbuka, grafik pemasukan & pengeluaran |
-| **Integrasi YouTube** | Embed video kajian, live streaming, dokumentasi kegiatan masjid |
-
----
-
-## Struktur Folder
+## Project Structure
 
 ```
-mesjid-donasi-main/
+mesjid-website/
 |
-|-- admin/                          # Panel Administrator
-|   |-- dashboard.php               # Dashboard keuangan & eksekutif terpadu
-|   |-- berita-admin.php            # Manajemen berita & artikel
-|   |-- banner-admin.php            # Manajemen slider & banner promosi
-|   |-- program-admin.php           # CRUD program donasi masjid
-|   |-- rekening-admin.php          # Kelola rekening donasi & QRIS
-|   |-- transaksi.php               # Pencatatan transaksi kas (pembukuan)
-|   |-- verifikasi-donasi.php       # Verifikasi & persetujuan donasi online
-|   |-- laporan.php                 # Laporan keuangan & cetak
-|   |-- profil-admin.php            # Edit profil & pengaturan masjid
-|   |-- youtube-admin.php           # Kelola video YouTube & kajian
-|   |-- users-admin.php             # Manajemen pengguna & hak akses
+|-- admin/              Admin panel (dashboard, news, programs, transactions, users, reports)
+|-- assets/             Static assets (CSS, JS, images)
+|-- auth/               Login, register, logout, forgot/reset password
+|-- config/             App configuration and PDO connection + helper functions
+|-- db/                 Database schema, seeders, and migration scripts
+|-- donatur/            Donor portal and e-receipt
+|-- home/               Public pages (profile, programs, donations, transparency, news, kajian, contact)
+|-- layouts/            Reusable layout components (header, footer, sidebar)
+|-- uploads/            User uploads (banner, news, proofs, programs, QRIS, board members)
+|-- vendor/             Composer dependencies (PHPMailer)
 |
-|-- assets/                         # Aset Statis (CSS, JS, Gambar)
-|   |-- css/
-|       |-- classic-theme.css       # Tema klasik Islami (Deep Cypress, Antique Gold)
-|
-|-- auth/                           # Autentikasi & Manajemen Sesi
-|   |-- login.php                   # Halaman masuk
-|   |-- register.php                # Registrasi akun baru
-|   |-- logout.php                  # Proses logout
-|   |-- forgot-password.php         # Lupa password (kirim token reset)
-|   |-- reset-password.php          # Form reset password via token
-|
-|-- config/                         # Konfigurasi Aplikasi
-|   |-- database.php                # Koneksi DB (PDO), helper functions, session, upload
-|
-|-- db/                             # Database & Migrasi
-|   |-- database_schema_v2.sql      # Skema database lengkap + data seeder awal
-|   |-- mesjid_website.sql          # Database dump / backup
-|   |-- migrate.php                 # Script migrasi database
-|
-|-- donatur/                        # Portal Donatur
-|   |-- portal-donatur.php          # Dashboard mandiri donatur
-|   |-- kwitansi.php                # Cetak e-Kwitansi donasi
-|
-|-- home/                           # Halaman Publik (Frontend)
-|   |-- profil.php                  # Profil, sejarah, visi-misi masjid
-|   |-- program.php                 # Katalog seluruh program donasi
-|   |-- program-detail.php          # Detail program & progress donasi
-|   |-- donasi-online.php           # Formulir donasi online (QRIS & transfer)
-|   |-- transparansi.php            # Laporan keuangan transparan publik
-|   |-- berita.php                  # Daftar berita & artikel
-|   |-- berita-detail.php           # Detail berita (full text)
-|   |-- kajian.php                  # Galeri video kajian & live streaming
-|   |-- kontak.php                  # Halaman kontak & formulir pesan
-|
-|-- layouts/                        # Komponen Layout (Reusable)
-|   |-- header.php                  # Header admin panel
-|   |-- footer.php                  # Footer admin panel
-|   |-- sidebar.php                 # Sidebar navigasi admin
-|   |-- public_header.php           # Header website publik
-|   |-- public_footer.php           # Footer website publik
-|
-|-- uploads/                        # Direktori Unggahan (User Uploads)
-|   |-- banner/                     # Gambar slider & banner
-|   |-- berita/                     # Thumbnail berita
-|   |-- bukti/                      # Bukti transfer pembayaran donasi
-|   |-- program/                    # Gambar program donasi
-|   |-- qris/                       # Gambar QRIS
-|   |-- pengurus/                   # Foto pengurus DKM
-|
-|-- index.php                       # Beranda utama (entry point publik)
-|-- donasi.php                      # Endpoint donasi cepat
-|-- kegiatan.php                    # Halaman kegiatan masjid
-|-- 404.php                         # Halaman error 404 kustom
-|-- .htaccess                       # Konfigurasi Apache (URL rewrite, keamanan)
-|-- add_socmed_columns.php          # Script migrasi tambah kolom sosmed
-|-- README.md                       # Dokumentasi proyek
+|-- index.php           Public homepage
+|-- donasi.php          Quick donation endpoint
+|-- kegiatan.php        Mosque activities page
+|-- 404.php             Custom 404 page
+|-- .htaccess           Apache configuration
 ```
-
----
 
 ## Database
 
-Sistem menggunakan **13 tabel** utama dengan engine InnoDB dan charset `utf8mb4`:
+The system uses 13 relational tables with the InnoDB engine and `utf8mb4` charset:
 
-| # | Tabel | Fungsi |
-|---|-------|--------|
-| 1 | `users` | Pengguna & multi-role RBAC (admin, bendahara, content_admin, donatur) |
-| 2 | `profil_masjid` | Profil, sejarah, visi-misi, kontak, sosial media masjid |
-| 3 | `pengurus_masjid` | Data pengurus DKM (nama, jabatan, bidang, foto) |
-| 4 | `rekening_donasi` | Rekening bank & QRIS donasi masjid |
-| 5 | `program_donasi` | Program donasi (target, terkumpul, status, kategori) |
-| 6 | `kategori_transaksi` | Master kategori pemasukan & pengeluaran kas |
-| 7 | `transaksi_keuangan` | Buku kas transaksi (pembukuan terintegrasi) |
-| 8 | `donasi_online` | Donasi masuk dari jamaah (pending/verifikasi/ditolak) |
-| 9 | `berita` | Berita, artikel & kegiatan masjid |
-| 10 | `banners` | Slider & banner promosi beranda |
-| 11 | `youtube_videos` | Integrasi video YouTube (kajian, live, dokumentasi) |
-| 12 | `notifikasi` | Notifikasi untuk pengguna & donatur |
-| 13 | `pesan_kontak` | Pesan masuk dari formulir kontak jamaah |
+| Table | Purpose |
+|-------|---------|
+| `users` | Users and multi-role RBAC (admin, bendahara, content_admin, donatur) |
+| `profil_masjid` | Mosque profile, history, vision/mission, contact, social media |
+| `pengurus_masjid` | DKM board members |
+| `rekening_donasi` | Donation bank accounts and QRIS |
+| `program_donasi` | Donation programs (target, collected, status, category) |
+| `kategori_transaksi` | Master income/expense categories |
+| `transaksi_keuangan` | Cash bookkeeping transactions |
+| `donasi_online` | Incoming donations (pending, verified, rejected) |
+| `berita` | News and activities |
+| `banners` | Homepage sliders and promotion banners |
+| `youtube_videos` | YouTube videos (kajian, live, documentation) |
+| `notifikasi` | User and donor notifications |
+| `pesan_kontak` | Messages from the contact form |
 
-### Akun Default
+### Default Accounts
 
 | Role | Username | Password |
 |------|----------|----------|
@@ -138,51 +73,41 @@ Sistem menggunakan **13 tabel** utama dengan engine InnoDB dan charset `utf8mb4`
 | Content Admin | `konten` | `konten123` |
 | Donatur | `donatur` | `donatur123` |
 
-> Ganti semua password default sebelum deployment ke production.
+> Change all default passwords before deploying to production.
 
----
+## Requirements
 
-## Persyaratan
+- PHP >= 8.0 (PDO MySQL, mbstring, json, openssl)
+- MySQL >= 8.0 / MariaDB >= 10.5
+- Apache with `mod_rewrite` enabled (or Laragon / XAMPP)
+- Composer (only required to install PHPMailer)
 
-- **PHP** >= 8.0 (PDO MySQL, mbstring, json, openssl)
-- **MySQL** >= 8.0 / MariaDB >= 10.5
-- **Apache** dengan mod `rewrite` aktif (atau **Laragon** / **XAMPP**)
-- **Composer** *(tidak wajib, project murni tanpa dependency)*
+## Installation
 
----
-
-## Instalasi
-
-### 1. Clone Repository
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/username/MesjidApps.git
-cd MesjidApps-main
+git clone https://github.com/username/mesjid-website.git
+cd mesjid-website
 ```
 
-### 2. Konfigurasi Web Server
+### 2. Configure your web server
 
-Jika menggunakan **Laragon**, cukup copy folder project ke `C:\laragon\www\` dan akses melalui `http://localhost/MesjidApps/`.
+If you use Laragon, copy the project folder to `C:\laragon\www\` and access it at `http://localhost/mesjid-website/`. Make sure the Apache `rewrite` module is enabled for `.htaccess`.
 
-Pastikan mod `rewrite` Apache aktif untuk `.htaccess`.
+### 3. Create the database
 
-### 3. Buat Database
-
-```sql
-CREATE DATABASE mesjid_website CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-Import skema database:
+Run the schema file:
 
 ```bash
 mysql -u root -p mesjid_website < db/database_schema_v2.sql
 ```
 
-Atau gunakan **phpMyAdmin** untuk import file `db/database_schema_v2.sql`.
+You can also import `db/database_schema_v2.sql` through phpMyAdmin. The file creates the database, all tables, and seeds realistic starter data.
 
-### 4. Konfigurasi Koneksi
+### 4. Configure the connection
 
-Edit `config/database.php` sesuai environment Anda:
+Edit `config/database.php` to match your environment:
 
 ```php
 define('DB_HOST', 'localhost');
@@ -191,41 +116,38 @@ define('DB_PASS', '');
 define('DB_NAME', 'mesjid_website');
 ```
 
-### 5. Akses Aplikasi
+### 5. Install Composer dependencies
 
-| URL | Deskripsi |
-|-----|-----------|
-| `http://localhost/mesjid-donasi-main/` | Beranda publik |
-| `http://localhost/mesjid-donasi-main/auth/login.php` | Halaman login |
-| `http://localhost/mesjid-donasi-main/admin/dashboard.php` | Dashboard admin |
+```bash
+composer install
+```
+
+This installs PHPMailer, which is required for OTP email delivery. Then configure the SMTP settings in `config/mail.php`.
+
+### 6. Access the application
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost/mesjid-website/` | Public homepage |
+| `http://localhost/mesjid-website/auth/login.php` | Login page |
+| `http://localhost/mesjid-website/admin/dashboard.php` | Admin dashboard |
+
+## Design
+
+The UI uses a classic Islamic theme with:
+
+- Deep Cypress Green (#183728) as the primary color
+- Antique Brass Gold (#c5a059) as an accent
+- Warm Alabaster (#fbf9f5) as the body background
+
+Fonts: Plus Jakarta Sans (body), Amiri and Cinzel (classic Islamic headings).
+
+## License
+
+This project is licensed under the MIT License. You are free to use, modify, and distribute it.
 
 ---
 
-## Tema & Desain
+"Memakmurkan Masjid, Mensejahterakan Ummat"
 
-Menggunakan tema klasik Islami dengan palet warna:
-
-| Warna | Kode | Penggunaan |
-|-------|------|------------|
-| Deep Cypress Green | `#183728` | Warna primer, header, navbar |
-| Antique Brass Gold | `#c5a059` | Aksen emas, judul, highlight |
-| Warm Alabaster | `#fbf9f5` | Background body |
-| Warm Cream | `#f4efe4` | Background surface/card |
-
-**Font:** Plus Jakarta Sans (body), Amiri & Cinzel (heading klasik Islami)
-
----
-
-## Lisensi
-
-Proyek ini menggunakan lisensi MIT. Bebas digunakan, dimodifikasi, dan didistribusikan.
-
----
-
-<div align="center">
-
-**"Memakmurkan Masjid, Mensejahterakan Ummat"**
-
-*Masjid Jami' Nurul Iman &mdash; Pusat Dakwah, Ibadah, dan Pemberdayaan Ummat*
-
-</div>
+Masjid Jami' Nurul Iman, Pusat Dakwah, Ibadah, dan Pemberdayaan Ummat
