@@ -509,15 +509,13 @@ $stmtDonasi = $pdo->prepare("
         ON d.program_id = p.id
     WHERE
         d.user_id = ?
-        OR d.email = ?
     ORDER BY
         d.tanggal_donasi DESC,
         d.id DESC
 ");
 
 $stmtDonasi->execute([
-    $user['id'],
-    $user['email'] ?? ''
+    $user['id']
 ]);
 
 $riwayatDonasi =
