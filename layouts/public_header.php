@@ -85,40 +85,6 @@ $base = base_url();
 </head>
 <body class="pattern-arabesque-light min-h-screen text-warm-900 flex flex-col justify-between antialiased selection:bg-antique-500 selection:text-white">
 
-    <!-- Topbar Syiar & Kontak Cepat -->
-    <div class="bg-cypress-950 text-white text-xs border-b border-white/10 py-2 px-4 sm:px-8 hidden md:block">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-6 text-antique-200/90">
-                <span class="inline-flex items-center gap-2">
-                    <i class="fa-solid fa-mosque text-antique-500"></i>
-                    <span><?= e($profil['slogan']) ?></span>
-                </span>
-                <span class="inline-flex items-center gap-2">
-                    <i class="fa-solid fa-location-dot text-antique-500"></i>
-                   <span><?= e($profil['kota'] ?? '') ?></span>
-                </span>
-            </div>
-
-            <div class="flex items-center gap-4 text-xs">
-                <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $profil['whatsapp']) ?>" target="_blank" class="hover:text-antique-300 transition flex items-center gap-1.5 text-emerald-300">
-                    <i class="fa-brands fa-whatsapp"></i>
-                    <span>WhatsApp Layanan DKM</span>
-                </a>
-                <span class="text-white/20">|</span>
-                <?php if ($currentUser): ?>
-                    <a href="<?= in_array($currentUser['role'], ['admin', 'bendahara', 'content_admin']) ? $base . '/admin/dashboard.php' : $base . '/donatur/portal-donatur.php' ?>" class="text-antique-300 font-semibold hover:text-white transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-user"></i>
-                        <span><?= e($currentUser['nama']) ?> (<?= ucfirst($currentUser['role']) ?>)</span>
-                    </a>
-                <?php else: ?>
-                    <a href="<?= $base ?>/auth/login.php" class="text-antique-300 hover:text-white transition flex items-center gap-1">
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                        <span>Masuk Akun / Portal</span>
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
 
     <!-- Navigasi Utama Sticky -->
     <header class="sticky top-0 z-40 bg-cypress-900/95 backdrop-blur-md border-b border-antique-500/30 text-white shadow-lg transition-all duration-300" id="navbar">
