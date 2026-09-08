@@ -1,6 +1,7 @@
 <?php
 // verify-otp.php — Verifikasi Kode OTP (Register & Forgot Password)
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../otp/otp.php';
 mulai_session();
 
 $profil  = get_profil_masjid();

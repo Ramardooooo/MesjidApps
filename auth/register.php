@@ -1,6 +1,7 @@
 <?php
 // register.php - Pendaftaran Akun Donatur Baru (Scope 11)
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../otp/otp.php';
 mulai_session();
 
 if (isset($_SESSION['user'])) {

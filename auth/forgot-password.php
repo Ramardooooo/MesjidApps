@@ -1,6 +1,7 @@
 <?php
 // forgot-password.php - Permintaan Reset Kata Sandi via OTP
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../otp/otp.php';
 mulai_session();
 
 $profil = get_profil_masjid();
