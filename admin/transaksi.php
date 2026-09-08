@@ -410,7 +410,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                             <i class="fa-solid fa-file-invoice"></i>
                                         </a>
                                     <?php endif; ?>
-                                    <a href="transaksi.php?hapus=<?= $t['id'] ?>" onclick="return confirm('Apakah Anda yakin ingin menghapus catatan transaksi ini?');" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus Transaksi">
+                                    <a href="transaksi.php?hapus=<?= $t['id'] ?>" data-hapus data-judul="Hapus Transaksi" data-pesan="Catatan transaksi '<?= e($t['keterangan']) ?>' akan dihapus permanen dari buku kas. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus Transaksi">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </a>
                                 </div>

@@ -179,7 +179,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 <button type="button" onclick='editProgram(<?= json_encode($p) ?>)' class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="program-admin.php?hapus=<?= $p['id'] ?>" onclick="return confirm('Hapus program ini?');" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
+                                <a href="program-admin.php?hapus=<?= $p['id'] ?>" data-hapus data-judul="Hapus Program" data-pesan="Program '<?= e($p['nama_program'] ?? '') ?>' beserta progres donasinya akan dihapus. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </a>
                             </div>

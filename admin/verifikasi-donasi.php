@@ -282,7 +282,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 <?php if ($d['status'] === 'pending'): ?>
                                     <div class="flex items-center justify-end gap-1.5">
                                         <!-- Form Verifikasi Terima -->
-                                        <form method="POST" action="verifikasi-donasi.php" onsubmit="return confirm('Verifikasi donasi ini dan otomatis bukukan ke transaksi kas?');">
+                                        <form method="POST" action="verifikasi-donasi.php" data-hapus data-variant="success" data-judul="Verifikasi Donasi" data-pesan="Verifikasi donasi ini dan otomatis bukukan ke transaksi kas?">
                                             <input type="hidden" name="aksi" value="verifikasi">
                                             <input type="hidden" name="donasi_id" value="<?= $d['id'] ?>">
                                             <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition flex items-center gap-1 shadow-xs">

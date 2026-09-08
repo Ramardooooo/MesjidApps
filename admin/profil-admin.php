@@ -264,7 +264,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                         <h4 class="font-bold text-warm-900 text-sm mt-1"><?= e($peng['nama']) ?></h4>
                         <span class="text-[11px] text-warm-800/60"><?= e($peng['bidang'] ?: 'Pengurus') ?></span>
                     </div>
-                    <a href="profil-admin.php?hapus_pengurus=<?= $peng['id'] ?>" onclick="return confirm('Hapus pengurus ini?');" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50">
+                    <a href="profil-admin.php?hapus_pengurus=<?= $peng['id'] ?>" data-hapus data-judul="Hapus Pengurus" data-pesan="Pengurus '<?= e($peng['nama']) ?>' akan dihapus dari struktur kepengurusan. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50">
                         <i class="fa-solid fa-trash-can"></i>
                     </a>
                 </div>

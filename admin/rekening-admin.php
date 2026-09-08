@@ -140,7 +140,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 <button type="button" onclick='editRekening(<?= json_encode($r) ?>)' class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="rekening-admin.php?hapus=<?= $r['id'] ?>" onclick="return confirm('Hapus rekening ini?');" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
+                                <a href="rekening-admin.php?hapus=<?= $r['id'] ?>" data-hapus data-judul="Hapus Rekening" data-pesan="Rekening <?= e($r['nama_bank'] ?? '') ?> a.n. <?= e($r['atas_nama'] ?? '') ?> akan dihapus. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </a>
                             </div>

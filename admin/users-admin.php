@@ -174,7 +174,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
                                 <?php if ($u['id'] !== $user['id']): ?>
-                                    <a href="users-admin.php?hapus=<?= $u['id'] ?>" onclick="return confirm('Hapus pengguna ini?');" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
+                                    <a href="users-admin.php?hapus=<?= $u['id'] ?>" data-hapus data-judul="Hapus Pengguna" data-pesan="Akses pengguna '<?= e($u['nama_lengkap'] ?? '') ?>' akan dinonaktifkan permanen. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </a>
                                 <?php endif; ?>

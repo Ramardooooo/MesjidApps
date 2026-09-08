@@ -149,7 +149,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 <button type="button" onclick='editBanner(<?= json_encode($b) ?>)' class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="banner-admin.php?hapus=<?= $b['id'] ?>" onclick="return confirm('Hapus banner ini?');" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
+                                <a href="banner-admin.php?hapus=<?= $b['id'] ?>" data-hapus data-judul="Hapus Banner" data-pesan="Banner ini akan dihapus permanen. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </a>
                             </div>

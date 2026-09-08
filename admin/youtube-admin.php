@@ -148,7 +148,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 <button type="button" onclick='editVideo(<?= json_encode($v) ?>)' class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="youtube-admin.php?hapus=<?= $v['id'] ?>" onclick="return confirm('Hapus video ini?');" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
+                                <a href="youtube-admin.php?hapus=<?= $v['id'] ?>" data-hapus data-judul="Hapus Video" data-pesan="Video ini akan dihapus dari daftar gallery YouTube. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </a>
                             </div>
