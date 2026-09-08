@@ -190,17 +190,19 @@ if ($search !== '') {
 }
 
 $sql .= " ORDER BY t.tanggal_transaksi DESC, t.id DESC";
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$daftarTransaksi = $stmt->fetchAll();
 
-// Hitung Ringkasan dari Transaksi yang Terfilter
-$totalDebitFilter = 0;
-$totalKreditFilter = 0;
-foreach ($daftarTransaksi as $dt) {
-    if ($dt['jenis'] === 'pemasukan') $totalDebitFilter += (float)$dt['nominal'];
-    else $totalKreditFilter += (float)$dt['nominal'];
-}
+$pag = paginate_data($pdo, $sql, $params, 10);
+$daftarTransaksi = $pag['items'];
+
+// Hitung Ringkasan dari Seluruh Transaksi yang Terfilter (independent dari halaman)
+$stmtTotal = $pdo->prepare("SELECT 
+        COALESCE(SUM(CASE WHEN sub_sum.jenis = 'pemasukan' THEN sub_sum.nominal ELSE 0 END), 0) AS debit,
+        COALESCE(SUM(CASE WHEN sub_sum.jenis = 'pengeluaran' THEN sub_sum.nominal ELSE 0 END), 0) AS kredit
+    FROM (" . $sql . ") AS sub_sum");
+$stmtTotal->execute($params);
+$rowTotal = $stmtTotal->fetch();
+$totalDebitFilter  = (float)$rowTotal['debit'];
+$totalKreditFilter = (float)$rowTotal['kredit'];
 
 // Master Kategori & Program
 $kategoriList = $pdo->query("SELECT * FROM kategori_transaksi ORDER BY jenis ASC, urutan ASC")->fetchAll();
@@ -332,7 +334,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <h3 class="font-classic text-base font-bold text-warm-900">
             Daftar Catatan Buku Kas
         </h3>
-        <span class="text-xs text-warm-800/60 font-semibold"><?= count($daftarTransaksi) ?> Baris Data</span>
+        <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Baris Data</span>
     </div>
 
     <?php if (empty($daftarTransaksi)): ?>
@@ -420,6 +422,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 </tbody>
             </table>
         </div>
+        <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
     <?php endif; ?>
 </div>
 

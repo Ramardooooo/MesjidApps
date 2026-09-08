@@ -101,7 +101,8 @@ if (isset($_GET['hapus'])) {
     }
 }
 
-$beritaList = $pdo->query("SELECT b.id, b.judul, b.kategori, b.tanggal_publikasi, b.status, b.views, b.thumbnail, b.isi, b.ringkasan, u.nama_lengkap as penulis FROM berita b LEFT JOIN users u ON b.penulis_id = u.id ORDER BY b.id DESC")->fetchAll();
+$pag = paginate_data($pdo, "SELECT b.id, b.judul, b.kategori, b.tanggal_publikasi, b.status, b.views, b.thumbnail, b.isi, b.ringkasan, u.nama_lengkap as penulis FROM berita b LEFT JOIN users u ON b.penulis_id = u.id ORDER BY b.id DESC", [], 10);
+$beritaList = $pag['items'];
 
 $pageTitle    = 'Kelola Berita & Warta · ' . $profil['nama_masjid'];
 $activeMenu   = 'berita-admin';
@@ -139,7 +140,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <h3 class="font-classic text-base font-bold text-warm-900">
             Daftar Artikel &amp; Berita
         </h3>
-        <span class="text-xs text-warm-800/60 font-semibold"><?= count($beritaList) ?> Artikel</span>
+        <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Artikel</span>
     </div>
 
     <div class="overflow-x-auto">
@@ -206,6 +207,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </tbody>
         </table>
     </div>
+    <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
 </div>
 
 <!-- Modal Tambah/Edit Berita -->

@@ -68,7 +68,8 @@ if (isset($_GET['hapus'])) {
     exit;
 }
 
-$banners = $pdo->query("SELECT * FROM banners ORDER BY urutan ASC, id DESC")->fetchAll();
+$pag = paginate_data($pdo, "SELECT * FROM banners ORDER BY urutan ASC, id DESC", [], 10);
+$banners = $pag['items'];
 
 $pageTitle    = 'Kelola Slider & Banner · ' . $profil['nama_masjid'];
 $activeMenu   = 'banner-admin';
@@ -106,7 +107,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <h3 class="font-classic text-base font-bold text-warm-900">
             Daftar Slider &amp; Banner
         </h3>
-        <span class="text-xs text-warm-800/60 font-semibold"><?= count($banners) ?> Banner</span>
+        <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Banner</span>
     </div>
 
     <div class="overflow-x-auto">
@@ -159,6 +160,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </tbody>
         </table>
     </div>
+    <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
 </div>
 
 <!-- Modal Tambah/Edit Banner -->

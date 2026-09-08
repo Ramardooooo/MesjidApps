@@ -76,7 +76,8 @@ if (isset($_GET['hapus'])) {
     }
 }
 
-$usersList = $pdo->query("SELECT * FROM users ORDER BY id ASC")->fetchAll();
+$pag = paginate_data($pdo, "SELECT * FROM users ORDER BY id ASC", [], 10);
+$usersList = $pag['items'];
 
 $pageTitle    = 'Manajemen Pengguna & Role · ' . $profil['nama_masjid'];
 $activeMenu   = 'users-admin';
@@ -115,7 +116,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <h3 class="font-classic text-base font-bold text-warm-900">
             Daftar Akun Pengguna Sistem
         </h3>
-        <span class="text-xs text-warm-800/60 font-semibold"><?= count($usersList) ?> Pengguna</span>
+        <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Pengguna</span>
     </div>
 
     <div class="overflow-x-auto">
@@ -185,6 +186,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </tbody>
         </table>
     </div>
+    <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
 </div>
 
 <!-- Modal Tambah/Edit User -->

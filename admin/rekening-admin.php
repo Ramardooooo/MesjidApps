@@ -56,7 +56,8 @@ if (isset($_GET['hapus'])) {
     exit;
 }
 
-$rekening = $pdo->query("SELECT * FROM rekening_donasi ORDER BY urutan ASC, id ASC")->fetchAll();
+$pag = paginate_data($pdo, "SELECT * FROM rekening_donasi ORDER BY urutan ASC, id ASC", [], 10);
+$rekening = $pag['items'];
 
 $pageTitle    = 'Kelola Rekening Donasi · ' . $profil['nama_masjid'];
 $activeMenu   = 'rekening-admin';
@@ -94,7 +95,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <h3 class="font-classic text-base font-bold text-warm-900">
             Daftar Rekening Bank &amp; QRIS
         </h3>
-        <span class="text-xs text-warm-800/60 font-semibold"><?= count($rekening) ?> Rekening</span>
+        <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Rekening</span>
     </div>
 
     <div class="overflow-x-auto">
@@ -150,6 +151,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </tbody>
         </table>
     </div>
+    <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
 </div>
 
 <!-- Modal Tambah/Edit Rekening -->

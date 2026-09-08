@@ -130,9 +130,9 @@ if ($filterStatus !== 'semua' && in_array($filterStatus, ['pending', 'diverifika
 }
 
 $sql .= " ORDER BY (d.status = 'pending') DESC, d.id DESC";
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$daftarDonasi = $stmt->fetchAll();
+
+$pag = paginate_data($pdo, $sql, $params, 10);
+$daftarDonasi = $pag['items'];
 
 // Hitung Statistik
 $countPending = (int)$pdo->query("SELECT COUNT(*) FROM donasi_online WHERE status = 'pending'")->fetchColumn();
@@ -191,7 +191,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <h3 class="font-classic text-base font-bold text-warm-900">
             Daftar Setoran Donasi Jamaah
         </h3>
-        <span class="text-xs text-warm-800/60 font-semibold"><?= count($daftarDonasi) ?> Donasi Ditemukan</span>
+        <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Donasi Ditemukan</span>
     </div>
 
     <?php if (empty($daftarDonasi)): ?>
@@ -306,6 +306,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 </tbody>
             </table>
         </div>
+        <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
     <?php endif; ?>
 </div>
 

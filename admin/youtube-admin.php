@@ -68,7 +68,8 @@ if (isset($_GET['hapus'])) {
     exit;
 }
 
-$videos = $pdo->query("SELECT * FROM youtube_videos ORDER BY id DESC")->fetchAll();
+$pag = paginate_data($pdo, "SELECT * FROM youtube_videos ORDER BY id DESC", [], 10);
+$videos = $pag['items'];
 
 $pageTitle    = 'Kelola Video YouTube · ' . $profil['nama_masjid'];
 $activeMenu   = 'youtube-admin';
@@ -106,7 +107,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <h3 class="font-classic text-base font-bold text-warm-900">
             Daftar Video YouTube Aktif
         </h3>
-        <span class="text-xs text-warm-800/60 font-semibold"><?= count($videos) ?> Video</span>
+        <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Video</span>
     </div>
 
     <div class="overflow-x-auto">
@@ -158,6 +159,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </tbody>
         </table>
     </div>
+    <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
 </div>
 
 <!-- Modal Tambah/Edit Video -->

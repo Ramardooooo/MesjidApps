@@ -92,7 +92,8 @@ if (isset($_GET['hapus_pengurus'])) {
     exit;
 }
 
-$pengurusList = $pdo->query("SELECT * FROM pengurus_masjid ORDER BY urutan ASC, id ASC")->fetchAll();
+$pag = paginate_data($pdo, "SELECT * FROM pengurus_masjid ORDER BY urutan ASC, id ASC", [], 10);
+$pengurusList = $pag['items'];
 
 $pageTitle    = 'Pengaturan Profil Masjid & DKM · ' . $profil['nama_masjid'];
 $activeMenu   = 'profil-admin';
@@ -241,6 +242,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 </h3>
                 <p class="text-xs text-warm-800/60 mt-0.5">Daftar asatidz dan pengurus DKM yang ditampilkan pada halaman profil.</p>
             </div>
+            <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Pengurus</span>
 
             <!-- Form Tambah Pengurus Langsung -->
             <form method="POST" action="profil-admin.php" class="flex flex-wrap items-center gap-2 text-xs">
@@ -270,6 +272,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 </div>
             <?php endforeach; ?>
         </div>
+        <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
     </div>
 </div>
 

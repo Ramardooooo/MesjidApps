@@ -65,23 +65,26 @@ $outPrev = (float)$stmtOutPrev->fetchColumn();
 
 $saldoAwalPeriode = (float)$profil['saldo_awal_kas'] + $inPrev - $outPrev;
 
-// 2. Query Transaksi Dalam Periode Terpilih
-$stmtTrx = $pdo->prepare("SELECT t.*, k.nama_kategori, u.nama_lengkap as pencatat 
-                          FROM transaksi_keuangan t 
-                          JOIN kategori_transaksi k ON t.kategori_id = k.id 
-                          LEFT JOIN users u ON t.user_id = u.id 
-                          WHERE t.tanggal_transaksi BETWEEN ? AND ? 
-                          ORDER BY t.tanggal_transaksi ASC, t.id ASC");
-$stmtTrx->execute([$tglMulai, $tglSelesai]);
-$transaksiPeriode = $stmtTrx->fetchAll();
+// 2. Query Transaksi Dalam Periode Terpilih (dengan saldo berjalan via window function)
+$sqlTrx = "SELECT t.*, k.nama_kategori, u.nama_lengkap as pencatat,
+                  SUM(CASE WHEN t.jenis = 'pemasukan' THEN t.nominal ELSE -t.nominal END)
+                      OVER (ORDER BY t.tanggal_transaksi ASC, t.id ASC) AS saldo_dasar
+           FROM transaksi_keuangan t 
+           JOIN kategori_transaksi k ON t.kategori_id = k.id 
+           LEFT JOIN users u ON t.user_id = u.id 
+           WHERE t.tanggal_transaksi BETWEEN ? AND ? 
+           ORDER BY t.tanggal_transaksi ASC, t.id ASC";
+$paramsTrx = [$tglMulai, $tglSelesai];
 
-// 3. Hitung Pemasukan, Pengeluaran, Saldo Akhir, dan Surplus/Defisit
-$totalPemasukanPeriode = 0;
-$totalPengeluaranPeriode = 0;
-foreach ($transaksiPeriode as $tp) {
-    if ($tp['jenis'] === 'pemasukan') $totalPemasukanPeriode += (float)$tp['nominal'];
-    else $totalPengeluaranPeriode += (float)$tp['nominal'];
-}
+// 3. Hitung Pemasukan, Pengeluaran, Saldo Akhir & Surplus/Defisit (via SUM, bukan loop)
+$stmtTot = $pdo->prepare("SELECT 
+        COALESCE(SUM(CASE WHEN jenis = 'pemasukan' THEN nominal ELSE 0 END), 0) AS masuk,
+        COALESCE(SUM(CASE WHEN jenis = 'pengeluaran' THEN nominal ELSE 0 END), 0) AS keluar
+    FROM transaksi_keuangan WHERE tanggal_transaksi BETWEEN ? AND ?");
+$stmtTot->execute($paramsTrx);
+$rowTot = $stmtTot->fetch();
+$totalPemasukanPeriode   = (float)$rowTot['masuk'];
+$totalPengeluaranPeriode = (float)$rowTot['keluar'];
 $saldoAkhirPeriode = $saldoAwalPeriode + $totalPemasukanPeriode - $totalPengeluaranPeriode;
 $surplusDefisit    = $totalPemasukanPeriode - $totalPengeluaranPeriode;
 
@@ -127,7 +130,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
 
     $no = 1;
     $saldoJalan = $saldoAwalPeriode;
-    foreach ($transaksiPeriode as $t) {
+    $stmtExport = $pdo->prepare($sqlTrx);
+    $stmtExport->execute($paramsTrx);
+    foreach ($stmtExport->fetchAll() as $t) {
         $debit = ($t['jenis'] === 'pemasukan') ? (float)$t['nominal'] : 0;
         $kredit = ($t['jenis'] === 'pengeluaran') ? (float)$t['nominal'] : 0;
         $saldoJalan += ($debit - $kredit);
@@ -233,8 +238,10 @@ if ($isPrint) {
             </thead>
             <tbody class="divide-y divide-stone-200">
                 <?php 
+                $stmtPrint = $pdo->prepare($sqlTrx);
+                $stmtPrint->execute($paramsTrx);
                 $saldoRun = $saldoAwalPeriode;
-                foreach ($transaksiPeriode as $tr): 
+                foreach ($stmtPrint->fetchAll() as $tr): 
                     $deb = ($tr['jenis'] === 'pemasukan') ? (float)$tr['nominal'] : 0;
                     $kre = ($tr['jenis'] === 'pengeluaran') ? (float)$tr['nominal'] : 0;
                     $saldoRun += ($deb - $kre);
@@ -531,15 +538,16 @@ require_once __DIR__ . '/../layouts/sidebar.php';
     </div>
 
     <!-- Tabel Rincian Mutasi Transaksi Detail -->
+    <?php $pag = paginate_data($pdo, $sqlTrx, $paramsTrx, 10); ?>
     <div class="bg-white rounded-3xl border border-antique-300/50 shadow-sm overflow-hidden">
         <div class="p-6 border-b border-antique-200 flex items-center justify-between">
             <h3 class="font-classic text-base font-bold text-warm-900">
                 Detail Transaksi: <?= e($judulPeriode) ?>
             </h3>
-            <span class="text-xs text-warm-800/60 font-semibold"><?= count($transaksiPeriode) ?> Transaksi</span>
+            <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Transaksi</span>
         </div>
 
-        <?php if (empty($transaksiPeriode)): ?>
+        <?php if (empty($pag['items'])): ?>
             <div class="text-center py-12 space-y-2">
                 <i class="fa-solid fa-folder-open text-4xl text-stone-300"></i>
                 <p class="text-xs text-warm-800/60 font-medium">Tidak ada transaksi pada periode ini.</p>
@@ -559,11 +567,11 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                     </thead>
                     <tbody class="divide-y divide-antique-100">
                         <?php 
-                        $saldoJalan = $saldoAwalPeriode;
-                        foreach ($transaksiPeriode as $tp): 
+                        $saldoAwalHalaman = $saldoAwalPeriode;
+                        foreach ($pag['items'] as $tp): 
                             $deb = ($tp['jenis'] === 'pemasukan') ? (float)$tp['nominal'] : 0;
                             $kre = ($tp['jenis'] === 'pengeluaran') ? (float)$tp['nominal'] : 0;
-                            $saldoJalan += ($deb - $kre);
+                            $saldoBaris = $saldoAwalPeriode + (float)$tp['saldo_dasar'];
                         ?>
                             <tr class="hover:bg-warm-50/60 transition">
                                 <td class="py-3.5 px-4 align-top whitespace-nowrap">
@@ -595,7 +603,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 </td>
                                 <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
                                     <span class="font-bold font-classic text-cypress-900">
-                                        <?= format_rupiah($saldoJalan) ?>
+                                        <?= format_rupiah($saldoBaris) ?>
                                     </span>
                                 </td>
                             </tr>
@@ -603,6 +611,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                     </tbody>
                 </table>
             </div>
+            <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
         <?php endif; ?>
     </div>
 
