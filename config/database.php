@@ -1,4 +1,7 @@
 <?php
+// config/database.php
+// Konfigurasi Database Sistem Informasi & Pembukuan Masjid
+
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
@@ -18,20 +21,31 @@ try {
     die('Koneksi database gagal: ' . $e->getMessage());
 }
 
-function mulai_session() {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+// Pastikan zona waktu PHP & MySQL konsisten agar OTP tidak dianggap kedaluwarsa
+if (function_exists('date_default_timezone_set')) {
+    date_default_timezone_set('Asia/Makassar');
+}
+try {
+    $pdo->exec("SET time_zone = '+08:00'");
+} catch (Throwable $e) {
+    // Abaikan jika gagal set time_zone
+}
+
+// Pastikan folder uploads tersedia
+$uploadDirs = [
+    __DIR__ . '/../uploads',
+    __DIR__ . '/../uploads/bukti',
+    __DIR__ . '/../uploads/program',
+    __DIR__ . '/../uploads/berita',
+    __DIR__ . '/../uploads/banner',
+    __DIR__ . '/../uploads/qris',
+    __DIR__ . '/../uploads/pengurus',
+];
+foreach ($uploadDirs as $dir) {
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0777, true);
     }
 }
 
-function cek_login() {
-    mulai_session();
-    if (!isset($_SESSION['user'])) {
-        header('Location: login.php');
-        exit;
-    }
-}
-
-function e($text) {
-    return htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
-}
+// Load helper global (base_url, cek_login, e, format_rupiah, dsb.)
+require_once __DIR__ . '/helpers.php';

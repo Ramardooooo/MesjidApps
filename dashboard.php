@@ -79,7 +79,7 @@ require_once __DIR__ . '/layouts/sidebar.php';
     </div>
 
     <!-- Stat 2: Total Catatan Donatur -->
-    <div class="bg-white rounded-2xl p-6 border border-antique-300/40 shadow-sm hover:shadow-md transition-luxury flex items-start justify-between">
+    <div class="bg-white rounded-2xl p-6 border bordx`er-antique-300/40 shadow-sm hover:shadow-md transition-luxury flex items-start justify-between">
         <div>
             <span class="text-xs uppercase tracking-wider font-semibold text-warm-800/60 block mb-1">
                 Jumlah Donatur Terdata

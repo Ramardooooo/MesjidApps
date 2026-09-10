@@ -12,7 +12,9 @@ if (file_exists(__DIR__ . '/config/database.php')) {
 }
 
 $isLoggedIn = isset($_SESSION['user']);
-$targetBeranda = $isLoggedIn ? 'dashboard.php' : 'login.php';
+$base = function_exists('base_url') ? base_url() : '';
+$targetBeranda = $isLoggedIn ? $base . '/admin/dashboard.php' : $base . '/auth/login.php';
+$linkDonasi = $base . '/donasi.php';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -137,7 +139,7 @@ $targetBeranda = $isLoggedIn ? 'dashboard.php' : 'login.php';
                         </button>
 
                         <?php if ($isLoggedIn): ?>
-                        <a href="donasi.php" class="px-4 py-2.5 rounded-lg border border-antique-300/60 hover:bg-antique-50 text-antique-700 text-xs font-medium transition-luxury">
+                        <a href="<?= $linkDonasi ?>" class="px-4 py-2.5 rounded-lg border border-antique-300/60 hover:bg-antique-50 text-antique-700 text-xs font-medium transition-luxury">
                             Kelola Donasi
                         </a>
                         <?php endif; ?>
