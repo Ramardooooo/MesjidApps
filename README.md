@@ -21,9 +21,9 @@ Aplikasi web terintegrasi untuk pengelolaan masjid yang mencakup **website publi
 
 | Modul | Deskripsi |
 |-------|-----------|
-| **Website Publik** | Beranda, profil masjid, program donasi, berita/kegiatan, kajian YouTube, transparansi keuangan, kontak |
-| **Admin Panel** | Dashboard keuangan, manajemen berita, program donasi, pengguna, banner, rekening, laporan transaksi |
-| **Pembukuan Kas** | Pencatatan pemasukan/pengeluaran, kategori transaksi, bukti transaksi, filter periode, laporan cetak |
+| **Website Publik** | Beranda, profil masjid & pengurus DKM, program donasi, berita/kegiatan, kajian YouTube, transparansi keuangan, kontak |
+| **Admin Panel** | Dashboard keuangan, manajemen berita, program donasi, pengguna, banner, rekening & QRIS, video YouTube, laporan transaksi |
+| **Pembukuan Kas** | Pencatatan pemasukan/pengeluaran, kategori transaksi, bukti transaksi, filter periode, ekspor CSV/Excel, laporan cetak |
 | **Donasi Online** | Formulir donasi via QRIS & transfer bank, verifikasi admin, e-Kwitansi otomatis, notifikasi donatur |
 | **Portal Donatur** | Dashboard donatur, riwayat donasi, update profil, cetak kwitansi mandiri |
 | **Autentikasi** | Login multi-role (admin, bendahara, content_admin, donatur), registrasi, lupa/reset password via OTP |
@@ -52,7 +52,9 @@ mesjid-website/
 |
 |-- assets/                         Aset Statis
 |   |-- css/
-|       |-- classic-theme.css       Tema klasik Islami (Deep Cypress, Antique Gold)
+|   |   |-- classic-theme.css       Tema klasik Islami (Deep Cypress, Antique Gold)
+|   |-- js/
+|       |-- app.js                  Interaksi frontend (modal, toast, clipboard, form)
 |
 |-- auth/                           Autentikasi & Manajemen Sesi
 |   |-- login.php                   Halaman masuk
@@ -63,14 +65,13 @@ mesjid-website/
 |   |-- reset-password.php          Form reset password via OTP
 |
 |-- config/                         Konfigurasi Aplikasi
-|   |-- database.php                Koneksi DB (PDO), helper functions, session, upload
+|   |-- database.php                Koneksi DB (PDO), session, helper upload
 |   |-- mail.php                    Konfigurasi SMTP (Gmail App Password)
+|   |-- helpers.php                 Fungsi bantu: base_url, pagination, RBAC, upload
 |
-|-- db/                             Database & Migrasi
-|   |-- database_schema_v2.sql      Skema database lengkap + data seeder awal (13 tabel)
-|   |-- otp_migration.sql           Migrasi tabel otp_codes (ke-14)
-|   |-- mesjid_website.sql          Database dump / backup
-|   |-- migrate.php                 Script migrasi database
+|-- db/                             Database
+|   |-- MesjidApps.sql              Skema database lengkap (16 tabel)
+|   |-- DataMesjidApps.sql          Data seeder & contoh awal
 |
 |-- donatur/                        Portal Donatur
 |   |-- portal-donatur.php          Dashboard mandiri donatur
@@ -94,11 +95,15 @@ mesjid-website/
 |   |-- public_header.php           Header website publik
 |   |-- public_footer.php           Footer website publik
 |
+|-- otp/                            Modul Autentikasi OTP
+|   |-- otp.php                     Generator & pengirim kode OTP
+|   |-- email-template.php          Template email OTP
+|
 |-- uploads/                        Direktori Unggahan (User Uploads)
 |   |-- banner/                     Gambar slider & banner
 |   |-- berita/                     Thumbnail berita
 |   |-- bukti/                      Bukti transfer pembayaran donasi
-|   |-- home/                       Aset beranda
+|   |-- home/                       Salinan cadangan halaman home (backup)
 |   |-- pengurus/                   Foto pengurus DKM
 |   |-- profil/                     Foto masjid
 |   |-- program/                    Gambar program donasi
@@ -112,6 +117,7 @@ mesjid-website/
 |-- index.php                       Beranda utama (entry point publik)
 |-- donasi.php                      Endpoint donasi cepat
 |-- kegiatan.php                    Halaman kegiatan masjid
+|-- dashboard.php                   (Legacy) Dashboard lama berbasis tabel donasi/kegiatan
 |-- 404.php                         Halaman error 404 kustom
 |-- .htaccess                       Konfigurasi Apache (URL rewrite, keamanan)
 |-- .gitattributes                  Git line ending normalization
@@ -124,24 +130,26 @@ mesjid-website/
 
 ## Database
 
-Sistem menggunakan **14 tabel** dengan engine InnoDB dan charset `utf8mb4`. Sebanyak 13 tabel utama terdapat pada `database_schema_v2.sql`, dan tabel ke-14 (`otp_codes`) berada pada file migrasi terpisah `otp_migration.sql`.
+Sistem menggunakan **16 tabel** dengan engine InnoDB dan charset `utf8mb4_unicode_ci`. Skema lengkap terdapat pada `db/MesjidApps.sql`, sedangkan data seeder & contoh awal (akun default, kategori transaksi, rekening, program donasi) berada pada `db/DataMesjidApps.sql`. Dua tabel terakhir adalah tabel **legacy** dari versi awal aplikasi yang masih dipertahankan untuk kompatibilitas `dashboard.php`.
 
 | # | Tabel | File | Fungsi |
 |---|-------|------|--------|
-| 1 | `users` | `database_schema_v2.sql` | Pengguna & multi-role RBAC (admin, bendahara, content_admin, donatur) |
-| 2 | `profil_masjid` | `database_schema_v2.sql` | Profil, sejarah, visi-misi, kontak, sosial media masjid |
-| 3 | `pengurus_masjid` | `database_schema_v2.sql` | Data pengurus DKM |
-| 4 | `rekening_donasi` | `database_schema_v2.sql` | Rekening bank & QRIS donasi |
-| 5 | `program_donasi` | `database_schema_v2.sql` | Program donasi (target, terkumpul, status, kategori) |
-| 6 | `kategori_transaksi` | `database_schema_v2.sql` | Master kategori pemasukan & pengeluaran kas |
-| 7 | `transaksi_keuangan` | `database_schema_v2.sql` | Buku kas transaksi (pembukuan terintegrasi) |
-| 8 | `donasi_online` | `database_schema_v2.sql` | Donasi masuk dari jamaah (pending/verifikasi/ditolak) |
-| 9 | `berita` | `database_schema_v2.sql` | Berita, artikel & kegiatan masjid |
-| 10 | `banners` | `database_schema_v2.sql` | Slider & banner promosi beranda |
-| 11 | `youtube_videos` | `database_schema_v2.sql` | Integrasi video YouTube (kajian, live, dokumentasi) |
-| 12 | `notifikasi` | `database_schema_v2.sql` | Notifikasi untuk pengguna & donatur |
-| 13 | `pesan_kontak` | `database_schema_v2.sql` | Pesan masuk dari formulir kontak jamaah |
-| 14 | `otp_codes` | `otp_migration.sql` | Kode OTP untuk verifikasi register & reset password |
+| 1 | `users` | `MesjidApps.sql` | Pengguna & multi-role RBAC (admin, bendahara, content_admin, donatur) |
+| 2 | `profil_masjid` | `MesjidApps.sql` | Profil, sejarah, visi-misi, kontak, sosial media masjid |
+| 3 | `pengurus_masjid` | `MesjidApps.sql` | Data pengurus DKM |
+| 4 | `rekening_donasi` | `MesjidApps.sql` | Rekening bank & QRIS donasi |
+| 5 | `program_donasi` | `MesjidApps.sql` | Program donasi (target, terkumpul, status, kategori) |
+| 6 | `kategori_transaksi` | `MesjidApps.sql` | Master kategori pemasukan & pengeluaran kas |
+| 7 | `transaksi_keuangan` | `MesjidApps.sql` | Buku kas transaksi (pembukuan terintegrasi) |
+| 8 | `donasi_online` | `MesjidApps.sql` | Donasi masuk dari jamaah (pending/diverifikasi/ditolak) |
+| 9 | `berita` | `MesjidApps.sql` | Berita, artikel & kegiatan masjid |
+| 10 | `banners` | `MesjidApps.sql` | Slider & banner promosi beranda |
+| 11 | `youtube_videos` | `MesjidApps.sql` | Integrasi video YouTube (kajian, live, dokumentasi) |
+| 12 | `notifikasi` | `MesjidApps.sql` | Notifikasi untuk pengguna & donatur |
+| 13 | `pesan_kontak` | `MesjidApps.sql` | Pesan masuk dari formulir kontak jamaah |
+| 14 | `otp_codes` | `MesjidApps.sql` | Kode OTP untuk verifikasi register & reset password |
+| 15 | `donasi` | `MesjidApps.sql` | (Legacy) Donasi manual versi awal aplikasi |
+| 16 | `kegiatan` | `MesjidApps.sql` | (Legacy) Kegiatan versi awal aplikasi |
 
 ### Akun Default
 
@@ -182,16 +190,16 @@ Pastikan mod `rewrite` Apache aktif untuk `.htaccess`.
 
 ### 3. Buat Database
 
-Jalankan skema database lengkap (membuat database `mesjid_website`, 13 tabel, dan data seeder):
+Jalankan skema database lengkap (membuat database `mesjid_website` dan 16 tabel):
 
 ```bash
-mysql -u root -p mesjid_website < db/database_schema_v2.sql
+mysql -u root -p < db/MesjidApps.sql
 ```
 
-Import juga migrasi tabel OTP (tabel `otp_codes`) untuk fitur verifikasi/aktivasi akun dan reset password:
+Import data seeder & contoh (akun default, kategori transaksi, rekening, program donasi, dan data lainnya):
 
 ```bash
-mysql -u root -p mesjid_website < db/otp_migration.sql
+mysql -u root -p mesjid_website < db/DataMesjidApps.sql
 ```
 
 Atau gunakan **phpMyAdmin** untuk mengimpor kedua file tersebut secara berurutan.
