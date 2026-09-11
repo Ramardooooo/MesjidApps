@@ -3,14 +3,20 @@
 require_once __DIR__ . '/../config/database.php';
 mulai_session();
 
+if (empty($_SESSION['user']) || ($_SESSION['user']['role'] ?? '') !== 'donatur') {
+    header('Location: ../auth/login.php');
+    exit;
+}
+
 $profil = get_profil_masjid();
 $no = trim($_GET['no'] ?? '');
 
 $stmt = $pdo->prepare("SELECT d.*, p.nama_program 
                        FROM donasi_online d 
                        JOIN program_donasi p ON d.program_id = p.id 
-                       WHERE d.no_donasi = ?");
-$stmt->execute([$no]);
+                       WHERE d.no_donasi = ?
+                         AND d.user_id = ?");
+$stmt->execute([$no, $_SESSION['user']['id']]);
 $donasi = $stmt->fetch();
 
 if (!$donasi) {

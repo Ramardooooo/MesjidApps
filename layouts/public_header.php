@@ -106,6 +106,13 @@ $base = base_url();
                 </a>
                 <span class="text-white/20">|</span>
                 <?php if ($currentUser): ?>
+                    <?php if (($currentUser['role'] ?? '') === 'donatur'): ?>
+                        <a href="<?= $base ?>/index.php" class="text-stone-300 hover:text-white transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-house"></i>
+                            <span>Beranda</span>
+                        </a>
+                        <span class="text-white/20">|</span>
+                    <?php endif; ?>
                     <a href="<?= in_array($currentUser['role'], ['admin', 'bendahara', 'content_admin']) ? $base . '/admin/dashboard.php' : $base . '/donatur/portal-donatur.php' ?>" class="text-antique-300 font-semibold hover:text-white transition flex items-center gap-1.5">
                         <i class="fa-solid fa-circle-user"></i>
                         <span><?= e($currentUser['nama']) ?> (<?= ucfirst($currentUser['role']) ?>)</span>
