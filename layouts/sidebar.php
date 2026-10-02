@@ -10,14 +10,18 @@ $pageSubtitle = $pageSubtitle ?? 'Portal Administrasi & Pembukuan Masjid';
 
 // Hitung Donasi Online Pending untuk Badge
 $countPendingDonasi = 0;
+$countPesanUnread   = 0;
 if (in_array($userRole, ['admin', 'bendahara'])) {
     $countPendingDonasi = (int)$pdo->query("SELECT COUNT(*) FROM donasi_online WHERE status = 'pending'")->fetchColumn();
+}
+if (in_array($userRole, ['admin', 'content_admin'])) {
+    $countPesanUnread = (int)$pdo->query("SELECT COUNT(*) FROM pesan_kontak WHERE is_read = 0")->fetchColumn();
 }
 
 // Format Tanggal Dinamis
 $namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][date('w')];
-$namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][date('n')];
-$tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y');
+$bulanSekarang = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][date('n')];
+$tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $bulanSekarang . ' ' . date('Y');
 ?>
 
 <!-- ==============================================================================
@@ -42,10 +46,10 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
     </div>
 
     <div class="flex items-center gap-2">
-        <a href="../index.php" target="_blank" class="p-1.5 rounded-lg bg-white/10 text-stone-200 hover:text-white text-xs" title="Lihat Web Publik">
+        <a href="../" target="_blank" class="p-1.5 rounded-lg bg-white/10 text-stone-200 hover:text-white text-xs" title="Lihat Web Publik">
             <i class="fa-solid fa-globe"></i>
         </a>
-        <a href="../auth/logout.php" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-950/70 border border-red-500/30 text-red-200 text-xs hover:text-white transition">
+        <a href="../auth/logout" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-950/70 border border-red-500/30 text-red-200 text-xs hover:text-white transition">
             <i class="fa-solid fa-arrow-right-from-bracket text-[10px]"></i>
             <span>Keluar</span>
         </a>
@@ -64,7 +68,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
     <div>
         <!-- Header Brand Masjid di Sidebar -->
         <div class="p-5 border-b border-white/10 flex items-center justify-between">
-            <a href="../index.php" class="flex items-center gap-3">
+            <a href="../" class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-cypress-900 border border-antique-500/40 flex items-center justify-center text-antique-300 shadow-inner shrink-0">
                     <i class="fa-solid fa-mosque text-lg"></i>
                 </div>
@@ -87,7 +91,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
             
             <!-- GROUP 1: UTAMA & DASHBOARD -->
             <div class="space-y-1">
-                <a href="dashboard.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'dashboard' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                <a href="dashboard" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'dashboard' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                     <i class="fa-solid fa-gauge-high w-4 text-center <?= $activeMenu === 'dashboard' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                     <span>Dashboard Utama</span>
                 </a>
@@ -100,12 +104,12 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
                         Pembukuan &amp; Kas
                     </span>
 
-                    <a href="transaksi.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'transaksi' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="transaksi" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'transaksi' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-solid fa-book-journal-whills w-4 text-center <?= $activeMenu === 'transaksi' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Buku Kas Transaksi</span>
                     </a>
 
-                    <a href="verifikasi-donasi.php" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'verifikasi' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="verifikasi-donasi" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'verifikasi' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-check-to-slot w-4 text-center <?= $activeMenu === 'verifikasi' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                             <span>Verifikasi Donasi</span>
@@ -117,7 +121,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
                         <?php endif; ?>
                     </a>
 
-                    <a href="laporan.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'laporan' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="laporan" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'laporan' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-solid fa-chart-pie w-4 text-center <?= $activeMenu === 'laporan' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Laporan Keuangan</span>
                     </a>
@@ -131,34 +135,46 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
                         Konten &amp; Media Web
                     </span>
 
-                    <a href="program-admin.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'program-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="program-admin" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'program-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-solid fa-hand-holding-dollar w-4 text-center <?= $activeMenu === 'program-admin' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Program Donasi</span>
                     </a>
 
-                    <a href="berita-admin.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'berita-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="berita-admin" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'berita-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-solid fa-newspaper w-4 text-center <?= $activeMenu === 'berita-admin' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Warta &amp; Berita</span>
                     </a>
 
-                    <a href="banner-admin.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'banner-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="banner-admin" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'banner-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-solid fa-images w-4 text-center <?= $activeMenu === 'banner-admin' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Slider &amp; Banner</span>
                     </a>
 
-                    <a href="youtube-admin.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'youtube-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="youtube-admin" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'youtube-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-brands fa-youtube w-4 text-center <?= $activeMenu === 'youtube-admin' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Integrasi YouTube</span>
                     </a>
 
-                    <a href="rekening-admin.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'rekening-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="rekening-admin" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'rekening-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-solid fa-credit-card w-4 text-center <?= $activeMenu === 'rekening-admin' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Rekening &amp; QRIS</span>
                     </a>
 
-                    <a href="profil-admin.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'profil-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="profil-admin" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'profil-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-solid fa-mosque w-4 text-center <?= $activeMenu === 'profil-admin' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Profil &amp; DKM</span>
+                    </a>
+
+                    <a href="pesan-admin" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'pesan-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-envelope-open-text w-4 text-center <?= $activeMenu === 'pesan-admin' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
+                            <span>Pesan Kontak</span>
+                        </div>
+                        <?php if ($countPesanUnread > 0): ?>
+                            <span class="px-2 py-0.5 rounded-full bg-emerald-500 text-white font-bold text-[10px] animate-pulse">
+                                <?= $countPesanUnread ?>
+                            </span>
+                        <?php endif; ?>
                     </a>
                 </div>
             <?php endif; ?>
@@ -170,7 +186,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
                         Administrasi &amp; Akses
                     </span>
 
-                    <a href="users-admin.php" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'users-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                    <a href="users-admin" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'users-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-solid fa-users-gear w-4 text-center <?= $activeMenu === 'users-admin' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Kelola Pengguna (RBAC)</span>
                     </a>
@@ -184,7 +200,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
     <div class="p-4 border-t border-white/10 bg-cypress-950/80 space-y-3">
         
         <!-- Tautan Cepat ke Web Publik -->
-        <a href="../index.php" target="_blank" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-antique-300 text-xs font-semibold transition">
+        <a href="../" target="_blank" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-antique-300 text-xs font-semibold transition">
             <i class="fa-solid fa-globe text-xs"></i>
             <span>Buka Website Publik</span>
         </a>
@@ -202,7 +218,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
             </div>
         </div>
 
-        <a href="../auth/logout.php" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-200 text-xs font-medium transition-luxury">
+        <a href="../auth/logout" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-200 text-xs font-medium transition-luxury">
             <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
             <span>Keluar dari Portal</span>
         </a>
@@ -223,7 +239,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('
         </div>
 
         <div class="flex items-center gap-4 text-xs text-warm-800/80">
-            <a href="../index.php" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-cypress-700 hover:text-cypress-900 font-semibold transition">
+            <a href="../" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-cypress-700 hover:text-cypress-900 font-semibold transition">
                 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                 <span>Lihat Website Publik</span>
             </a>

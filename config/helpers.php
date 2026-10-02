@@ -37,16 +37,182 @@ function upload_url($path) {
     return base_url() . '/' . $path;
 }
 
+function app_url($path = '') {
+    $path = trim((string)($path ?? ''));
+    if ($path === '' || $path === '#') return '#';
+    // External link / special scheme
+    if (preg_match('#^(https?:)?//#i', $path) || strpos($path, 'wa.me') !== false || strpos($path, 'mailto:') === 0 || strpos($path, 'tel:') === 0) {
+        return $path;
+    }
+    // Normalisasi tautan internal: hapus leading slash, prefix home/, dan ekstensi .php
+    $path = ltrim($path, '/');
+    $path = preg_replace('#^home/#i', '', $path);
+    $path = preg_replace('#\.php(\?|$)#i', '$1', $path);
+
+    if ($path === '' || $path === 'index') {
+        return base_url() . '/';
+    }
+    return base_url() . '/' . $path;
+}
+
 function mulai_session() {
     if (session_status() === PHP_SESSION_NONE) {
+        ini_set('session.gc_maxlifetime', 7200);
+        session_set_cookie_params(7200);
         session_start();
+    }
+    
+    if (isset($_SESSION['user'])) {
+        if (isset($_SESSION['last_activity'])) {
+            $idle_time = time() - $_SESSION['last_activity'];
+            
+            if ($idle_time > 7200) {
+                session_unset();
+                session_destroy();
+                header('Location: ' . base_url() . '/auth/login?timeout=1');
+                exit;
+            }
+        }
+        
+        $_SESSION['last_activity'] = time();
+    }
+}
+
+function csrf_token() {
+    mulai_session();
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function csrf_field() {
+    return '<input type="hidden" name="csrf_token" value="' . csrf_token() . '">';
+}
+
+function verify_csrf() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return;
+    }
+    
+    if (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        http_response_code(403);
+        die('CSRF token invalid. Refresh page dan coba lagi.');
+    }
+}
+
+function get_client_ip() {
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        $ip = $_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+    } else {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    }
+    return trim($ip);
+}
+
+function hapus_file_upload($path) {
+    if (empty($path)) return false;
+    
+    $fullPath = __DIR__ . '/../' . $path;
+    
+    if (file_exists($fullPath) && is_file($fullPath)) {
+        return @unlink($fullPath);
+    }
+    
+    return false;
+}
+
+function rate_limit($key, $max_attempts = 5, $decay_minutes = 15) {
+    global $pdo;
+    
+    $key_type = 'ip';
+    $identifier = get_client_ip();
+    
+    if (strpos($key, 'email:') === 0) {
+        $key_type = 'email';
+        $identifier = substr($key, 6);
+    } elseif (strpos($key, 'username:') === 0) {
+        $key_type = 'username';
+        $identifier = substr($key, 9);
+    }
+    
+    $now = new DateTime('now', new DateTimeZone('Asia/Makassar'));
+    $decay_time = (clone $now)->add(new DateInterval('PT' . $decay_minutes . 'M'));
+    
+    try {
+        $stmt = $pdo->prepare('
+            SELECT id, attempts, locked_until FROM rate_limits 
+            WHERE key_type = ? AND identifier = ?
+            LIMIT 1
+        ');
+        $stmt->execute([$key_type, $identifier]);
+        $record = $stmt->fetch();
+        
+        if ($record) {
+            $locked_until = $record['locked_until'] ? new DateTime($record['locked_until'], new DateTimeZone('Asia/Makassar')) : null;
+            
+            if ($locked_until && $now < $locked_until) {
+                return [
+                    'allowed' => false,
+                    'wait_seconds' => $locked_until->getTimestamp() - $now->getTimestamp(),
+                    'reset_at' => $locked_until->getTimestamp()
+                ];
+            }
+            
+            $new_attempts = $record['attempts'] + 1;
+            $new_locked_until = $new_attempts > $max_attempts ? $decay_time : null;
+            
+            $stmt = $pdo->prepare('
+                UPDATE rate_limits 
+                SET attempts = ?, locked_until = ?, last_attempt = NOW()
+                WHERE id = ?
+            ');
+            $stmt->execute([$new_attempts, $new_locked_until?->format('Y-m-d H:i:s'), $record['id']]);
+            
+            if ($new_attempts > $max_attempts) {
+                return [
+                    'allowed' => false,
+                    'wait_seconds' => $decay_minutes * 60,
+                    'reset_at' => $decay_time->getTimestamp()
+                ];
+            }
+            
+            return ['allowed' => true, 'attempts' => $new_attempts];
+        } else {
+            $stmt = $pdo->prepare('
+                INSERT INTO rate_limits (key_type, identifier, attempts, locked_until, last_attempt, created_at)
+                VALUES (?, ?, 1, NULL, NOW(), NOW())
+            ');
+            $stmt->execute([$key_type, $identifier]);
+            
+            return ['allowed' => true, 'attempts' => 1];
+        }
+    } catch (Exception $e) {
+        return ['allowed' => true, 'attempts' => 1];
+    }
+}
+
+function cleanup_expired_rate_limits() {
+    global $pdo;
+    
+    try {
+        $stmt = $pdo->prepare('
+            DELETE FROM rate_limits 
+            WHERE locked_until IS NOT NULL AND locked_until < NOW()
+        ');
+        $stmt->execute();
+        return $stmt->rowCount();
+    } catch (Exception $e) {
+        return 0;
     }
 }
 
 function cek_login() {
     mulai_session();
     if (!isset($_SESSION['user'])) {
-        header('Location: ' . base_url() . '/auth/login.php');
+        header('Location: ' . base_url() . '/auth/login');
         exit;
     }
 }
@@ -56,13 +222,37 @@ function cek_role(array $allowed_roles) {
     cek_login();
     $userRole = $_SESSION['user']['role'] ?? '';
     if (!in_array($userRole, $allowed_roles)) {
-        header('Location: ' . base_url() . '/404.php?err=unauthorized');
+        header('Location: ' . base_url() . '/404?err=unauthorized');
         exit;
     }
 }
 
+function get_daftar_bulan() {
+    return ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+}
+
 function e($text) {
     return htmlspecialchars((string)($text ?? ''), ENT_QUOTES, 'UTF-8');
+}
+
+function validate_input($data, $type = 'string', $max_length = 255) {
+    if ($type === 'email') {
+        return filter_var(trim($data), FILTER_VALIDATE_EMAIL);
+    } elseif ($type === 'int') {
+        return filter_var($data, FILTER_VALIDATE_INT, ['min_range' => 1]);
+    } elseif ($type === 'float') {
+        return filter_var($data, FILTER_VALIDATE_FLOAT);
+    } else {
+        $trimmed = trim($data);
+        return strlen($trimmed) > 0 && strlen($trimmed) <= $max_length ? $trimmed : false;
+    }
+}
+
+function require_login() {
+    if (!isset($_SESSION['user'])) {
+        header('Location: ' . base_url() . '/auth/login');
+        exit;
+    }
 }
 
 function format_rupiah($nominal) {

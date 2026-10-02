@@ -1,5 +1,4 @@
 <?php
-// forgot-password.php - Permintaan Reset Kata Sandi via OTP
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../otp/otp.php';
 mulai_session();
@@ -15,35 +14,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pesan = 'Mohon masukkan alamat email Anda.';
         $tipe = 'error';
     } else {
-        $stmt = $pdo->prepare("SELECT id, nama_lengkap FROM users WHERE email = ? LIMIT 1");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
-
-        if ($user) {
-            try {
-                // Generate OTP dan simpan email di session
-                $otp = generate_otp($email, 'forgot_password');
-                send_otp_email($email, $user['nama_lengkap'], $otp, 'forgot_password');
-
-                $_SESSION['pending_forgot'] = ['email' => $email, 'nama' => $user['nama_lengkap']];
-
-                header('Location: verify-otp.php?purpose=forgot_password');
-                exit;
-            } catch (\Exception $e) {
-                $pesan = 'Gagal mengirim kode OTP ke email Anda. Pastikan email benar dan coba lagi.';
-                $tipe  = 'error';
-            }
-        } else {
-            $pesan = 'Alamat email tidak ditemukan dalam pangkalan data kami.';
+        $rate_key = 'otp_forgot_' . strtolower($email);
+        $rate = rate_limit($rate_key, 3, 15);
+        
+        if (!$rate['allowed']) {
+            $minutes = floor($rate['wait_seconds'] / 60);
+            $seconds = $rate['wait_seconds'] % 60;
+            $pesan = sprintf('Terlalu banyak permintaan OTP. Tunggu %02d:%02d sebelum coba lagi.', $minutes, $seconds);
             $tipe = 'error';
+        } else {
+            $checkRecent = $pdo->prepare("SELECT created_at FROM otp_codes WHERE email = ? AND purpose = 'forgot_password' ORDER BY created_at DESC LIMIT 1");
+            $checkRecent->execute([$email]);
+            $recent = $checkRecent->fetch();
+
+            if ($recent) {
+                $secondsAgo = time() - strtotime($recent['created_at']);
+                if ($secondsAgo < 60) {
+                    $wait = 60 - $secondsAgo;
+                    $pesan = "Kode OTP baru saja dikirim. Tunggu $wait detik sebelum minta ulang.";
+                    $tipe = 'error';
+                } else {
+                    $stmt = $pdo->prepare("SELECT id, nama_lengkap FROM users WHERE email = ? LIMIT 1");
+                    $stmt->execute([$email]);
+                    $user = $stmt->fetch();
+
+                    if ($user) {
+                        try {
+                            $otp = generate_otp($email, 'forgot_password');
+                            send_otp_email($email, $user['nama_lengkap'], $otp, 'forgot_password');
+
+                            $_SESSION['pending_forgot'] = ['email' => $email, 'nama' => $user['nama_lengkap']];
+
+                            header('Location: verify-otp?purpose=forgot_password');
+                            exit;
+                        } catch (\Exception $e) {
+                            $pesan = 'Gagal mengirim kode OTP ke email Anda. Pastikan email benar dan coba lagi.';
+                            $tipe  = 'error';
+                        }
+                    } else {
+                        $pesan = 'Alamat email tidak ditemukan dalam pangkalan data kami.';
+                        $tipe = 'error';
+                    }
+                }
+            } else {
+                $stmt = $pdo->prepare("SELECT id, nama_lengkap FROM users WHERE email = ? LIMIT 1");
+                $stmt->execute([$email]);
+                $user = $stmt->fetch();
+
+                if ($user) {
+                    try {
+                        $otp = generate_otp($email, 'forgot_password');
+                        send_otp_email($email, $user['nama_lengkap'], $otp, 'forgot_password');
+
+                        $_SESSION['pending_forgot'] = ['email' => $email, 'nama' => $user['nama_lengkap']];
+
+                        header('Location: verify-otp?purpose=forgot_password');
+                        exit;
+                    } catch (\Exception $e) {
+                        $pesan = 'Gagal mengirim kode OTP ke email Anda. Pastikan email benar dan coba lagi.';
+                        $tipe  = 'error';
+                    }
+                } else {
+                    $pesan = 'Alamat email tidak ditemukan dalam pangkalan data kami.';
+                    $tipe = 'error';
+                }
+            }
         }
     }
 }
 
-// Konfigurasi Tanggal
 $namaHari  = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][date('w')];
 $namaBulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][date('n')];
 $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y');
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -51,9 +94,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lupa Kata Sandi · <?= e($profil['nama_masjid']) ?></title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts & Custom Classic Theme -->
     <link rel="stylesheet" href="../assets/css/classic-theme.css">
     <script>
         tailwind.config = {
@@ -98,11 +139,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
 <body class="pattern-arabesque-light min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 text-warm-800">
 
     <div class="w-full max-w-4xl mx-auto my-6">
-
-        <!-- Kartu Utama Klasik — mirip login -->
         <div class="bg-white rounded-2xl shadow-xl shadow-stone-900/5 border border-antique-300/40 overflow-hidden grid grid-cols-1 md:grid-cols-12 transition-all">
-
-            <!-- Sisi Kiri: Visual Klasik & Identitas Masjid -->
             <div class="md:col-span-5 pattern-arabesque-dark p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-24 h-24 pointer-events-none opacity-20">
                     <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -148,13 +185,12 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                         </svg>
                         <span><?= e($tanggalMasehi) ?></span>
                     </div>
-                    <a href="../index.php" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
+                    <a href="../" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
                         ← Beranda
                     </a>
                 </div>
             </div>
 
-            <!-- Sisi Kanan: Formulir Lupa Sandi -->
             <div class="md:col-span-7 p-8 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
                 <div class="max-w-md mx-auto w-full">
 
@@ -181,7 +217,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     </div>
                     <?php endif; ?>
 
-                    <form method="POST" action="forgot-password.php" class="space-y-5">
+                    <form method="POST" action="forgot-password" class="space-y-5">
                         <div>
                             <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-warm-800/80 mb-2">
                                 Alamat Email Terdaftar
@@ -208,7 +244,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     </form>
 
                     <div class="mt-6 pt-5 border-t border-warm-100 text-center text-xs text-warm-800/70">
-                        Ingat kata sandi Anda? <a href="login.php" class="text-cypress-700 font-bold hover:underline">Kembali ke Login</a>
+                        Ingat kata sandi Anda? <a href="login" class="text-cypress-700 font-bold hover:underline">Kembali ke Login</a>
                     </div>
                 </div>
             </div>

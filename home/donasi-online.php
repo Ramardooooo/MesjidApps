@@ -17,13 +17,14 @@ $tipe = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $program_id   = (int)($_POST['program_id'] ?? 0);
-    $nominal      = (float)str_replace(['Rp', '.', ' ', ','], '', $_POST['nominal'] ?? '0');
+    $nominalRaw   = $_POST['nominal'] ?? '0';
+    $nominal      = (float)str_replace(['Rp', '.', ' ', ','], '', $nominalRaw);
     $is_anonim    = isset($_POST['is_anonim']) ? 1 : 0;
     $nama_donatur = trim($_POST['nama_donatur'] ?? '');
     $no_wa        = trim($_POST['no_wa'] ?? '');
     $email        = trim($_POST['email'] ?? '');
     $metode       = $_POST['metode_pembayaran'] ?? 'qris';
-    $bank_tujuan  = trim($_POST['bank_tujuan'] ?? 'QRIS Dinamis');
+    $bank_tujuan  = trim($_POST['bank_tujuan'] ?? 'QRIS Standar');
     $doa_donatur  = trim($_POST['doa_donatur'] ?? '');
 
     if ($is_anonim && empty($nama_donatur)) {
@@ -36,52 +37,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($nominal < 10000) {
         $pesan = 'Nominal donasi minimal Rp 10.000.';
         $tipe = 'error';
+    } elseif ($nominal > 100000000) {
+        $pesan = 'Nominal donasi maksimal Rp 100.000.000 per transaksi.';
+        $tipe = 'error';
     } elseif (empty($nama_donatur)) {
         $pesan = 'Nama donatur wajib diisi (atau centang Hamba Allah).';
         $tipe = 'error';
+    } elseif (empty($no_wa)) {
+        $pesan = 'Nomor WhatsApp aktif wajib diisi untuk konfirmasi penerimaan.';
+        $tipe = 'error';
     } else {
-        // Upload Bukti Pembayaran (jika ada)
+        // Validasi upload bukti transfer & MIME type
         $buktiPath = null;
-        if (isset($_FILES['bukti_pembayaran']) && $_FILES['bukti_pembayaran']['error'] === UPLOAD_ERR_OK) {
-            $buktiPath = upload_berkas('bukti_pembayaran', 'bukti');
-        }
-
-        // Generate No Donasi Unik: DON-YYYYMM-XXXX
-        $blnThn = date('Ym');
-        $lastTrx = $pdo->query("SELECT no_donasi FROM donasi_online WHERE no_donasi LIKE 'DON-$blnThn-%' ORDER BY id DESC LIMIT 1")->fetch();
-        if ($lastTrx) {
-            $lastNum = (int)substr($lastTrx['no_donasi'], -4);
-            $nextNum = str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
+        if (!isset($_FILES['bukti_pembayaran']) || $_FILES['bukti_pembayaran']['error'] !== UPLOAD_ERR_OK) {
+            $pesan = 'Wajib mengunggah bukti transfer / screenshot pembayaran untuk verifikasi bendahara.';
+            $tipe = 'error';
+        } elseif ($_FILES['bukti_pembayaran']['size'] > 3 * 1024 * 1024) {
+            $pesan = 'Ukuran berkas bukti pembayaran terlalu besar (Maksimal 3MB).';
+            $tipe = 'error';
         } else {
-            $nextNum = '0001';
+            $tmpName = $_FILES['bukti_pembayaran']['tmp_name'];
+            $finfo   = finfo_open(FILEINFO_MIME_TYPE);
+            $mime    = finfo_file($finfo, $tmpName);
+            finfo_close($finfo);
+
+            $ext = strtolower(pathinfo($_FILES['bukti_pembayaran']['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'])
+                || !in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                $pesan = 'Format berkas bukti tidak valid. Hanya menerima file gambar JPG, PNG, atau WEBP asli.';
+                $tipe  = 'error';
+            } else {
+                $buktiPath = upload_berkas('bukti_pembayaran', 'bukti');
+            }
         }
-        $noDonasi = "DON-$blnThn-$nextNum";
 
-        $userId = ($user && isset($user['id'])) ? $user['id'] : null;
+        if (empty($pesan)) {
+            // Generate No Donasi Unik: DON-YYYYMM-XXXX
+            $blnThn  = date('Ym');
+            $lastTrx = $pdo->query("SELECT no_donasi FROM donasi_online WHERE no_donasi LIKE 'DON-$blnThn-%' ORDER BY id DESC LIMIT 1")->fetch();
+            $nextNum = $lastTrx ? str_pad((int)substr($lastTrx['no_donasi'], -4) + 1, 4, '0', STR_PAD_LEFT) : '0001';
+            $noDonasi = "DON-$blnThn-$nextNum";
 
-        $stmt = $pdo->prepare("INSERT INTO donasi_online (
-            no_donasi, user_id, nama_donatur, is_anonim, email, no_wa, program_id, 
-            nominal, metode_pembayaran, bank_tujuan, bukti_pembayaran, doa_donatur, status, tanggal_donasi
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURDATE())");
+            $userId = ($user && isset($user['id'])) ? $user['id'] : null;
 
-        $stmt->execute([
-            $noDonasi, $userId, $nama_donatur, $is_anonim, $email, $no_wa, $program_id,
-            $nominal, $metode, $bank_tujuan, $buktiPath, $doa_donatur
-        ]);
+            $stmt = $pdo->prepare("INSERT INTO donasi_online (
+                no_donasi, user_id, nama_donatur, is_anonim, email, no_wa, program_id,
+                nominal, metode_pembayaran, bank_tujuan, bukti_pembayaran, doa_donatur, status, tanggal_donasi
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURDATE())");
 
-        // Tambahkan notifikasi jika donatur memiliki akun
-        if ($userId) {
-            $stmtNotif = $pdo->prepare("INSERT INTO notifikasi (user_id, judul, pesan, tipe, link) VALUES (?, ?, ?, 'donasi', ?)");
-            $stmtNotif->execute([
-                $userId,
-                'Donasi Baru Tercatat #' . $noDonasi,
-                'Donasi Anda sebesar ' . format_rupiah($nominal) . ' berhasil diajukan dan sedang menunggu verifikasi bendahara.',
-                '../donatur/kwitansi.php?no=' . $noDonasi
+            $stmt->execute([
+                $noDonasi, $userId, $nama_donatur, $is_anonim, $email, $no_wa, $program_id,
+                $nominal, $metode, $bank_tujuan, $buktiPath, $doa_donatur
             ]);
-        }
 
-        header('Location: ../donatur/kwitansi.php?no=' . $noDonasi . '&baru=1');
-        exit;
+            if ($userId) {
+                $stmtNotif = $pdo->prepare("INSERT INTO notifikasi (user_id, judul, pesan, tipe, link) VALUES (?, ?, ?, 'donasi', ?)");
+                $stmtNotif->execute([
+                    $userId,
+                    'Donasi Baru Tercatat #' . $noDonasi,
+                    'Donasi Anda sebesar ' . format_rupiah($nominal) . ' berhasil diajukan dan sedang menunggu verifikasi bendahara.',
+                    '../donatur/kwitansi?no=' . $noDonasi
+                ]);
+            }
+
+            header('Location: ' . base_url() . '/donatur/kwitansi?no=' . $noDonasi . '&baru=1');
+            exit;
+        }
     }
 }
 
@@ -113,7 +135,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
         </div>
     <?php endif; ?>
 
-    <form method="POST" action="donasi-online.php" enctype="multipart/form-data" class="bg-white rounded-3xl p-6 sm:p-10 border border-antique-300/50 shadow-xl space-y-8">
+    <form method="POST" action="<?= base_url() ?>/donasi-online" enctype="multipart/form-data" class="bg-white rounded-3xl p-6 sm:p-10 border border-antique-300/50 shadow-xl space-y-8">
         
         <!-- Bagian 1: Pilih Program & Nominal -->
         <div class="space-y-4">
@@ -147,14 +169,21 @@ require_once __DIR__ . '/../layouts/public_header.php';
                 </div>
             </div>
 
-            <!-- Input Nominal Manual -->
+            <!-- Input Nominal Manual (Real-Time Auto Dots Formatter) -->
             <div>
                 <label class="block text-xs font-bold text-warm-800 mb-1.5">Atau Masukkan Nominal Kustom (Rp) <span class="text-red-500">*</span></label>
                 <div class="relative">
                     <span class="absolute left-4 top-3 text-sm font-bold text-warm-800">Rp</span>
-                    <input type="number" id="nominalInput" name="nominal" required min="10000" step="5000" placeholder="Contoh: 100000" class="w-full pl-12 pr-4 py-3 rounded-xl bg-warm-50 border border-antique-300 text-sm sm:text-base font-bold text-cypress-900 focus:ring-2 focus:ring-antique-500 focus:outline-none">
+                    <input type="text" 
+                           inputmode="numeric" 
+                           id="nominalInput" 
+                           name="nominal" 
+                           required 
+                           oninput="formatRupiahRealtime(this)"
+                           placeholder="Contoh: 100.000" 
+                           class="w-full pl-12 pr-4 py-3 rounded-xl bg-warm-50 border border-antique-300 text-sm sm:text-base font-bold text-cypress-900 focus:ring-2 focus:ring-antique-500 focus:outline-none font-mono">
                 </div>
-                <span class="text-[11px] text-warm-800/60 block mt-1">Minimal donasi Rp 10.000</span>
+                <span class="text-[11px] text-warm-800/60 block mt-1">Minimal Rp 10.000 - Maksimal Rp 100.000.000 (Otomatis berformat titik ribuan)</span>
             </div>
         </div>
 
@@ -278,8 +307,8 @@ require_once __DIR__ . '/../layouts/public_header.php';
                 <!-- Upload Bukti Transfer -->
                 <div>
                     <label class="block text-xs font-bold text-warm-800 mb-1">Upload Bukti Transfer / Screenshot Pembayaran</label>
-                    <input type="file" name="bukti_pembayaran" accept="image/jpeg,image/png,image/webp,application/pdf" class="w-full px-4 py-2 rounded-xl bg-warm-50 border border-antique-300 text-xs text-warm-900 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cypress-800 file:text-white hover:file:bg-cypress-900">
-                    <span class="text-[11px] text-warm-800/60 block mt-1">Format: JPG, PNG, WEBP, atau PDF. Maksimal 5MB.</span>
+                    <input type="file" name="bukti_pembayaran" accept="image/jpeg,image/png,image/webp" required class="w-full px-4 py-2 rounded-xl bg-warm-50 border border-antique-300 text-xs text-warm-900 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cypress-800 file:text-white hover:file:bg-cypress-900">
+                    <span class="text-[11px] text-warm-800/60 block mt-1"><i class="fa-solid fa-shield-halved text-emerald-500 mr-1"></i>Format yang diterima: JPG, PNG, WEBP · Maksimal 3MB · Wajib diisi untuk proses verifikasi.</span>
                 </div>
             </div>
         </div>
@@ -300,8 +329,31 @@ require_once __DIR__ . '/../layouts/public_header.php';
 </div>
 
 <script>
+// ─── Format Rupiah Realtime (Auto Titik Ribuan) dengan Max Limit ───────────────────────────────
+function formatRupiahRealtime(el) {
+    // Hapus semua karakter non-digit
+    let raw = el.value.replace(/\D/g, '');
+    let num = parseInt(raw, 10) || 0;
+    
+    // Enforce max limit Rp 100.000.000
+    const MAX_NOMINAL = 100000000;
+    if (num > MAX_NOMINAL) {
+        num = MAX_NOMINAL;
+    }
+    
+    // Format ulang pakai titik ribuan (id-ID locale)
+    el.value = num > 0 ? new Intl.NumberFormat('id-ID').format(num) : '';
+}
+
+// Tombol preset nominal — langsung format dengan titik ribuan
 function setNominal(val) {
-    document.getElementById('nominalInput').value = val;
+    const input = document.getElementById('nominalInput');
+    if (input) {
+        input.value = new Intl.NumberFormat('id-ID').format(val);
+        // Highlight preset yang dipilih
+        document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('ring-2','ring-antique-500','bg-antique-100'));
+        event.currentTarget && event.currentTarget.classList.add('ring-2','ring-antique-500','bg-antique-100');
+    }
 }
 
 function toggleMetode(metode) {

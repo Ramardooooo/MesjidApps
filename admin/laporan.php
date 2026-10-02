@@ -310,11 +310,11 @@ require_once __DIR__ . '/../layouts/sidebar.php';
     </div>
 
     <div class="flex items-center gap-2">
-        <a href="laporan.php?<?= http_build_query(array_merge($_GET, ['export' => 'excel'])) ?>" class="px-3.5 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs">
+        <a href="laporan?<?= http_build_query(array_merge($_GET, ['export' => 'excel'])) ?>" class="px-3.5 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs">
             <i class="fa-solid fa-file-excel"></i>
             <span>Export Excel</span>
         </a>
-        <a href="laporan.php?<?= http_build_query(array_merge($_GET, ['print' => '1'])) ?>" target="_blank" class="px-4 py-2 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-xs">
+        <a href="laporan?<?= http_build_query(array_merge($_GET, ['print' => '1'])) ?>" target="_blank" class="px-4 py-2 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-xs">
             <i class="fa-solid fa-print"></i>
             <span>Cetak Laporan PDF</span>
         </a>
@@ -325,16 +325,16 @@ require_once __DIR__ . '/../layouts/sidebar.php';
      TABS MODE LAPORAN
      ============================================================================== -->
 <div class="bg-white p-3 rounded-2xl border border-antique-300/40 shadow-xs flex items-center gap-2 overflow-x-auto text-xs font-semibold">
-    <a href="laporan.php?tipe=bulanan&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'bulanan' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
+    <a href="laporan?tipe=bulanan&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'bulanan' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
         <i class="fa-solid fa-calendar-days mr-1.5"></i> Laporan Bulanan
     </a>
-    <a href="laporan.php?tipe=mingguan&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&minggu=<?= $minggu ?>" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'mingguan' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
+    <a href="laporan?tipe=mingguan&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>&minggu=<?= $minggu ?>" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'mingguan' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
         <i class="fa-solid fa-calendar-week mr-1.5"></i> Laporan Mingguan
     </a>
-    <a href="laporan.php?tipe=aktivitas_dana&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'aktivitas_dana' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
+    <a href="laporan?tipe=aktivitas_dana&bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'aktivitas_dana' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
         <i class="fa-solid fa-scale-balanced mr-1.5"></i> Penerimaan &amp; Pengeluaran
     </a>
-    <a href="laporan.php?tipe=custom" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'custom' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
+    <a href="laporan?tipe=custom" class="px-4 py-2 rounded-xl transition whitespace-nowrap <?= $tipeLaporan === 'custom' ? 'bg-cypress-800 text-white shadow-xs' : 'text-warm-800 hover:bg-warm-50' ?>">
         <i class="fa-solid fa-sliders mr-1.5"></i> Filter Kustom
     </a>
 </div>
@@ -343,7 +343,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
      FORM FILTER BERDASARKAN MODE
      ============================================================================== -->
 <div class="bg-white p-5 rounded-3xl border border-antique-300/50 shadow-sm">
-    <form method="GET" action="laporan.php" class="flex flex-wrap items-center gap-3 text-xs">
+    <form method="GET" action="" class="flex flex-wrap items-center gap-3 text-xs">
         <input type="hidden" name="tipe" value="<?= e($tipeLaporan) ?>">
 
         <?php if ($tipeLaporan === 'mingguan'): ?>

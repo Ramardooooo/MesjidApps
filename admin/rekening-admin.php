@@ -8,6 +8,11 @@ $user   = $_SESSION['user'];
 $pesan  = '';
 $tipe   = '';
 
+if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
+    $pesan = 'Rekening donasi berhasil dihapus.';
+    $tipe  = 'success';
+}
+
 // 1. TAMBAH REKENING
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah') {
     $bank     = trim($_POST['nama_bank'] ?? '');
@@ -52,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 if (isset($_GET['hapus'])) {
     $idHapus = (int)$_GET['hapus'];
     $pdo->prepare("DELETE FROM rekening_donasi WHERE id = ?")->execute([$idHapus]);
-    header('Location: rekening-admin.php?msg=deleted');
+    header('Location: rekening-admin?msg=deleted');
     exit;
 }
 
@@ -138,10 +143,10 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                         </td>
                         <td class="py-3.5 px-4 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-2">
-                                <button type="button" onclick='editRekening(<?= json_encode($r) ?>)' class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
+                                <button type="button" data-rekening="<?= htmlspecialchars(json_encode($r, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>" onclick="editRekeningSafe(this)" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="rekening-admin.php?hapus=<?= $r['id'] ?>" data-hapus data-judul="Hapus Rekening" data-pesan="Rekening <?= e($r['nama_bank'] ?? '') ?> a.n. <?= e($r['atas_nama'] ?? '') ?> akan dihapus. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
+                                <a href="rekening-admin?hapus=<?= $r['id'] ?>" data-hapus data-judul="Hapus Rekening" data-pesan="Rekening <?= e($r['nama_bank'] ?? '') ?> a.n. <?= e($r['atas_nama'] ?? '') ?> akan dihapus. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </a>
                             </div>
@@ -165,7 +170,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </button>
         </div>
 
-        <form method="POST" action="rekening-admin.php" class="space-y-4">
+        <form method="POST" action="" class="space-y-4">
             <input type="hidden" id="rekAksi" name="aksi" value="tambah">
             <input type="hidden" id="rekId" name="id" value="0">
 
@@ -224,17 +229,22 @@ function bukaModalRekening() {
     document.getElementById('modalRekening').classList.remove('hidden');
 }
 
-function editRekening(r) {
-    document.getElementById('rekAksi').value = 'edit';
-    document.getElementById('rekId').value = r.id;
-    document.getElementById('modalRekTitle').textContent = 'Edit Rekening #' + r.id;
-    document.getElementById('rekBank').value = r.nama_bank;
-    document.getElementById('rekNo').value = r.nomor_rekening;
-    document.getElementById('rekNama').value = r.atas_nama;
-    document.getElementById('rekKat').value = r.kategori_donasi;
-    document.getElementById('rekUrutan').value = r.urutan;
-    document.getElementById('rekActive').checked = r.is_active == 1;
-    document.getElementById('modalRekening').classList.remove('hidden');
+function editRekeningSafe(btn) {
+    try {
+        const r = JSON.parse(btn.getAttribute('data-rekening'));
+        document.getElementById('rekAksi').value = 'edit';
+        document.getElementById('rekId').value = r.id;
+        document.getElementById('modalRekTitle').textContent = 'Edit Rekening #' + r.id;
+        document.getElementById('rekBank').value = r.nama_bank || '';
+        document.getElementById('rekNo').value = r.nomor_rekening || '';
+        document.getElementById('rekNama').value = r.atas_nama || '';
+        document.getElementById('rekKat').value = r.kategori_donasi || '';
+        document.getElementById('rekUrutan').value = r.urutan || 1;
+        document.getElementById('rekActive').checked = (r.is_active == 1);
+        document.getElementById('modalRekening').classList.remove('hidden');
+    } catch (err) {
+        console.error('Gagal memproses data rekening:', err);
+    }
 }
 
 function tutupModalRekening() {

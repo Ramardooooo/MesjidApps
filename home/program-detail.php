@@ -11,7 +11,7 @@ $stmt->execute([$id]);
 $prog = $stmt->fetch();
 
 if (!$prog) {
-    header('Location: program.php');
+    header('Location: program');
     exit;
 }
 
@@ -34,9 +34,9 @@ require_once __DIR__ . '/../layouts/public_header.php';
 <div class="bg-cypress-950 text-white py-12 relative pattern-arabesque-dark border-b border-antique-500/30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3 relative z-10">
         <div class="flex items-center gap-2 text-xs text-antique-300">
-            <a href="../index.php" class="hover:underline">Beranda</a>
+            <a href="../" class="hover:underline">Beranda</a>
             <span>/</span>
-            <a href="program.php" class="hover:underline">Program Donasi</a>
+            <a href="program" class="hover:underline">Program Donasi</a>
             <span>/</span>
             <span class="text-stone-300 truncate max-w-xs sm:max-w-md"><?= e($prog['nama_program']) ?></span>
         </div>
@@ -191,7 +191,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                     </p>
                 </div>
 
-                <a href="donasi-online.php?program_id=<?= $prog['id'] ?>" class="w-full text-center block py-3.5 px-4 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 hover:from-antique-400 hover:to-antique-500 text-cypress-950 font-bold text-sm tracking-wide shadow-lg shadow-antique-500/20 transition-luxury">
+                <a href="donasi-online?program_id=<?= $prog['id'] ?>" class="w-full text-center block py-3.5 px-4 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 hover:from-antique-400 hover:to-antique-500 text-cypress-950 font-bold text-sm tracking-wide shadow-lg shadow-antique-500/20 transition-luxury">
                     <i class="fa-solid fa-hand-holding-heart mr-2"></i> Donasi Sekarang
                 </a>
 
@@ -214,7 +214,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
             <!-- Tombol Bagikan -->
             <div class="bg-white rounded-2xl p-4 border border-antique-300/40 shadow-xs flex items-center justify-between">
                 <span class="text-xs font-semibold text-warm-800/80">Ajak Sahabat Berinfaq:</span>
-                <a href="https://api.whatsapp.com/send?text=<?= urlencode('Mari bersama berinfaq untuk program ' . $prog['nama_program'] . ' di ' . $profil['nama_masjid'] . ': ' . base_url() . '/home/program-detail.php?id=' . $prog['id']) ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition">
+                <a href="https://api.whatsapp.com/send?text=<?= urlencode('Mari bersama berinfaq untuk program ' . $prog['nama_program'] . ' di ' . $profil['nama_masjid'] . ': ' . base_url() . '/home/program-detail?id=' . $prog['id']) ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition">
                     <i class="fa-brands fa-whatsapp"></i>
                     <span>Share WA</span>
                 </a>

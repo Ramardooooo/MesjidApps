@@ -8,6 +8,11 @@ $user   = $_SESSION['user'];
 $pesan  = '';
 $tipe   = '';
 
+if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
+    $pesan = 'Pengguna berhasil dihapus dari sistem.';
+    $tipe  = 'success';
+}
+
 // 1. TAMBAH USER BARU
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah') {
     $username = trim($_POST['username'] ?? '');
@@ -71,7 +76,7 @@ if (isset($_GET['hapus'])) {
         $tipe  = 'error';
     } else {
         $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$idHapus]);
-        header('Location: users-admin.php?msg=deleted');
+        header('Location: users-admin?msg=deleted');
         exit;
     }
 }
@@ -171,11 +176,11 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                         </td>
                         <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-2">
-                                <button type="button" onclick='editUser(<?= json_encode($u) ?>)' class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
+                                <button type="button" data-user="<?= htmlspecialchars(json_encode($u, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>" onclick="editUserSafe(this)" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
                                 <?php if ($u['id'] !== $user['id']): ?>
-                                    <a href="users-admin.php?hapus=<?= $u['id'] ?>" data-hapus data-judul="Hapus Pengguna" data-pesan="Akses pengguna '<?= e($u['nama_lengkap'] ?? '') ?>' akan dinonaktifkan permanen. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
+                                    <a href="users-admin?hapus=<?= $u['id'] ?>" data-hapus data-judul="Hapus Pengguna" data-pesan="Akses pengguna '<?= e($u['nama_lengkap'] ?? '') ?>' akan dinonaktifkan permanen. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </a>
                                 <?php endif; ?>
@@ -200,7 +205,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </button>
         </div>
 
-        <form method="POST" action="users-admin.php" class="space-y-3.5">
+        <form method="POST" action="" class="space-y-3.5">
             <input type="hidden" id="userAksi" name="aksi" value="tambah">
             <input type="hidden" id="userId" name="id" value="0">
 
@@ -276,22 +281,27 @@ function bukaModalUser() {
     document.getElementById('modalUser').classList.remove('hidden');
 }
 
-function editUser(u) {
-    document.getElementById('userAksi').value = 'edit';
-    document.getElementById('userId').value = u.id;
-    document.getElementById('modalUserTitle').textContent = 'Edit Pengguna @' + u.username;
-    document.getElementById('boxUsername').classList.add('hidden');
-    document.getElementById('inputUsername').required = false;
-    document.getElementById('inputNama').value = u.nama_lengkap;
-    document.getElementById('inputEmail').value = u.email || '';
-    document.getElementById('inputHp').value = u.no_hp || '';
-    document.getElementById('selectRole').value = u.role;
-    document.getElementById('selectStatus').value = u.status;
-    document.getElementById('inputPassword').required = false;
-    document.getElementById('inputPassword').value = '';
-    document.getElementById('labelPassword').textContent = 'Ubah Kata Sandi (Opsional)';
-    document.getElementById('hintPassword').classList.remove('hidden');
-    document.getElementById('modalUser').classList.remove('hidden');
+function editUserSafe(btn) {
+    try {
+        const u = JSON.parse(btn.getAttribute('data-user'));
+        document.getElementById('userAksi').value = 'edit';
+        document.getElementById('userId').value = u.id;
+        document.getElementById('modalUserTitle').textContent = 'Edit Pengguna @' + u.username;
+        document.getElementById('boxUsername').classList.add('hidden');
+        document.getElementById('inputUsername').required = false;
+        document.getElementById('inputNama').value = u.nama_lengkap || '';
+        document.getElementById('inputEmail').value = u.email || '';
+        document.getElementById('inputHp').value = u.no_hp || '';
+        document.getElementById('selectRole').value = u.role || 'donatur';
+        document.getElementById('selectStatus').value = u.status || 'aktif';
+        document.getElementById('inputPassword').required = false;
+        document.getElementById('inputPassword').value = '';
+        document.getElementById('labelPassword').textContent = 'Ubah Kata Sandi (Opsional)';
+        document.getElementById('hintPassword').classList.remove('hidden');
+        document.getElementById('modalUser').classList.remove('hidden');
+    } catch (err) {
+        console.error('Gagal memproses data pengguna:', err);
+    }
 }
 
 function tutupModalUser() {

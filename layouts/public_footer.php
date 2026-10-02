@@ -76,32 +76,32 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
                     </h4>
                     <ul class="space-y-2.5 text-xs text-stone-300">
                         <li>
-                            <a href="<?= $base ?>/index.php" class="hover:text-antique-300 transition flex items-center gap-2">
+                            <a href="<?= $base ?>/" class="hover:text-antique-300 transition flex items-center gap-2">
                                 <i class="fa-solid fa-chevron-right text-[10px] text-antique-500"></i> Beranda Masjid
                             </a>
                         </li>
                         <li>
-                            <a href="<?= $base ?>/home/profil.php" class="hover:text-antique-300 transition flex items-center gap-2">
+                            <a href="<?= $base ?>/profil" class="hover:text-antique-300 transition flex items-center gap-2">
                                 <i class="fa-solid fa-chevron-right text-[10px] text-antique-500"></i> Profil &amp; Struktur DKM
                             </a>
                         </li>
                         <li>
-                            <a href="<?= $base ?>/home/program.php" class="hover:text-antique-300 transition flex items-center gap-2">
+                            <a href="<?= $base ?>/program" class="hover:text-antique-300 transition flex items-center gap-2">
                                 <i class="fa-solid fa-chevron-right text-[10px] text-antique-500"></i> Katalog Program &amp; Wakaf
                             </a>
                         </li>
                         <li>
-                            <a href="<?= $base ?>/home/transparansi.php" class="hover:text-antique-300 transition flex items-center gap-2">
+                            <a href="<?= $base ?>/transparansi" class="hover:text-antique-300 transition flex items-center gap-2">
                                 <i class="fa-solid fa-chevron-right text-[10px] text-antique-500"></i> Transparansi Kas Terbuka
                             </a>
                         </li>
                         <li>
-                            <a href="<?= $base ?>/home/berita.php" class="hover:text-antique-300 transition flex items-center gap-2">
+                            <a href="<?= $base ?>/berita" class="hover:text-antique-300 transition flex items-center gap-2">
                                 <i class="fa-solid fa-chevron-right text-[10px] text-antique-500"></i> Kabar &amp; Warta Kegiatan
                             </a>
                         </li>
                         <li>
-                            <a href="<?= $base ?>/home/kajian.php" class="hover:text-antique-300 transition flex items-center gap-2">
+                            <a href="<?= $base ?>/kajian" class="hover:text-antique-300 transition flex items-center gap-2">
                                 <i class="fa-solid fa-chevron-right text-[10px] text-antique-500"></i> Video Kajian &amp; Live Streaming
                             </a>
                         </li>
@@ -129,7 +129,7 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
                                 <span class="text-[10px] text-stone-400 block mt-0.5">a.n <?= e($rek['atas_nama']) ?></span>
                             </div>
                         <?php endforeach; ?>
-                        <a href="<?= $base ?>/home/donasi-online.php" class="inline-flex items-center gap-1.5 text-xs text-antique-400 hover:text-white font-semibold mt-1">
+                        <a href="<?= $base ?>/donasi-online" class="inline-flex items-center gap-1.5 text-xs text-antique-400 hover:text-white font-semibold mt-1">
                             <span>Lihat metode QRIS &amp; transfer lengkap</span>
                             <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </a>
@@ -155,7 +155,7 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
                     </p>
 
                     <div class="pt-2">
-                        <a href="<?= $base ?>/home/kontak.php" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cypress-900 hover:bg-cypress-800 border border-antique-500/40 text-antique-300 text-xs font-semibold transition">
+                        <a href="<?= $base ?>/kontak" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cypress-900 hover:bg-cypress-800 border border-antique-500/40 text-antique-300 text-xs font-semibold transition">
                             <i class="fa-solid fa-paper-plane"></i>
                             <span>Hubungi Pengurus</span>
                         </a>
@@ -168,9 +168,9 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
             <div class="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-400 gap-4">
                 <p>&copy; <?= date('Y') ?> <?= e($profil['nama_masjid']) ?>. Seluruh hak cipta dilindungi.</p>
                 <div class="flex items-center gap-4 text-xs">
-                    <a href="<?= $base ?>/home/transparansi.php" class="hover:text-antique-300">Laporan Publik</a>
+                    <a href="<?= $base ?>/transparansi" class="hover:text-antique-300">Laporan Publik</a>
                     <span>•</span>
-                    <a href="<?= $base ?>/auth/login.php" class="hover:text-antique-300">Portal Pengurus &amp; Donatur</a>
+                    <a href="<?= $base ?>/auth/login" class="hover:text-antique-300">Portal Pengurus &amp; Donatur</a>
                 </div>
             </div>
         </div>

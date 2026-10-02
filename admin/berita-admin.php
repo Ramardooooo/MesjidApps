@@ -8,6 +8,11 @@ $user   = $_SESSION['user'];
 $pesan  = '';
 $tipe   = '';
 
+if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
+    $pesan = 'Artikel berita berhasil dihapus dari sistem.';
+    $tipe  = 'success';
+}
+
 // HANDLE AJAX REQUEST UNTUK GET BERITA
 if (isset($_GET['get_berita'])) {
     header('Content-Type: application/json');
@@ -72,6 +77,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
             $stmt = $pdo->prepare("UPDATE berita SET judul = ?, kategori = ?, tanggal_publikasi = ?, status = ?, ringkasan = ?, isi = ? WHERE id = ?");
             if ($stmt->execute([$judul, $kategori, $tglPublik, $status, $ringkasan, $isi, $id])) {
                 if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
+                    $stmt = $pdo->prepare("SELECT thumbnail FROM berita WHERE id = ?");
+                    $stmt->execute([$id]);
+                    $old = $stmt->fetch();
+                    if ($old && !empty($old['thumbnail'])) {
+                        hapus_file_upload($old['thumbnail']);
+                    }
+                    
                     $thumb = upload_berkas('thumbnail', 'berita');
                     if ($thumb) {
                         $pdo->prepare("UPDATE berita SET thumbnail = ? WHERE id = ?")->execute([$thumb, $id]);
@@ -92,11 +104,20 @@ if (isset($_GET['hapus'])) {
     $idHapus = (int)$_GET['hapus'];
     if ($idHapus > 0) {
         try {
+            $stmt = $pdo->prepare("SELECT thumbnail FROM berita WHERE id = ?");
+            $stmt->execute([$idHapus]);
+            $berita = $stmt->fetch();
+            
+            if ($berita && !empty($berita['thumbnail'])) {
+                hapus_file_upload($berita['thumbnail']);
+            }
+            
             $pdo->prepare("DELETE FROM berita WHERE id = ?")->execute([$idHapus]);
-            header('Location: berita-admin.php?msg=deleted');
+            header('Location: berita-admin?msg=deleted');
             exit;
         } catch (Exception $e) {
-            die("Gagal menghapus berita: " . $e->getMessage());
+            $pesan = 'Gagal menghapus berita: ' . $e->getMessage();
+            $tipe  = 'error';
         }
     }
 }
@@ -191,13 +212,13 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                         </td>
                         <td class="py-3.5 px-4 align-middle text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-2">
-                                <a href="../home/berita-detail.php?id=<?= $b['id'] ?>" target="_blank" class="p-1.5 rounded-lg text-cypress-700 hover:bg-cypress-50 transition" title="Pratinjau">
+                                <a href="../berita-detail?id=<?= $b['id'] ?>" target="_blank" class="p-1.5 rounded-lg text-cypress-700 hover:bg-cypress-50 transition" title="Pratinjau">
                                     <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                                 </a>
-                                <button type="button" onclick="bukaModalEditBerita(<?= $b['id'] ?>)" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition" title="Edit">
+                                <button type="button" data-berita='<?= htmlspecialchars(json_encode($b, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>' onclick="bukaModalEditBeritaSafe(this)" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition" title="Edit">
                                     <i class="fa-solid fa-pen-to-square text-xs"></i>
                                 </button>
-                                <a href="berita-admin.php?hapus=<?= $b['id'] ?>" data-hapus data-judul="Hapus Artikel" data-pesan="Artikel '<?= e($b['judul']) ?>' akan dihapus permanen dari daftar berita. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition" title="Hapus">
+                                <a href="berita-admin?hapus=<?= $b['id'] ?>" data-hapus data-judul="Hapus Artikel" data-pesan="Artikel '<?= e($b['judul']) ?>' akan dihapus permanen dari daftar berita. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition" title="Hapus">
                                     <i class="fa-solid fa-trash-can text-xs"></i>
                                 </a>
                             </div>
@@ -221,7 +242,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </button>
         </div>
 
-        <form method="POST" action="berita-admin.php" enctype="multipart/form-data" class="space-y-4">
+        <form method="POST" action="" enctype="multipart/form-data" class="space-y-4">
             <input type="hidden" id="beritaAksi" name="aksi" value="tambah">
             <input type="hidden" id="beritaId" name="id" value="0">
 
@@ -287,21 +308,22 @@ function bukaModalBerita() {
     document.getElementById('modalBerita').classList.remove('hidden');
 }
 
-function bukaModalEditBerita(id) {
-    fetch(`berita-admin.php?get_berita=${id}`)
-        .then(r => r.json())
-        .then(b => {
-            document.getElementById('beritaAksi').value = 'edit';
-            document.getElementById('beritaId').value = b.id;
-            document.getElementById('modalBeritaTitle').textContent = 'Edit Berita #' + b.id;
-            document.getElementById('beritaJudul').value = b.judul;
-            document.getElementById('beritaKategori').value = b.kategori;
-            document.getElementById('beritaTgl').value = b.tanggal_publikasi;
-            document.getElementById('beritaStatus').value = b.status;
-            document.getElementById('beritaRingkas').value = b.ringkasan || '';
-            document.getElementById('beritaIsi').value = b.isi;
-            document.getElementById('modalBerita').classList.remove('hidden');
-        });
+function bukaModalEditBeritaSafe(btn) {
+    try {
+        const b = JSON.parse(btn.getAttribute('data-berita'));
+        document.getElementById('beritaAksi').value = 'edit';
+        document.getElementById('beritaId').value = b.id;
+        document.getElementById('modalBeritaTitle').textContent = 'Edit Berita #' + b.id;
+        document.getElementById('beritaJudul').value = b.judul || '';
+        document.getElementById('beritaKategori').value = b.kategori || 'Kajian & Kegiatan';
+        document.getElementById('beritaTgl').value = b.tanggal_publikasi || '';
+        document.getElementById('beritaStatus').value = b.status || 'published';
+        document.getElementById('beritaRingkas').value = b.ringkasan || '';
+        document.getElementById('beritaIsi').value = b.isi || '';
+        document.getElementById('modalBerita').classList.remove('hidden');
+    } catch(e) {
+        console.error('Error parsing berita data:', e);
+    }
 }
 
 function tutupModalBerita() {

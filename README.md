@@ -7,13 +7,14 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![PHPMailer](https://img.shields.io/badge/PHPMailer-7.x-31A4DB?style=flat-square&logo=maildotru&logoColor=white)](https://github.com/PHPMailer/PHPMailer)
 [![Apache](https://img.shields.io/badge/Apache-2.4-D22128?style=flat-square&logo=apache&logoColor=white)](https://httpd.apache.org)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](#license)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](#lisensi)
+[![Release](https://img.shields.io/badge/Release-v1.1.0-0e90f0?style=flat-square)](RELEASE.md)
 
 ---
 
 ## Tentang Proyek
 
-Aplikasi web terintegrasi untuk pengelolaan masjid yang mencakup **website publik**, **sistem pembukuan kas**, **platform donasi online**, dan **portal donatur**. Dibangun dengan arsitektur modular PHP murni tanpa framework, dirancang untuk transparansi keuangan, kemudahan administrasi, dan pengalaman jamaah yang modern.
+Aplikasi web terintegrasi untuk pengelolaan masjid yang mencakup **website publik**, **sistem pembukuan kas**, **platform donasi online**, **e-kwitansi berlapis**, dan **portal donatur**. Dibangun dengan arsitektur modular PHP murni tanpa framework, dirancang untuk transparansi keuangan, kemudahan administrasi DKM, dan pengalaman jamaah yang modern.
 
 ---
 
@@ -22,13 +23,15 @@ Aplikasi web terintegrasi untuk pengelolaan masjid yang mencakup **website publi
 | Modul | Deskripsi |
 |-------|-----------|
 | **Website Publik** | Beranda, profil masjid & pengurus DKM, program donasi, berita/kegiatan, kajian YouTube, transparansi keuangan, kontak |
-| **Admin Panel** | Dashboard keuangan, manajemen berita, program donasi, pengguna, banner, rekening & QRIS, video YouTube, laporan transaksi |
+| **Admin Panel** | Dashboard keuangan, manajemen berita, program donasi, pengguna, banner, rekening & QRIS, video YouTube, laporan |
 | **Pembukuan Kas** | Pencatatan pemasukan/pengeluaran, kategori transaksi, bukti transaksi, filter periode, ekspor CSV/Excel, laporan cetak |
-| **Donasi Online** | Formulir donasi via QRIS & transfer bank, verifikasi admin, e-Kwitansi otomatis, notifikasi donatur |
+| **Donasi Online** | Formulir donasi via QRIS & transfer bank, validasi MIME upload, format rupiah realtime, verifikasi admin |
+| **e-Kwitansi Berlapis** | Security lock 3 status: Pending (DRAFT/watermark), Diverifikasi (stempel DKM resmi), Ditolak (keterangan alasan) |
+| **Inbox Pesan Kontak** | Admin baca & balas pesan jamaah via WhatsApp/Email, badge unread realtime di sidebar |
 | **Portal Donatur** | Dashboard donatur, riwayat donasi, update profil, cetak kwitansi mandiri |
 | **Autentikasi** | Login multi-role (admin, bendahara, content_admin, donatur), registrasi, lupa/reset password via OTP |
-| **Transparansi Kas** | Laporan keuangan publik, saldo kas terbuka, grafik pemasukan & pengeluaran |
-| **Integrasi YouTube** | Embed video kajian, live streaming, dokumentasi kegiatan masjid |
+| **Transparansi Kas** | Laporan keuangan publik, saldo kas terbuka |
+| **Integrasi YouTube** | Embed video kajian, live streaming, dokumentasi kegiatan |
 
 ---
 
@@ -38,118 +41,86 @@ Aplikasi web terintegrasi untuk pengelolaan masjid yang mencakup **website publi
 mesjid-website/
 |
 |-- admin/                          Panel Administrator
-|   |-- dashboard.php               Dashboard keuangan & eksekutif terpadu
+|   |-- dashboard.php               Dashboard keuangan & eksekutif
 |   |-- berita-admin.php            Manajemen berita & artikel
-|   |-- banner-admin.php            Manajemen slider & banner promosi
-|   |-- program-admin.php           CRUD program donasi masjid
+|   |-- banner-admin.php            Manajemen slider & banner
+|   |-- program-admin.php           CRUD program donasi
 |   |-- rekening-admin.php          Kelola rekening donasi & QRIS
-|   |-- transaksi.php               Pencatatan transaksi kas (pembukuan)
-|   |-- verifikasi-donasi.php       Verifikasi & persetujuan donasi online
+|   |-- transaksi.php               Pembukuan kas
+|   |-- verifikasi-donasi.php       Verifikasi & persetujuan donasi
 |   |-- laporan.php                 Laporan keuangan & cetak
 |   |-- profil-admin.php            Edit profil & pengaturan masjid
 |   |-- youtube-admin.php           Kelola video YouTube & kajian
 |   |-- users-admin.php             Manajemen pengguna & hak akses
+|   |-- pesan-admin.php             [NEW v1.1] Inbox pesan kontak jamaah
 |
-|-- assets/                         Aset Statis
-|   |-- css/
-|   |   |-- classic-theme.css       Tema klasik Islami (Deep Cypress, Antique Gold)
-|   |-- js/
-|       |-- app.js                  Interaksi frontend (modal, toast, clipboard, form)
+|-- assets/
+|   |-- css/classic-theme.css       Tema klasik Islami (Deep Cypress + Antique Gold)
+|   |-- js/app.js                   Interaksi frontend (modal, toast, clipboard, form)
 |
 |-- auth/                           Autentikasi & Manajemen Sesi
-|   |-- login.php                   Halaman masuk
-|   |-- register.php                Registrasi akun baru
-|   |-- logout.php                  Proses logout
-|   |-- forgot-password.php         Lupa password (kirim OTP ke email)
-|   |-- verify-otp.php              Verifikasi kode OTP
-|   |-- reset-password.php          Form reset password via OTP
+|   |-- login.php / register.php / logout.php
+|   |-- forgot-password.php / verify-otp.php / reset-password.php
 |
-|-- config/                         Konfigurasi Aplikasi
+|-- config/
 |   |-- database.php                Koneksi DB (PDO), session, helper upload
 |   |-- mail.php                    Konfigurasi SMTP (Gmail App Password)
 |   |-- helpers.php                 Fungsi bantu: base_url, pagination, RBAC, upload
 |
-|-- db/                             Database
+|-- db/
 |   |-- MesjidApps.sql              Skema database lengkap (16 tabel)
 |   |-- DataMesjidApps.sql          Data seeder & contoh awal
 |
-|-- donatur/                        Portal Donatur
+|-- donatur/
 |   |-- portal-donatur.php          Dashboard mandiri donatur
-|   |-- kwitansi.php                Cetak e-Kwitansi donasi
+|   |-- kwitansi.php                e-Kwitansi dengan Security Lock 3 status [v1.1]
 |
-|-- home/                           Halaman Publik (Frontend)
-|   |-- profil.php                  Profil, sejarah, visi-misi masjid
-|   |-- program.php                 Katalog seluruh program donasi
-|   |-- program-detail.php          Detail program & progress donasi
-|   |-- donasi-online.php           Formulir donasi online (QRIS & transfer)
-|   |-- transparansi.php            Laporan keuangan transparan publik
-|   |-- berita.php                  Daftar berita & artikel
-|   |-- berita-detail.php           Detail berita (full text)
-|   |-- kajian.php                  Galeri video kajian & live streaming
-|   |-- kontak.php                  Halaman kontak & formulir pesan
+|-- home/                           Halaman Publik
+|   |-- profil.php / program.php / program-detail.php
+|   |-- donasi-online.php           Formulir donasi (format rupiah realtime) [v1.1]
+|   |-- transparansi.php / berita.php / berita-detail.php
+|   |-- kajian.php / kontak.php
 |
-|-- layouts/                        Komponen Layout (Reusable)
-|   |-- header.php                  Header admin panel
-|   |-- footer.php                  Footer admin panel
-|   |-- sidebar.php                 Sidebar navigasi admin
-|   |-- public_header.php           Header website publik
-|   |-- public_footer.php           Footer website publik
+|-- layouts/                        Komponen Layout
+|   |-- header.php / footer.php / sidebar.php  (admin)
+|   |-- public_header.php / public_footer.php   (publik)
 |
-|-- otp/                            Modul Autentikasi OTP
-|   |-- otp.php                     Generator & pengirim kode OTP
-|   |-- email-template.php          Template email OTP
+|-- otp/                            Modul OTP Email
+|-- uploads/                        Direktori Unggahan
+|-- vendor/                         Dependensi Composer (PHPMailer)
 |
-|-- uploads/                        Direktori Unggahan (User Uploads)
-|   |-- banner/                     Gambar slider & banner
-|   |-- berita/                     Thumbnail berita
-|   |-- bukti/                      Bukti transfer pembayaran donasi
-|   |-- home/                       Salinan cadangan halaman home (backup)
-|   |-- pengurus/                   Foto pengurus DKM
-|   |-- profil/                     Foto masjid
-|   |-- program/                    Gambar program donasi
-|   |-- qris/                       Gambar QRIS
-|
-|-- vendor/                         Dependensi Composer
-|   |-- phpmailer/phpmailer/        PHPMailer (pengiriman email OTP)
-|   |-- composer/                   Autoloader Composer
-|   |-- autoload.php                Autoload entry point
-|
-|-- index.php                       Beranda utama (entry point publik)
-|-- donasi.php                      Endpoint donasi cepat
-|-- kegiatan.php                    Halaman kegiatan masjid
-|-- dashboard.php                   (Legacy) Dashboard lama berbasis tabel donasi/kegiatan
-|-- 404.php                         Halaman error 404 kustom
-|-- .htaccess                       Konfigurasi Apache (URL rewrite, keamanan)
-|-- .gitattributes                  Git line ending normalization
-|-- composer.json                   Konfigurasi dependensi Composer
-|-- composer.lock                   Lock file Composer
-|-- README.md                       Dokumentasi proyek
+|-- index.php                       Beranda utama
+|-- .htaccess                       Rewrite URL bersih + proteksi keamanan
+|-- RELEASE.md                      Catatan rilis lengkap
+|-- WALKTHROUGH.md                  Panduan alur penggunaan
+|-- PROGRESS.md                     Status fitur & roadmap
+|-- README.md                       Dokumentasi proyek ini
 ```
 
 ---
 
 ## Database
 
-Sistem menggunakan **16 tabel** dengan engine InnoDB dan charset `utf8mb4_unicode_ci`. Skema lengkap terdapat pada `db/MesjidApps.sql`, sedangkan data seeder & contoh awal (akun default, kategori transaksi, rekening, program donasi) berada pada `db/DataMesjidApps.sql`. Dua tabel terakhir adalah tabel **legacy** dari versi awal aplikasi yang masih dipertahankan untuk kompatibilitas `dashboard.php`.
+Sistem menggunakan **16 tabel** dengan engine InnoDB dan charset `utf8mb4_unicode_ci`.
 
-| # | Tabel | File | Fungsi |
-|---|-------|------|--------|
-| 1 | `users` | `MesjidApps.sql` | Pengguna & multi-role RBAC (admin, bendahara, content_admin, donatur) |
-| 2 | `profil_masjid` | `MesjidApps.sql` | Profil, sejarah, visi-misi, kontak, sosial media masjid |
-| 3 | `pengurus_masjid` | `MesjidApps.sql` | Data pengurus DKM |
-| 4 | `rekening_donasi` | `MesjidApps.sql` | Rekening bank & QRIS donasi |
-| 5 | `program_donasi` | `MesjidApps.sql` | Program donasi (target, terkumpul, status, kategori) |
-| 6 | `kategori_transaksi` | `MesjidApps.sql` | Master kategori pemasukan & pengeluaran kas |
-| 7 | `transaksi_keuangan` | `MesjidApps.sql` | Buku kas transaksi (pembukuan terintegrasi) |
-| 8 | `donasi_online` | `MesjidApps.sql` | Donasi masuk dari jamaah (pending/diverifikasi/ditolak) |
-| 9 | `berita` | `MesjidApps.sql` | Berita, artikel & kegiatan masjid |
-| 10 | `banners` | `MesjidApps.sql` | Slider & banner promosi beranda |
-| 11 | `youtube_videos` | `MesjidApps.sql` | Integrasi video YouTube (kajian, live, dokumentasi) |
-| 12 | `notifikasi` | `MesjidApps.sql` | Notifikasi untuk pengguna & donatur |
-| 13 | `pesan_kontak` | `MesjidApps.sql` | Pesan masuk dari formulir kontak jamaah |
-| 14 | `otp_codes` | `MesjidApps.sql` | Kode OTP untuk verifikasi register & reset password |
-| 15 | `donasi` | `MesjidApps.sql` | (Legacy) Donasi manual versi awal aplikasi |
-| 16 | `kegiatan` | `MesjidApps.sql` | (Legacy) Kegiatan versi awal aplikasi |
+| # | Tabel | Fungsi |
+|---|-------|--------|
+| 1 | `users` | Pengguna & multi-role RBAC |
+| 2 | `profil_masjid` | Profil, sejarah, visi-misi, sosial media |
+| 3 | `pengurus_masjid` | Data pengurus DKM |
+| 4 | `rekening_donasi` | Rekening bank & QRIS |
+| 5 | `program_donasi` | Program donasi (target, terkumpul, status) |
+| 6 | `kategori_transaksi` | Master kategori pemasukan & pengeluaran |
+| 7 | `transaksi_keuangan` | Buku kas terintegrasi |
+| 8 | `donasi_online` | Donasi masuk (pending/diverifikasi/ditolak) |
+| 9 | `berita` | Berita, artikel & kegiatan |
+| 10 | `banners` | Slider & banner beranda |
+| 11 | `youtube_videos` | Video YouTube (kajian, live) |
+| 12 | `notifikasi` | Notifikasi pengguna & donatur |
+| 13 | `pesan_kontak` | Pesan masuk formulir kontak jamaah |
+| 14 | `otp_codes` | Kode OTP verifikasi |
+| 15 | `donasi` | (Legacy) Donasi manual versi awal |
+| 16 | `kegiatan` | (Legacy) Kegiatan versi awal |
 
 ### Akun Default
 
@@ -160,16 +131,16 @@ Sistem menggunakan **16 tabel** dengan engine InnoDB dan charset `utf8mb4_unicod
 | Content Admin | `konten` | `konten123` |
 | Donatur | `donatur` | `donatur123` |
 
-> Ganti semua password default sebelum deployment ke production.
+> ⚠️ **Ganti semua password default sebelum deployment ke production.**
 
 ---
 
 ## Persyaratan
 
-- **PHP** >= 8.0 (PDO MySQL, mbstring, json, openssl)
+- **PHP** >= 8.0 (PDO MySQL, mbstring, json, openssl, **fileinfo**)
 - **MySQL** >= 8.0 / MariaDB >= 10.5
-- **Apache** dengan mod `rewrite` aktif (atau **Laragon** / **XAMPP**)
-- **Composer** (untuk menginstal PHPMailer)
+- **Apache** dengan `mod_rewrite` aktif (atau **Laragon** / **XAMPP**)
+- **Composer**
 
 ---
 
@@ -184,29 +155,22 @@ cd mesjid-website
 
 ### 2. Konfigurasi Web Server
 
-Jika menggunakan **Laragon**, cukup copy folder project ke `C:\laragon\www\` dan akses melalui `http://localhost/mesjid-website/`.
+Jika menggunakan **Laragon**, copy folder ke `C:\laragon\www\` dan akses via `http://localhost/mesjid-website/`.
 
-Pastikan mod `rewrite` Apache aktif untuk `.htaccess`.
+Pastikan `mod_rewrite` aktif di Apache.
 
 ### 3. Buat Database
 
-Jalankan skema database lengkap (membuat database `mesjid_website` dan 16 tabel):
-
 ```bash
 mysql -u root -p < db/MesjidApps.sql
-```
-
-Import data seeder & contoh (akun default, kategori transaksi, rekening, program donasi, dan data lainnya):
-
-```bash
 mysql -u root -p mesjid_website < db/DataMesjidApps.sql
 ```
 
-Atau gunakan **phpMyAdmin** untuk mengimpor kedua file tersebut secara berurutan.
+Atau gunakan phpMyAdmin untuk mengimpor kedua file secara berurutan.
 
 ### 4. Konfigurasi Koneksi
 
-Edit `config/database.php` sesuai environment Anda:
+Edit `config/database.php`:
 
 ```php
 define('DB_HOST', 'localhost');
@@ -221,25 +185,26 @@ define('DB_NAME', 'mesjid_website');
 composer install
 ```
 
-Instalasi ini mencakup PHPMailer untuk pengiriman email OTP. Selanjutnya konfigurasi SMTP di `config/mail.php`. Gunakan Gmail **App Password** (aktifkan 2-Step Verification → buat App Password), lalu isi `MAIL_USERNAME`, `MAIL_PASSWORD`, dan `MAIL_FROM`.
+Konfigurasi SMTP di `config/mail.php` menggunakan Gmail **App Password**.
 
 ### 6. Akses Aplikasi
 
 | URL | Deskripsi |
 |-----|-----------|
 | `http://localhost/mesjid-website/` | Beranda publik |
-| `http://localhost/mesjid-website/auth/login.php` | Halaman login |
-| `http://localhost/mesjid-website/admin/dashboard.php` | Dashboard admin |
+| `http://localhost/mesjid-website/login` | Halaman login |
+| `http://localhost/mesjid-website/dashboard` | Dashboard admin |
+| `http://localhost/mesjid-website/donasi-online` | Formulir donasi |
 
 ---
 
 ## Tema & Desain
 
-Menggunakan tema klasik Islami dengan palet warna:
+Tema klasik Islami dengan palet warna:
 
 | Warna | Kode | Penggunaan |
 |-------|------|------------|
-| Deep Cypress Green | `#183728` | Warna primer, header, navbar |
+| Deep Cypress Green | `#183728` | Primer, header, navbar |
 | Antique Brass Gold | `#c5a059` | Aksen emas, judul, highlight |
 | Warm Alabaster | `#fbf9f5` | Background body |
 
@@ -247,9 +212,36 @@ Menggunakan tema klasik Islami dengan palet warna:
 
 ---
 
+## Catatan Rilis
+
+### v1.1.0 *(2026-09-21)*
+- **e-Kwitansi Security Lock** — pengamanan 3 status (pending/diverifikasi/ditolak)
+- **Inbox Pesan Kontak Admin** — baca & balas via WA/Email
+- **Format Rupiah Realtime** — titik ribuan otomatis saat input nominal
+- **Validasi Upload MIME** — cek file asli via `finfo_open`
+- **Fix redirect** — donasi selesai langsung ke kwitansi
+- **Fix form action** — POST ke URL absolut
+
+### v1.0.0 *(2026-09-04)*
+- Rilis perdana — website publik, admin panel, pembukuan kas, donasi online, portal donatur, autentikasi OTP, clean URL
+
+Detail lengkap ada di [RELEASE.md](RELEASE.md).
+
+---
+
+## Dokumentasi Lanjutan
+
+| Dokumen | Isi |
+|---------|-----|
+| [RELEASE.md](RELEASE.md) | Changelog & catatan rilis lengkap per versi |
+| [WALKTHROUGH.md](WALKTHROUGH.md) | Panduan alur penggunaan per peran |
+| [PROGRESS.md](PROGRESS.md) | Status fitur, todo, dan roadmap |
+
+---
+
 ## Lisensi
 
-Proyek ini menggunakan lisensi MIT. Bebas digunakan, dimodifikasi, dan didistribusikan.
+Proyek ini menggunakan lisensi **MIT**. Bebas digunakan, dimodifikasi, dan didistribusikan.
 
 ---
 

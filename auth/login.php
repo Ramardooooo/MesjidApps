@@ -6,9 +6,9 @@ mulai_session();
 // Jika sudah login arahkan sesuai role
 if (isset($_SESSION['user'])) {
     if ($_SESSION['user']['role'] === 'donatur') {
-        header('Location: ../donatur/portal-donatur.php');
+        header('Location: ' . base_url() . '/donatur/portal-donatur');
     } else {
-        header('Location: ../admin/dashboard.php');
+        header('Location: ' . base_url() . '/admin/dashboard');
     }
     exit;
 }
@@ -28,28 +28,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($usernameOrEmail === '' || $password === '') {
         $error = 'Mohon masukkan username / email dan kata sandi Anda.';
     } else {
-        $stmt = $pdo->prepare('SELECT * FROM users WHERE (username = :u OR email = :u) AND status = "aktif" LIMIT 1');
-        $stmt->execute(['u' => $usernameOrEmail]);
-        $user = $stmt->fetch();
-
-        if ($user && password_verify($password, $user['password'])) {
-            $_SESSION['user'] = [
-                'id'       => $user['id'],
-                'username' => $user['username'],
-                'nama'     => $user['nama_lengkap'],
-                'role'     => $user['role'],
-                'email'    => $user['email'] ?? '',
-                'no_hp'    => $user['no_hp'] ?? '',
-            ];
-
-            if ($user['role'] === 'donatur') {
-                header('Location: ../donatur/portal-donatur.php');
-            } else {
-                header('Location: ../admin/dashboard.php');
-            }
-            exit;
+        $clientIP = get_client_ip();
+        $rate_key = 'login_' . md5($clientIP . '_' . strtolower($usernameOrEmail));
+        $rate = rate_limit($rate_key, 5, 15);
+        
+        if (!$rate['allowed']) {
+            $minutes = floor($rate['wait_seconds'] / 60);
+            $seconds = $rate['wait_seconds'] % 60;
+            $error = sprintf('Terlalu banyak percobaan login. Tunggu %02d:%02d sebelum coba lagi.', $minutes, $seconds);
         } else {
-            $error = 'Username/email atau kata sandi tidak cocok. Silakan periksa kembali.';
+            $stmt = $pdo->prepare('SELECT * FROM users WHERE (username = :u OR email = :u) AND status = "aktif" LIMIT 1');
+            $stmt->execute(['u' => $usernameOrEmail]);
+            $user = $stmt->fetch();
+
+            if ($user && password_verify($password, $user['password'])) {
+                if ($rate['attempts'] > 3) {
+                    $minutes = floor($rate['wait_seconds'] / 60);
+                    $seconds = $rate['wait_seconds'] % 60;
+                    $error = sprintf('Terlalu banyak percobaan login. Tunggu %02d:%02d sebelum coba lagi.', $minutes, $seconds);
+                } else {
+                    session_regenerate_id(true);
+                    
+                    $_SESSION['user'] = [
+                        'id'       => $user['id'],
+                        'username' => $user['username'],
+                        'nama'     => $user['nama_lengkap'],
+                        'role'     => $user['role'],
+                        'email'    => $user['email'] ?? '',
+                        'no_hp'    => $user['no_hp'] ?? '',
+                    ];
+
+                    if ($user['role'] === 'donatur') {
+                        header('Location: ' . base_url() . '/donatur/portal-donatur');
+                    } else {
+                        header('Location: ' . base_url() . '/admin/dashboard');
+                    }
+                    exit;
+                }
+            } else {
+                $error = 'Username / email atau kata sandi salah.';
+            }
         }
     }
 }
@@ -161,7 +179,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                         </svg>
                         <span><?= e($tanggalMasehi) ?></span>
                     </div>
-                    <a href="../index.php" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
+                    <a href="../" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
                         ← Beranda
                     </a>
                 </div>
@@ -189,18 +207,18 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     <?php endif; ?>
 
                     <?php if ($error): ?>
-                    <div class="mb-6 p-4 rounded-xl bg-amber-50/90 border border-amber-200/80 text-amber-900 flex items-start gap-3 text-sm shadow-sm">
+                    <div class="mb-6 p-4 rounded-xl bg-amber-50/90 border border-amber-200/80 text-amber-900 flex items-start gap-3 text-sm shadow-sm" id="errorBox" data-reset-at="<?= isset($rate['reset_at']) ? $rate['reset_at'] : 0 ?>">
                         <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
                         <div class="leading-snug">
                             <strong class="font-semibold block text-xs uppercase tracking-wide text-amber-800">Akses Ditolak</strong>
-                            <?= e($error) ?>
+                            <span id="errorMsg"><?= e($error) ?></span>
                         </div>
                     </div>
                     <?php endif; ?>
 
-                    <form method="POST" action="login.php" class="space-y-5" id="loginForm">
+                    <form method="POST" action="login" class="space-y-5" id="loginForm">
                         <div>
                             <label for="loginUsername" class="block text-xs font-semibold uppercase tracking-wider text-warm-800/80 mb-2">
                                 Username atau Email
@@ -222,7 +240,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                                 <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-warm-800/80">
                                     Kata Sandi
                                 </label>
-                                <a href="forgot-password.php" class="text-xs text-antique-600 hover:text-antique-700 hover:underline transition">
+                                <a href="forgot-password" class="text-xs text-antique-600 hover:text-antique-700 hover:underline transition">
                                     Lupa sandi?
                                 </a>
                             </div>
@@ -253,7 +271,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                                 <input type="checkbox" name="remember" class="w-4 h-4 rounded border-warm-300 text-cypress-700 focus:ring-cypress-700/30 accent-[#1b3a2b]">
                                 <span>Ingat saya di perangkat ini</span>
                             </label>
-                            <a href="register.php" class="text-xs font-semibold text-antique-700 hover:text-antique-900 hover:underline transition">
+                            <a href="register" class="text-xs font-semibold text-antique-700 hover:text-antique-900 hover:underline transition">
                                 Daftar Donatur
                             </a>
                         </div>
@@ -266,29 +284,6 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                             </svg>
                         </button>
                     </form>
-
-                    <!-- Akses Cepat Role Pengujian -->
-                    <div class="mt-6 pt-5 border-t border-warm-100 text-center">
-                        <span class="text-[10px] uppercase font-bold text-warm-800/60 block mb-2.5">Akses Cepat Pengujian (Role Akun)</span>
-                        <div class="grid grid-cols-2 gap-2 text-[11px]">
-                            <button type="button" onclick="setLogin('admin', 'admin123')" class="p-2 rounded-lg bg-warm-50 border border-antique-200 hover:bg-antique-50 text-left transition">
-                                <span class="font-bold text-cypress-900 block">1. Administrator</span>
-                                <span class="text-stone-500 text-[10px]">admin / admin123</span>
-                            </button>
-                            <button type="button" onclick="setLogin('bendahara', 'bendahara123')" class="p-2 rounded-lg bg-warm-50 border border-antique-200 hover:bg-antique-50 text-left transition">
-                                <span class="font-bold text-emerald-900 block">2. Bendahara Kas</span>
-                                <span class="text-stone-500 text-[10px]">bendahara / bendahara123</span>
-                            </button>
-                            <button type="button" onclick="setLogin('konten', 'konten123')" class="p-2 rounded-lg bg-warm-50 border border-antique-200 hover:bg-antique-50 text-left transition">
-                                <span class="font-bold text-blue-900 block">3. Content Admin</span>
-                                <span class="text-stone-500 text-[10px]">konten / konten123</span>
-                            </button>
-                            <button type="button" onclick="setLogin('donatur', 'donatur123')" class="p-2 rounded-lg bg-warm-50 border border-antique-200 hover:bg-antique-50 text-left transition">
-                                <span class="font-bold text-amber-900 block">4. Akun Donatur</span>
-                                <span class="text-stone-500 text-[10px]">donatur / donatur123</span>
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -309,9 +304,28 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
             on.classList.toggle('hidden', show);
             off.classList.toggle('hidden', !show);
         });
-        function setLogin(u, p) {
-            document.getElementById('loginUsername').value = u;
-            document.getElementById('password').value = p;
+
+        const errorBox = document.getElementById('errorBox');
+        if (errorBox && errorBox.dataset.resetAt) {
+            const resetAt = parseInt(errorBox.dataset.resetAt) * 1000;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            function updateCountdown() {
+                const now = Date.now();
+                const remaining = Math.max(0, resetAt - now);
+                
+                if (remaining > 0) {
+                    const minutes = Math.floor(remaining / 60000);
+                    const seconds = Math.floor((remaining % 60000) / 1000);
+                    const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    errorMsg.textContent = `Terlalu banyak percobaan login. Tunggu ${timeStr} sebelum coba lagi.`;
+                } else {
+                    errorBox.style.display = 'none';
+                }
+            }
+            
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
         }
     </script>
 </body>

@@ -143,7 +143,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" action="kontak.php" class="space-y-4">
+                <form method="POST" action="kontak" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-warm-800 mb-1">Nama Lengkap <span class="text-red-500">*</span></label>

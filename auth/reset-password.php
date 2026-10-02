@@ -10,7 +10,7 @@ $tipe   = '';
 // Pastikan user sudah verifikasi OTP sebelumnya
 $email = $_SESSION['otp_verified_email'] ?? '';
 if (empty($email)) {
-    header('Location: forgot-password.php');
+    header('Location: forgot-password');
     exit;
 }
 
@@ -21,7 +21,7 @@ $user = $stmt->fetch();
 
 if (!$user) {
     unset($_SESSION['otp_verified_email']);
-    header('Location: forgot-password.php');
+    header('Location: forgot-password');
     exit;
 }
 
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Hapus session otorisasi
         unset($_SESSION['otp_verified_email']);
 
-        header('Location: login.php?reset=success');
+        header('Location: login?reset=success');
         exit;
     }
 }
@@ -149,7 +149,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                         </svg>
                         <span><?= e($tanggalMasehi) ?></span>
                     </div>
-                    <a href="../index.php" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
+                    <a href="../" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
                         ← Beranda
                     </a>
                 </div>
@@ -180,7 +180,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     </div>
                     <?php endif; ?>
 
-                    <form method="POST" action="reset-password.php" class="space-y-5">
+                    <form method="POST" action="reset-password" class="space-y-5">
                         <div>
                             <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-warm-800/80 mb-2">
                                 Kata Sandi Baru <span class="text-red-500">*</span>
@@ -233,7 +233,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     </form>
 
                     <div class="mt-6 pt-5 border-t border-warm-100 text-center text-xs text-warm-800/70">
-                        <a href="login.php" class="text-cypress-700 font-bold hover:underline">← Kembali ke Halaman Login</a>
+                        <a href="login" class="text-cypress-700 font-bold hover:underline">← Kembali ke Halaman Login</a>
                     </div>
                 </div>
             </div>

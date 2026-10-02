@@ -70,8 +70,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
                 $donasi['user_id'],
                 'Donasi #' . $donasi['no_donasi'] . ' Terverifikasi!',
                 'Alhamdulillah, donasi Anda sebesar ' . format_rupiah($nominal) . ' telah diverifikasi bendahara dan dicatat pada buku kas masjid.',
-                '../donatur/kwitansi.php?no=' . $donasi['no_donasi']
+                '../donatur/kwitansi?no=' . $donasi['no_donasi']
             ]);
+        }
+        
+        // 5. Kirim Email Notification
+        if (!empty($donasi['email'])) {
+            require_once __DIR__ . '/../otp/send_donasi_notification.php';
+            $namaDisplay = $donasi['is_anonim'] ? 'Hamba Allah' : $donasi['nama_donatur'];
+            kirim_notif_donasi(
+                $donasi['email'], 
+                $namaDisplay, 
+                'diverifikasi', 
+                $donasi['no_donasi'], 
+                format_rupiah($nominal),
+                $donasi['nama_program']
+            );
+            
+            $pdo->prepare("UPDATE donasi_online SET notif_email_sent = 1, notif_email_at = NOW() WHERE id = ?")->execute([$idDonasi]);
         }
 
         $pesan = "Alhamdulillah! Donasi #{$donasi['no_donasi']} berhasil diverifikasi dan otomatis dibukukan ke Kas Masuk ({$noTrx}).";
@@ -103,8 +119,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
                 $donasi['user_id'],
                 'Donasi #' . $donasi['no_donasi'] . ' Ditolak',
                 'Mohon maaf, donasi Anda tidak dapat diverifikasi: ' . $alasan,
-                '../donatur/kwitansi.php?no=' . $donasi['no_donasi']
+                '../donatur/kwitansi?no=' . $donasi['no_donasi']
             ]);
+        }
+        
+        // Kirim Email Rejection
+        if (!empty($donasi['email'])) {
+            require_once __DIR__ . '/../otp/send_donasi_notification.php';
+            $namaDisplay = $donasi['is_anonim'] ? 'Hamba Allah' : $donasi['nama_donatur'];
+            kirim_notif_donasi(
+                $donasi['email'], 
+                $namaDisplay, 
+                'ditolak', 
+                $donasi['no_donasi'], 
+                '',
+                '',
+                $alasan
+            );
+            
+            $pdo->prepare("UPDATE donasi_online SET notif_email_sent = 1, notif_email_at = NOW() WHERE id = ?")->execute([$idDonasi]);
         }
 
         $pesan = "Donasi #{$donasi['no_donasi']} telah ditolak.";
@@ -160,19 +193,19 @@ require_once __DIR__ . '/../layouts/sidebar.php';
 
     <!-- Status Tabs -->
     <div class="flex items-center gap-2 overflow-x-auto text-xs font-semibold">
-        <a href="verifikasi-donasi.php?status=pending" class="px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 <?= $filterStatus === 'pending' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
+        <a href="verifikasi-donasi?status=pending" class="px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 <?= $filterStatus === 'pending' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
             <span>Menunggu</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-bold"><?= $countPending ?></span>
         </a>
-        <a href="verifikasi-donasi.php?status=diverifikasi" class="px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 <?= $filterStatus === 'diverifikasi' ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
+        <a href="verifikasi-donasi?status=diverifikasi" class="px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 <?= $filterStatus === 'diverifikasi' ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
             <span>Diterima</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-bold"><?= $countVerif ?></span>
         </a>
-        <a href="verifikasi-donasi.php?status=ditolak" class="px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 <?= $filterStatus === 'ditolak' ? 'bg-red-700 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
+        <a href="verifikasi-donasi?status=ditolak" class="px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 <?= $filterStatus === 'ditolak' ? 'bg-red-700 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
             <span>Ditolak</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-bold"><?= $countDitolak ?></span>
         </a>
-        <a href="verifikasi-donasi.php?status=semua" class="px-3.5 py-2 rounded-xl transition <?= $filterStatus === 'semua' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
+        <a href="verifikasi-donasi?status=semua" class="px-3.5 py-2 rounded-xl transition <?= $filterStatus === 'semua' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
             Semua Donasi
         </a>
     </div>
@@ -282,7 +315,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 <?php if ($d['status'] === 'pending'): ?>
                                     <div class="flex items-center justify-end gap-1.5">
                                         <!-- Form Verifikasi Terima -->
-                                        <form method="POST" action="verifikasi-donasi.php" data-hapus data-variant="success" data-judul="Verifikasi Donasi" data-pesan="Verifikasi donasi ini dan otomatis bukukan ke transaksi kas?">
+                                        <form method="POST" action="" data-hapus data-variant="success" data-judul="Verifikasi Donasi" data-pesan="Verifikasi donasi ini dan otomatis bukukan ke transaksi kas?">
                                             <input type="hidden" name="aksi" value="verifikasi">
                                             <input type="hidden" name="donasi_id" value="<?= $d['id'] ?>">
                                             <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition flex items-center gap-1 shadow-xs">
@@ -296,9 +329,25 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                         </button>
                                     </div>
                                 <?php else: ?>
-                                    <a href="../donatur/kwitansi.php?no=<?= e($d['no_donasi']) ?>" target="_blank" class="px-2.5 py-1 rounded-lg bg-warm-100 hover:bg-warm-200 text-warm-800 text-[11px] font-semibold transition">
-                                        Kwitansi
-                                    </a>
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <a href="../donatur/kwitansi?no=<?= e($d['no_donasi']) ?>" target="_blank" class="px-2.5 py-1 rounded-lg bg-warm-100 hover:bg-warm-200 text-warm-800 text-[11px] font-semibold transition flex items-center gap-1" title="Lihat & Cetak e-Kwitansi">
+                                            <i class="fa-solid fa-receipt text-stone-500"></i>
+                                            <span>Kwitansi</span>
+                                        </a>
+
+                                        <?php if ($d['status'] === 'diverifikasi' && !empty($d['no_hp'])): 
+                                            $phone = preg_replace('/\D/', '', $d['no_hp']);
+                                            if (str_starts_with($phone, '0')) $phone = '62' . substr($phone, 1);
+                                            $kwitansiUrl = base_url('donatur/kwitansi?no=' . $d['no_donasi']);
+                                            $waMsg = "Assalamu’alaikum Wr. Wb. Yth. Bapak/Ibu " . ($d['is_anonim'] ? 'Hamba Allah' : $d['nama_donatur']) . ",\n\nAlhamdulillah, donasi Anda untuk program *" . $d['nama_program'] . "* sebesar *" . format_rupiah($d['nominal']) . "* telah diverifikasi dan dibukukan resmi oleh Bendahara " . $profil['nama_masjid'] . ".\n\nBerikut tautan e-Kwitansi resmi Anda:\n" . $kwitansiUrl . "\n\nSemoga menjadi amal jariyah yang berlipat ganda di sisi Allah SWT. Aamiin.\n\n_Wassalamu’alaikum Wr. Wb._\n*Pengurus " . $profil['nama_masjid'] . "*";
+                                            $waLink = "https://wa.me/" . $phone . "?text=" . urlencode($waMsg);
+                                        ?>
+                                            <a href="<?= $waLink ?>" target="_blank" class="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[11px] font-bold transition flex items-center gap-1" title="Kirim Kwitansi via WhatsApp">
+                                                <i class="fa-brands fa-whatsapp text-emerald-600"></i>
+                                                <span>Kirim WA</span>
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -317,7 +366,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <h3 class="font-classic text-base font-bold text-red-900">
             Tolak Donasi Online <span id="labelTolakNo"></span>
         </h3>
-        <form method="POST" action="verifikasi-donasi.php" class="space-y-3 text-xs">
+        <form method="POST" action="" class="space-y-3 text-xs">
             <input type="hidden" name="aksi" value="tolak">
             <input type="hidden" id="inputTolakId" name="donasi_id" value="0">
             

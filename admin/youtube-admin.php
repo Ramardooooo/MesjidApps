@@ -8,6 +8,11 @@ $user   = $_SESSION['user'];
 $pesan  = '';
 $tipe   = '';
 
+if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
+    $pesan = 'Video YouTube berhasil dihapus dari sistem.';
+    $tipe  = 'success';
+}
+
 // Helper extract YouTube ID
 function extractYouTubeId($url) {
     if (preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $url, $match)) {
@@ -63,9 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 // 3. HAPUS VIDEO
 if (isset($_GET['hapus'])) {
     $idHapus = (int)$_GET['hapus'];
-    $pdo->prepare("DELETE FROM youtube_videos WHERE id = ?")->execute([$idHapus]);
-    header('Location: youtube-admin.php?msg=deleted');
-    exit;
+    if ($idHapus > 0) {
+        $pdo->prepare("DELETE FROM youtube_videos WHERE id = ?")->execute([$idHapus]);
+        header('Location: youtube-admin?msg=deleted');
+        exit;
+    }
 }
 
 $pag = paginate_data($pdo, "SELECT * FROM youtube_videos ORDER BY id DESC", [], 10);
@@ -146,10 +153,10 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 <a href="https://youtube.com/watch?v=<?= e($v['video_id']) ?>" target="_blank" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Buka di YouTube">
                                     <i class="fa-solid fa-play"></i>
                                 </a>
-                                <button type="button" onclick='editVideo(<?= json_encode($v) ?>)' class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
+                                <button type="button" data-video='<?= htmlspecialchars(json_encode($v, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>' onclick="editVideoSafe(this)" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="youtube-admin.php?hapus=<?= $v['id'] ?>" data-hapus data-judul="Hapus Video" data-pesan="Video ini akan dihapus dari daftar gallery YouTube. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
+                                <a href="youtube-admin?hapus=<?= $v['id'] ?>" data-hapus data-judul="Hapus Video" data-pesan="Video '<?= e($v['judul']) ?>' ini akan dihapus dari daftar gallery YouTube. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </a>
                             </div>
@@ -173,7 +180,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </button>
         </div>
 
-        <form method="POST" action="youtube-admin.php" class="space-y-4">
+        <form method="POST" action="" class="space-y-4">
             <input type="hidden" id="videoAksi" name="aksi" value="tambah">
             <input type="hidden" id="videoId" name="id" value="0">
 
@@ -230,16 +237,21 @@ function bukaModalVideo() {
     document.getElementById('modalVideo').classList.remove('hidden');
 }
 
-function editVideo(v) {
-    document.getElementById('videoAksi').value = 'edit';
-    document.getElementById('videoId').value = v.id;
-    document.getElementById('modalVideoTitle').textContent = 'Edit Video #' + v.id;
-    document.getElementById('videoJudul').value = v.judul;
-    document.getElementById('videoUrl').value = 'https://www.youtube.com/watch?v=' + v.video_id;
-    document.getElementById('videoKategori').value = v.kategori;
-    document.getElementById('videoDesk').value = v.deskripsi || '';
-    document.getElementById('videoActive').checked = v.is_active == 1;
-    document.getElementById('modalVideo').classList.remove('hidden');
+function editVideoSafe(btn) {
+    try {
+        const v = JSON.parse(btn.getAttribute('data-video'));
+        document.getElementById('videoAksi').value = 'edit';
+        document.getElementById('videoId').value = v.id;
+        document.getElementById('modalVideoTitle').textContent = 'Edit Video #' + v.id;
+        document.getElementById('videoJudul').value = v.judul || '';
+        document.getElementById('videoUrl').value = 'https://www.youtube.com/watch?v=' + (v.video_id || '');
+        document.getElementById('videoKategori').value = v.kategori || 'kajian';
+        document.getElementById('videoDesk').value = v.deskripsi || '';
+        document.getElementById('videoActive').checked = (v.is_active == 1);
+        document.getElementById('modalVideo').classList.remove('hidden');
+    } catch(e) {
+        console.error('Error parsing video data:', e);
+    }
 }
 
 function tutupModalVideo() {

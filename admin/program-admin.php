@@ -8,6 +8,11 @@ $user   = $_SESSION['user'];
 $pesan  = '';
 $tipe   = '';
 
+if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
+    $pesan = 'Program donasi berhasil dihapus dari sistem.';
+    $tipe  = 'success';
+}
+
 // 1. TAMBAH PROGRAM
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah') {
     $nama      = trim($_POST['nama_program'] ?? '');
@@ -54,6 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
         $stmt->execute([$nama, $kategori, $deskripsi, $lengkap, $target, $tglMulai, $tglAkhir, $status, $id]);
 
         if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] === UPLOAD_ERR_OK) {
+            $oldProgram = $pdo->prepare("SELECT gambar FROM program_donasi WHERE id = ?")->execute([$id]) ? $pdo->prepare("SELECT gambar FROM program_donasi WHERE id = ?")->execute([$id]) : null;
+            $stmt = $pdo->prepare("SELECT gambar FROM program_donasi WHERE id = ?");
+            $stmt->execute([$id]);
+            $old = $stmt->fetch();
+            if ($old && !empty($old['gambar'])) {
+                hapus_file_upload($old['gambar']);
+            }
+            
             $gambar = upload_berkas('gambar', 'program');
             if ($gambar) {
                 $pdo->prepare("UPDATE program_donasi SET gambar = ? WHERE id = ?")->execute([$gambar, $id]);
@@ -68,9 +81,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 // 3. HAPUS PROGRAM
 if (isset($_GET['hapus'])) {
     $idHapus = (int)$_GET['hapus'];
-    $pdo->prepare("DELETE FROM program_donasi WHERE id = ?")->execute([$idHapus]);
-    header('Location: program-admin.php?msg=deleted');
-    exit;
+    if ($idHapus > 0) {
+        $stmt = $pdo->prepare("SELECT gambar FROM program_donasi WHERE id = ?");
+        $stmt->execute([$idHapus]);
+        $program = $stmt->fetch();
+        
+        if ($program && !empty($program['gambar'])) {
+            hapus_file_upload($program['gambar']);
+        }
+        
+        $pdo->prepare("DELETE FROM program_donasi WHERE id = ?")->execute([$idHapus]);
+        header('Location: program-admin?msg=deleted');
+        exit;
+    }
 }
 
 $pag = paginate_data($pdo, "SELECT * FROM program_donasi ORDER BY id DESC", [], 10);
@@ -174,13 +197,13 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                         </td>
                         <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-2">
-                                <a href="../home/program-detail.php?id=<?= $p['id'] ?>" target="_blank" class="p-1.5 rounded-lg text-cypress-700 hover:bg-cypress-50" title="Pratinjau">
+                                <a href="../program-detail?id=<?= $p['id'] ?>" target="_blank" class="p-1.5 rounded-lg text-cypress-700 hover:bg-cypress-50" title="Pratinjau">
                                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
                                 </a>
-                                <button type="button" onclick='editProgram(<?= json_encode($p) ?>)' class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
+                                <button type="button" data-program='<?= htmlspecialchars(json_encode($p, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>' onclick="editProgramSafe(this)" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50" title="Edit">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="program-admin.php?hapus=<?= $p['id'] ?>" data-hapus data-judul="Hapus Program" data-pesan="Program '<?= e($p['nama_program'] ?? '') ?>' beserta progres donasinya akan dihapus. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
+                                <a href="program-admin?hapus=<?= $p['id'] ?>" data-hapus data-judul="Hapus Program" data-pesan="Program '<?= e($p['nama_program'] ?? '') ?>' beserta progres donasinya akan dihapus. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </a>
                             </div>
@@ -204,7 +227,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </button>
         </div>
 
-        <form method="POST" action="program-admin.php" enctype="multipart/form-data" class="space-y-4">
+        <form method="POST" action="" enctype="multipart/form-data" class="space-y-4">
             <input type="hidden" id="progAksi" name="aksi" value="tambah">
             <input type="hidden" id="progId" name="id" value="0">
 
@@ -285,19 +308,24 @@ function bukaModalProgram() {
     document.getElementById('modalProgram').classList.remove('hidden');
 }
 
-function editProgram(p) {
-    document.getElementById('progAksi').value = 'edit';
-    document.getElementById('progId').value = p.id;
-    document.getElementById('modalProgTitle').textContent = 'Edit Program #' + p.id;
-    document.getElementById('progNama').value = p.nama_program;
-    document.getElementById('progKategori').value = p.kategori;
-    document.getElementById('progTarget').value = p.target_donasi;
-    document.getElementById('progMulai').value = p.tanggal_mulai;
-    document.getElementById('progSelesai').value = p.tanggal_selesai || '';
-    document.getElementById('progStatus').value = p.status;
-    document.getElementById('progDesk').value = p.deskripsi;
-    document.getElementById('progLengkap').value = p.deskripsi_lengkap || '';
-    document.getElementById('modalProgram').classList.remove('hidden');
+function editProgramSafe(btn) {
+    try {
+        const p = JSON.parse(btn.getAttribute('data-program'));
+        document.getElementById('progAksi').value = 'edit';
+        document.getElementById('progId').value = p.id;
+        document.getElementById('modalProgTitle').textContent = 'Edit Program #' + p.id;
+        document.getElementById('progNama').value = p.nama_program || '';
+        document.getElementById('progKategori').value = p.kategori || 'donasi';
+        document.getElementById('progTarget').value = p.target_donasi || '';
+        document.getElementById('progMulai').value = p.tanggal_mulai || '';
+        document.getElementById('progSelesai').value = p.tanggal_selesai || '';
+        document.getElementById('progStatus').value = p.status || 'aktif';
+        document.getElementById('progDesk').value = p.deskripsi || '';
+        document.getElementById('progLengkap').value = p.deskripsi_lengkap || '';
+        document.getElementById('modalProgram').classList.remove('hidden');
+    } catch(e) {
+        console.error('Error parsing program data:', e);
+    }
 }
 
 function tutupModalProgram() {

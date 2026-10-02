@@ -1,5 +1,5 @@
 <?php
-// program.php - Katalog Program & Donasi Masjid
+// program - Katalog Program & Donasi Masjid
 require_once __DIR__ . '/../config/database.php';
 mulai_session();
 
@@ -62,25 +62,25 @@ require_once __DIR__ . '/../layouts/public_header.php';
         
         <!-- Tab Kategori -->
         <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 text-xs font-semibold">
-            <a href="program.php" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === '' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
+            <a href="program" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === '' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
                 Semua Program
             </a>
-            <a href="program.php?kategori=sosial" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === 'sosial' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
+            <a href="program?kategori=sosial" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === 'sosial' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
                 Sosial &amp; Yatim
             </a>
-            <a href="program.php?kategori=keagamaan" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === 'keagamaan' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
+            <a href="program?kategori=keagamaan" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === 'keagamaan' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
                 Dakwah &amp; Al-Qur'an
             </a>
-            <a href="program.php?kategori=operasional" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === 'operasional' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
+            <a href="program?kategori=operasional" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === 'operasional' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
                 Fisik &amp; Operasional
             </a>
-            <a href="program.php?kategori=pendidikan" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === 'pendidikan' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
+            <a href="program?kategori=pendidikan" class="px-3.5 py-2 rounded-xl whitespace-nowrap transition <?= $filterKategori === 'pendidikan' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
                 Pendidikan
             </a>
         </div>
 
         <!-- Form Cari -->
-        <form method="GET" action="program.php" class="w-full md:w-72 flex items-center gap-2">
+        <form method="GET" action="program" class="w-full md:w-72 flex items-center gap-2">
             <?php if ($filterKategori): ?>
                 <input type="hidden" name="kategori" value="<?= e($filterKategori) ?>">
             <?php endif; ?>
@@ -101,7 +101,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
             <i class="fa-solid fa-folder-open text-4xl text-stone-300"></i>
             <h3 class="text-lg font-bold text-warm-900 font-classic">Belum Ada Program Sesuai Pencarian</h3>
             <p class="text-xs text-warm-800/60 max-w-sm mx-auto">Silakan coba dengan kata kunci lain atau pilih kategori Semua Program.</p>
-            <a href="program.php" class="inline-block mt-2 px-4 py-2 rounded-xl bg-cypress-700 text-white text-xs font-semibold">Reset Filter</a>
+            <a href="program" class="inline-block mt-2 px-4 py-2 rounded-xl bg-cypress-700 text-white text-xs font-semibold">Reset Filter</a>
         </div>
     <?php else: ?>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -164,11 +164,11 @@ require_once __DIR__ . '/../layouts/public_header.php';
                     <!-- Footer Action -->
                     <div class="p-6 pt-0">
                         <div class="pt-4 border-t border-antique-100 flex items-center gap-3">
-                            <a href="program-detail.php?id=<?= $prog['id'] ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-warm-50 hover:bg-warm-100 border border-antique-300/50 text-warm-800 text-xs font-semibold transition">
+                            <a href="program-detail?id=<?= $prog['id'] ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-warm-50 hover:bg-warm-100 border border-antique-300/50 text-warm-800 text-xs font-semibold transition">
                                 Rincian
                             </a>
                             <?php if ($prog['status'] === 'aktif'): ?>
-                                <a href="donasi-online.php?program_id=<?= $prog['id'] ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md shadow-cypress-900/10 transition">
+                                <a href="donasi-online?program_id=<?= $prog['id'] ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md shadow-cypress-900/10 transition">
                                     Donasi Sekarang
                                 </a>
                             <?php else: ?>

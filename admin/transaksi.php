@@ -8,6 +8,16 @@ $profil = get_profil_masjid();
 $pesan = '';
 $tipe = '';
 
+if (isset($_GET['msg'])) {
+    if ($_GET['msg'] === 'deleted') {
+        $pesan = 'Catatan transaksi berhasil dihapus.';
+        $tipe  = 'success';
+    } elseif ($_GET['msg'] === 'toggled') {
+        $pesan = 'Status publikasi transaksi berhasil diperbarui.';
+        $tipe  = 'success';
+    }
+}
+
 // ==============================================================================
 // 1. EKSPOR CSV FILTER AKTIF
 // ==============================================================================
@@ -56,7 +66,7 @@ if (isset($_GET['toggle_publish'])) {
     $idToggle = (int)$_GET['toggle_publish'];
     $stmtToggle = $pdo->prepare("UPDATE transaksi_keuangan SET is_published = 1 - is_published WHERE id = ?");
     $stmtToggle->execute([$idToggle]);
-    header('Location: transaksi.php?msg=toggled');
+    header('Location: transaksi?msg=toggled');
     exit;
 }
 
@@ -93,7 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
         // Auto-generate No Transaksi
         $prefix = ($jenis === 'pemasukan') ? 'TRX-IN' : 'TRX-OUT';
         $ym = date('Ym', strtotime($tanggal));
-        $last = $pdo->query("SELECT no_transaksi FROM transaksi_keuangan WHERE no_transaksi LIKE '{$prefix}-{$ym}-%' ORDER BY id DESC LIMIT 1")->fetch();
+        $lastStmt = $pdo->prepare("SELECT no_transaksi FROM transaksi_keuangan WHERE no_transaksi LIKE CONCAT(?, '-', ?, '-%') ORDER BY id DESC LIMIT 1");
+        $lastStmt->execute([$prefix, $ym]);
+        $last = $lastStmt->fetch();
         if ($last) {
             $num = (int)substr($last['no_transaksi'], -4);
             $next = str_pad($num + 1, 4, '0', STR_PAD_LEFT);
@@ -132,13 +144,18 @@ if (isset($_GET['hapus'])) {
     $dataTrx = $trx->fetch();
 
     if ($dataTrx) {
+        // Hapus file bukti transaksi jika ada
+        if (!empty($dataTrx['bukti_transaksi'])) {
+            hapus_file_upload($dataTrx['bukti_transaksi']);
+        }
+        
         // Rollback nominal program jika pemasukan
         if ($dataTrx['jenis'] === 'pemasukan' && $dataTrx['program_id']) {
             $pdo->prepare("UPDATE program_donasi SET dana_terkumpul = GREATEST(0, dana_terkumpul - ?) WHERE id = ?")->execute([$dataTrx['nominal'], $dataTrx['program_id']]);
         }
 
         $pdo->prepare("DELETE FROM transaksi_keuangan WHERE id = ?")->execute([$idHapus]);
-        header('Location: transaksi.php?msg=deleted');
+        header('Location: transaksi?msg=deleted');
         exit;
     }
 }
@@ -228,7 +245,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
     </div>
 
     <div class="flex items-center gap-2.5">
-        <a href="transaksi.php?export=csv" class="px-3.5 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs">
+        <a href="transaksi?export=csv" class="px-3.5 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-xs">
             <i class="fa-solid fa-file-excel"></i>
             <span>Ekspor Excel/CSV</span>
         </a>
@@ -272,7 +289,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
      FILTER & SEARCH FORM
      ============================================================================== -->
 <div class="bg-white p-5 rounded-3xl border border-antique-300/50 shadow-sm">
-    <form method="GET" action="transaksi.php" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+    <form method="GET" action="transaksi" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
         
         <!-- Jenis -->
         <div>
@@ -400,7 +417,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 <?php endif; ?>
                             </td>
                             <td class="py-3.5 px-4 align-top text-center whitespace-nowrap">
-                                <a href="transaksi.php?toggle_publish=<?= $t['id'] ?>" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition <?= $t['is_published'] ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-stone-200 text-stone-700 hover:bg-stone-300' ?>" title="Klik untuk mengubah status publikasi">
+                                <a href="transaksi?toggle_publish=<?= $t['id'] ?>" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition <?= $t['is_published'] ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-stone-200 text-stone-700 hover:bg-stone-300' ?>" title="Klik untuk mengubah status publikasi">
                                     <i class="fa-solid <?= $t['is_published'] ? 'fa-eye' : 'fa-eye-slash' ?>"></i>
                                     <span><?= $t['is_published'] ? 'Publik' : 'Private' ?></span>
                                 </a>
@@ -412,7 +429,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                             <i class="fa-solid fa-file-invoice"></i>
                                         </a>
                                     <?php endif; ?>
-                                    <a href="transaksi.php?hapus=<?= $t['id'] ?>" data-hapus data-judul="Hapus Transaksi" data-pesan="Catatan transaksi '<?= e($t['keterangan']) ?>' akan dihapus permanen dari buku kas. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus Transaksi">
+                                    <a href="transaksi?hapus=<?= $t['id'] ?>" data-hapus data-judul="Hapus Transaksi" data-pesan="Catatan transaksi '<?= e($t['keterangan']) ?>' akan dihapus permanen dari buku kas. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus Transaksi">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </a>
                                 </div>
@@ -442,7 +459,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </button>
         </div>
 
-        <form method="POST" action="transaksi.php" enctype="multipart/form-data" class="space-y-4 text-xs">
+        <form method="POST" action="" enctype="multipart/form-data" class="space-y-4 text-xs">
             <input type="hidden" name="aksi" value="tambah">
             <input type="hidden" id="formJenis" name="jenis" value="pemasukan">
 

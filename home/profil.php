@@ -1,5 +1,4 @@
 <?php
-// profil.php - Profil Masjid, Sejarah Singkat, Visi Misi, Struktur DKM, dan Lokasi
 require_once __DIR__ . '/../config/database.php';
 mulai_session();
 
@@ -7,13 +6,10 @@ $profil = get_profil_masjid();
 $pageTitle = 'Profil & Struktur DKM · ' . $profil['nama_masjid'];
 $activeNav = 'profil';
 
-// Ambil Struktur Pengurus DKM
 $pengurus = $pdo->query("SELECT * FROM pengurus_masjid ORDER BY urutan ASC, id ASC")->fetchAll();
-
 require_once __DIR__ . '/../layouts/public_header.php';
 ?>
 
-<!-- Header Banner Halaman -->
 <div class="bg-cypress-950 text-white py-14 relative pattern-arabesque-dark border-b border-antique-500/30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3 relative z-10">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cypress-900 border border-antique-500/40 text-antique-300 text-xs font-semibold uppercase tracking-wider">
@@ -29,10 +25,8 @@ require_once __DIR__ . '/../layouts/public_header.php';
     </div>
 </div>
 
-<!-- Konten Utama Profil -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
-    
-    <!-- Bagian 1: Tentang & Sejarah Singkat -->
+
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
         <div class="lg:col-span-7 space-y-5">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/50 text-antique-700 text-xs font-semibold uppercase tracking-wider">

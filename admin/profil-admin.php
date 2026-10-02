@@ -8,6 +8,11 @@ $user   = $_SESSION['user'];
 $pesan  = '';
 $tipe   = '';
 
+if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
+    $pesan = 'Pengurus berhasil dihapus.';
+    $tipe  = 'success';
+}
+
 // 1. UPDATE PROFIL MASJID
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'update_profil') {
     $nama   = trim($_POST['nama_masjid'] ?? '');
@@ -88,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 if (isset($_GET['hapus_pengurus'])) {
     $idHapus = (int)$_GET['hapus_pengurus'];
     $pdo->prepare("DELETE FROM pengurus_masjid WHERE id = ?")->execute([$idHapus]);
-    header('Location: profil-admin.php?msg=deleted');
+    header('Location: profil-admin?msg=deleted');
     exit;
 }
 
@@ -121,7 +126,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
     <?php endif; ?>
 
     <!-- Formulir Profil Masjid -->
-    <form method="POST" action="profil-admin.php" class="bg-white rounded-3xl p-6 sm:p-10 border border-antique-300/50 shadow-sm space-y-6 text-xs">
+    <form method="POST" action="" class="bg-white rounded-3xl p-6 sm:p-10 border border-antique-300/50 shadow-sm space-y-6 text-xs">
         <input type="hidden" name="aksi" value="update_profil">
 
         <h3 class="font-classic text-base font-bold text-warm-900 border-b border-antique-200 pb-3">
@@ -245,7 +250,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Pengurus</span>
 
             <!-- Form Tambah Pengurus Langsung -->
-            <form method="POST" action="profil-admin.php" class="flex flex-wrap items-center gap-2 text-xs">
+            <form method="POST" action="" class="flex flex-wrap items-center gap-2 text-xs">
                 <input type="hidden" name="aksi" value="tambah_pengurus">
                 <input type="text" name="nama" required placeholder="Nama Pengurus..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
                 <input type="text" name="jabatan" required placeholder="Jabatan (Ketua, Bendahara)..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
@@ -266,7 +271,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                         <h4 class="font-bold text-warm-900 text-sm mt-1"><?= e($peng['nama']) ?></h4>
                         <span class="text-[11px] text-warm-800/60"><?= e($peng['bidang'] ?: 'Pengurus') ?></span>
                     </div>
-                    <a href="profil-admin.php?hapus_pengurus=<?= $peng['id'] ?>" data-hapus data-judul="Hapus Pengurus" data-pesan="Pengurus '<?= e($peng['nama']) ?>' akan dihapus dari struktur kepengurusan. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50">
+                    <a href="profil-admin?hapus_pengurus=<?= $peng['id'] ?>" data-hapus data-judul="Hapus Pengurus" data-pesan="Pengurus '<?= e($peng['nama']) ?>' akan dihapus dari struktur kepengurusan. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50">
                         <i class="fa-solid fa-trash-can"></i>
                     </a>
                 </div>

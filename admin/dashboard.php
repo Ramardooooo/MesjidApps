@@ -5,7 +5,7 @@ cek_login();
 
 $user = $_SESSION['user'];
 if ($user['role'] === 'donatur') {
-    header('Location: ../donatur/portal-donatur.php');
+    header('Location: ' . base_url() . '/donatur/portal-donatur');
     exit;
 }
 
@@ -77,7 +77,29 @@ $donasiPending = $pdo->query("SELECT d.*, p.nama_program FROM donasi_online d JO
 // 4. 5 Transaksi Kas Terbaru
 $transaksiTerbaru = $pdo->query("SELECT t.*, k.nama_kategori FROM transaksi_keuangan t JOIN kategori_transaksi k ON t.kategori_id = k.id ORDER BY t.tanggal_transaksi DESC, t.id DESC LIMIT 5")->fetchAll();
 
-// 5. Data Grafik 6 Bulan Terakhir
+// 5. Data Grafik 6 Bulan Terakhir (Single query optimization)
+$stmtChart = $pdo->prepare("
+    SELECT 
+        DATE_FORMAT(tanggal_transaksi, '%Y-%m') as bulan,
+        SUM(CASE WHEN jenis = 'pemasukan' THEN nominal ELSE 0 END) as pemasukan,
+        SUM(CASE WHEN jenis = 'pengeluaran' THEN nominal ELSE 0 END) as pengeluaran
+    FROM transaksi_keuangan
+    WHERE tanggal_transaksi >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+    GROUP BY DATE_FORMAT(tanggal_transaksi, '%Y-%m')
+    ORDER BY bulan DESC
+    LIMIT 6
+");
+$stmtChart->execute();
+$chartData = $stmtChart->fetchAll();
+
+$chartDataMap = [];
+foreach ($chartData as $row) {
+    $chartDataMap[$row['bulan']] = [
+        'pemasukan' => (float)$row['pemasukan'],
+        'pengeluaran' => (float)$row['pengeluaran']
+    ];
+}
+
 $chartLabels = [];
 $chartPemasukan = [];
 $chartPengeluaran = [];
@@ -85,19 +107,17 @@ $chartPengeluaran = [];
 for ($i = 5; $i >= 0; $i--) {
     $m = date('n', strtotime("-$i month"));
     $y = date('Y', strtotime("-$i month"));
+    $bulantgl = sprintf('%04d-%02d', $y, $m);
     $namaBln = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][$m] . ' ' . $y;
     $chartLabels[] = $namaBln;
 
-    $startDateMonth = sprintf('%04d-%02d-01', $y, $m);
-    $endDateMonth = date('Y-m-t', strtotime($startDateMonth));
-
-    $inMonth = $pdo->prepare("SELECT COALESCE(SUM(nominal),0) FROM transaksi_keuangan WHERE jenis = 'pemasukan' AND tanggal_transaksi BETWEEN ? AND ?");
-    $inMonth->execute([$startDateMonth, $endDateMonth]);
-    $chartPemasukan[] = (float)$inMonth->fetchColumn();
-
-    $outMonth = $pdo->prepare("SELECT COALESCE(SUM(nominal),0) FROM transaksi_keuangan WHERE jenis = 'pengeluaran' AND tanggal_transaksi BETWEEN ? AND ?");
-    $outMonth->execute([$startDateMonth, $endDateMonth]);
-    $chartPengeluaran[] = (float)$outMonth->fetchColumn();
+    if (isset($chartDataMap[$bulantgl])) {
+        $chartPemasukan[] = $chartDataMap[$bulantgl]['pemasukan'];
+        $chartPengeluaran[] = $chartDataMap[$bulantgl]['pengeluaran'];
+    } else {
+        $chartPemasukan[] = 0;
+        $chartPengeluaran[] = 0;
+    }
 }
 
 // Konfigurasi Tampilan
@@ -132,11 +152,11 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <!-- Tombol Aksi Cepat -->
         <div class="shrink-0 flex flex-wrap items-center gap-2.5">
             <?php if (in_array($user['role'], ['admin', 'bendahara'])): ?>
-                <a href="transaksi.php?action=tambah_masuk" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white font-bold text-xs shadow-sm transition">
+                <a href="transaksi?action=tambah_masuk" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white font-bold text-xs shadow-sm transition">
                     <i class="fa-solid fa-plus-circle"></i>
                     <span>Catat Kas Masuk</span>
                 </a>
-                <a href="transaksi.php?action=tambah_keluar" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow-sm transition">
+                <a href="transaksi?action=tambah_keluar" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow-sm transition">
                     <i class="fa-solid fa-minus-circle"></i>
                     <span>Catat Pengeluaran</span>
                 </a>
@@ -156,18 +176,18 @@ require_once __DIR__ . '/../layouts/sidebar.php';
 
     <!-- Filter Buttons & Form -->
     <div class="flex flex-wrap items-center gap-2">
-        <a href="dashboard.php?periode=hari_ini" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition <?= $periode === 'hari_ini' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
+        <a href="dashboard?periode=hari_ini" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition <?= $periode === 'hari_ini' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
             Hari Ini
         </a>
-        <a href="dashboard.php?periode=minggu_ini" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition <?= $periode === 'minggu_ini' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
+        <a href="dashboard?periode=minggu_ini" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition <?= $periode === 'minggu_ini' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
             Minggu Ini
         </a>
-        <a href="dashboard.php?periode=bulan_ini" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition <?= $periode === 'bulan_ini' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
+        <a href="dashboard?periode=bulan_ini" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition <?= $periode === 'bulan_ini' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-warm-50 text-warm-800 hover:bg-warm-100 border border-antique-200' ?>">
             Bulan Ini
         </a>
 
         <!-- Custom Date Range Form -->
-        <form method="GET" action="dashboard.php" class="flex items-center gap-1.5 pl-2 border-l border-antique-200">
+        <form method="GET" action="dashboard" class="flex items-center gap-1.5 pl-2 border-l border-antique-200">
             <input type="hidden" name="periode" value="custom">
             <input type="date" name="start_date" value="<?= e($startDate ?: $tglMulai) ?>" class="px-2 py-1 rounded-lg bg-warm-50 border border-antique-300 text-[11px] focus:ring-1 focus:ring-antique-500">
             <span class="text-xs text-stone-400">-</span>
@@ -297,7 +317,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             <h3 class="font-classic text-base font-bold text-warm-900">
                 Transaksi Kas Terbaru
             </h3>
-            <a href="transaksi.php" class="text-xs text-cypress-700 hover:text-cypress-900 font-semibold underline">
+            <a href="transaksi" class="text-xs text-cypress-700 hover:text-cypress-900 font-semibold underline">
                 Buka Buku Kas &rarr;
             </a>
         </div>
@@ -341,7 +361,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                     </span>
                 <?php endif; ?>
             </div>
-            <a href="verifikasi-donasi.php" class="text-xs text-cypress-700 hover:text-cypress-900 font-semibold underline">
+            <a href="verifikasi-donasi" class="text-xs text-cypress-700 hover:text-cypress-900 font-semibold underline">
                 Verifikasi &rarr;
             </a>
         </div>
@@ -362,7 +382,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                         </div>
                         <div class="text-right shrink-0">
                             <span class="font-bold text-cypress-800 font-classic block"><?= format_rupiah($dp['nominal']) ?></span>
-                            <a href="verifikasi-donasi.php" class="text-[10px] font-bold text-emerald-700 hover:underline">
+                            <a href="verifikasi-donasi" class="text-[10px] font-bold text-emerald-700 hover:underline">
                                 Periksa &rarr;
                             </a>
                         </div>

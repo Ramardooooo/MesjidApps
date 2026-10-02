@@ -6,9 +6,9 @@ mulai_session();
 
 if (isset($_SESSION['user'])) {
     if ($_SESSION['user']['role'] === 'donatur') {
-        header('Location: ../donatur/portal-donatur.php');
+        header('Location: ' . base_url() . '/donatur/portal-donatur');
     } else {
-        header('Location: ../admin/dashboard.php');
+        header('Location: ' . base_url() . '/admin/dashboard');
     }
     exit;
 }
@@ -35,37 +35,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pesan = 'Kata sandi minimal 6 karakter demi keamanan.';
         $tipe  = 'error';
     } else {
-        // Buat username jika kosong
-        if (empty($username)) {
-            $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0])) . rand(10, 99);
-        }
-
-        // Cek apakah username atau email sudah terdaftar
-        $stmtCek = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1");
-        $stmtCek->execute([$username, $email]);
-        if ($stmtCek->fetch()) {
-            $pesan = 'Username atau email tersebut sudah terdaftar. Silakan gunakan akun lain atau login.';
-            $tipe  = 'error';
+        $clientIP = get_client_ip();
+        $rate_key = 'register_' . md5($clientIP . '_' . strtolower($email));
+        $rate = rate_limit($rate_key, 3, 15);
+        
+        if (!$rate['allowed']) {
+            $minutes = floor($rate['wait_seconds'] / 60);
+            $seconds = $rate['wait_seconds'] % 60;
+            $pesan = sprintf('Terlalu banyak percobaan registrasi. Tunggu %02d:%02d sebelum coba lagi.', $minutes, $seconds);
+            $tipe = 'error';
         } else {
-            // Simpan data pendaftaran sementara di session
-            $_SESSION['pending_register'] = [
-                'nama'     => $nama,
-                'email'    => $email,
-                'no_hp'    => $no_hp,
-                'username' => $username,
-                'password' => password_hash($password, PASSWORD_DEFAULT),
-            ];
+            // Buat username jika kosong
+            if (empty($username)) {
+                $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0])) . rand(10, 99);
+            }
 
-            // Generate & kirim OTP
-            try {
-                $otp = generate_otp($email, 'register');
-                send_otp_email($email, $nama, $otp, 'register');
-                header('Location: verify-otp.php?purpose=register');
-                exit;
-            } catch (\Exception $e) {
-                unset($_SESSION['pending_register']);
-                $pesan = 'Gagal mengirim kode OTP ke email Anda. Pastikan email benar dan coba lagi.';
+            // Cek apakah username atau email sudah terdaftar
+            $stmtCek = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1");
+            $stmtCek->execute([$username, $email]);
+            if ($stmtCek->fetch()) {
+                $pesan = 'Username atau email tersebut sudah terdaftar. Silakan gunakan akun lain atau login.';
                 $tipe  = 'error';
+            } else {
+                // Check OTP cooldown
+                $checkRecent = $pdo->prepare("SELECT created_at FROM otp_codes WHERE email = ? AND purpose = 'register' ORDER BY created_at DESC LIMIT 1");
+                $checkRecent->execute([$email]);
+                $recent = $checkRecent->fetch();
+
+                if ($recent) {
+                    $secondsAgo = time() - strtotime($recent['created_at']);
+                    if ($secondsAgo < 60) {
+                        $wait = 60 - $secondsAgo;
+                        $pesan = "Kode OTP baru saja dikirim. Tunggu $wait detik sebelum minta ulang.";
+                        $tipe = 'error';
+                    } else {
+                        // Proceed with registration
+                        $_SESSION['pending_register'] = [
+                            'nama'     => $nama,
+                            'email'    => $email,
+                            'no_hp'    => $no_hp,
+                            'username' => $username,
+                            'password' => password_hash($password, PASSWORD_DEFAULT),
+                        ];
+
+                        try {
+                            $otp = generate_otp($email, 'register');
+                            send_otp_email($email, $nama, $otp, 'register');
+                            header('Location: verify-otp?purpose=register');
+                            exit;
+                        } catch (\Exception $e) {
+                            unset($_SESSION['pending_register']);
+                            $pesan = 'Gagal mengirim kode OTP ke email Anda. Pastikan email benar dan coba lagi.';
+                            $tipe  = 'error';
+                        }
+                    }
+                } else {
+                    // First time registration
+                    $_SESSION['pending_register'] = [
+                        'nama'     => $nama,
+                        'email'    => $email,
+                        'no_hp'    => $no_hp,
+                        'username' => $username,
+                        'password' => password_hash($password, PASSWORD_DEFAULT),
+                    ];
+
+                    try {
+                        $otp = generate_otp($email, 'register');
+                        send_otp_email($email, $nama, $otp, 'register');
+                        header('Location: verify-otp?purpose=register');
+                        exit;
+                    } catch (\Exception $e) {
+                        unset($_SESSION['pending_register']);
+                        $pesan = 'Gagal mengirim kode OTP ke email Anda. Pastikan email benar dan coba lagi.';
+                        $tipe  = 'error';
+                    }
+                }
             }
         }
     }
@@ -178,7 +222,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                         </svg>
                         <span><?= e($tanggalMasehi) ?></span>
                     </div>
-                    <a href="../index.php" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
+                    <a href="../" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
                         ← Beranda
                     </a>
                 </div>
@@ -208,7 +252,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     </div>
                     <?php endif; ?>
 
-                    <form method="POST" action="register.php" class="space-y-4">
+                    <form method="POST" action="register" class="space-y-4">
                         <div>
                             <label for="nama_lengkap" class="block text-xs font-semibold uppercase tracking-wider text-warm-800/80 mb-2">Nama Lengkap</label>
                             <div class="relative">
@@ -271,7 +315,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     </form>
 
                     <div class="mt-6 pt-5 border-t border-warm-100 text-center text-xs text-warm-800/70">
-                        Sudah memiliki akun? <a href="login.php" class="text-cypress-700 font-bold hover:underline">Masuk di Sini</a>
+                        Sudah memiliki akun? <a href="login" class="text-cypress-700 font-bold hover:underline">Masuk di Sini</a>
                     </div>
                 </div>
             </div>

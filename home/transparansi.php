@@ -88,7 +88,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
             <span class="text-xs text-warm-800/60">Data terhubung langsung dengan Aplikasi Pembukuan DKM</span>
         </div>
 
-        <form method="GET" action="transparansi.php" class="flex items-center gap-2.5 w-full sm:w-auto">
+        <form method="GET" action="transparansi" class="flex items-center gap-2.5 w-full sm:w-auto">
             <select name="bulan" class="px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 text-xs font-semibold focus:ring-2 focus:ring-antique-500 focus:outline-none">
                 <?php for ($m = 1; $m <= 12; $m++): ?>
                     <option value="<?= $m ?>" <?= ($bulanDipilih === $m) ? 'selected' : '' ?>>

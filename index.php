@@ -8,13 +8,14 @@ $pageTitle = $profil['nama_masjid'] . ' · ' . $profil['sebutan'];
 $activeNav = 'beranda';
 
 // 1. Ambil Slider / Banner Aktif
-$sliders = $pdo->query("SELECT * FROM banners WHERE tipe = 'slider' AND is_active = 1 ORDER BY urutan ASC")->fetchAll();
+$sliders = $pdo->query("SELECT * FROM banners WHERE tipe = 'slider' AND is_active = 1 ORDER BY urutan ASC, id DESC")->fetchAll();
 if (empty($sliders)) {
     $sliders = [
         [
             'judul' => 'Selamat Datang di ' . $profil['nama_masjid'],
             'subjudul' => 'Pusat Ibadah Khusyuk, Tarbiyah Generasi Qur\'ani, dan Kebangkitan Ekonomi Ummat.',
-            'link_url' => 'home/profil.php'
+            'link_url' => 'donasi-online',
+            'gambar' => ''
         ]
     ];
 }
@@ -48,115 +49,195 @@ require_once __DIR__ . '/layouts/public_header.php';
     <div class="absolute bottom-0 right-10 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative z-10">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
-            <!-- Hero Text Content -->
-            <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-                <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-cypress-900/80 border border-antique-500/40 text-antique-300 text-xs font-semibold uppercase tracking-widest shadow-sm">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Pusat Dakwah &amp; Ibadah Ummat</span>
-                </div>
-
-                <h1 class="text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight leading-tight">
-                    <?= e($sliders[0]['judul'] ?? 'Makmurkan Rumah Allah') ?><br class="hidden sm:inline">
-                    <span class="gold-gradient-text font-classic">Alirkan Pahala Abadi</span>
-                </h1>
-
-                <p class="text-stone-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                    <?= e($sliders[0]['subjudul'] ?? 'Mari bersama menegakkan syiar Islam, mendukung kegiatan taklim, dan menyalurkan kepedulian bagi anak-anak yatim serta dhuafa melalui sistem donasi masjid yang transparan, amanah, dan akuntabel.') ?>
-                </p>
-
-                <!-- Action Buttons -->
-                <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                    <a href="<?= e($sliders[0]['link_url'] ?? 'home/donasi-online.php') ?>" class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 hover:from-antique-400 hover:to-antique-500 text-cypress-950 font-bold text-sm tracking-wide shadow-lg shadow-antique-500/25 transition-luxury flex items-center gap-2.5">
-                        <i class="fa-solid fa-hand-holding-heart text-base"></i>
-                        <span>Infaq / Donasi Sekarang</span>
-                    </a>
-                    <a href="home/transparansi.php" class="px-6 py-3.5 rounded-xl bg-cypress-900/90 hover:bg-cypress-800 border border-antique-500/40 text-antique-200 hover:text-white font-semibold text-sm transition-luxury flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie text-sm text-antique-400"></i>
-                        <span>Lihat Transparansi Kas</span>
-                    </a>
-                </div>
-
-                <!-- Fast Ayat/Hadith Box -->
-                <div class="pt-4 border-t border-white/10 text-xs text-stone-300/80 flex items-start gap-3">
-                    <i class="fa-solid fa-quote-left text-antique-500 text-lg shrink-0 mt-0.5"></i>
-                    <p class="italic leading-relaxed">
-                        "Perumpamaan orang yang menginfakkan hartanya di jalan Allah seperti sebutir biji yang menumbuhkan tujuh tangkai, pada setiap tangkai ada seratus biji." <span class="text-antique-400 font-semibold">(QS. Al-Baqarah: 261)</span>
-                    </p>
-                </div>
-            </div>
-
-            <!-- Hero Slider Image -->
-            <div class="lg:col-span-5">
-                <?php if (!empty($sliders[0]['gambar'])): ?>
-                    <div class="relative h-96 rounded-3xl overflow-hidden border border-antique-500/40 shadow-2xl">
-                        <img src="<?= e(upload_url($sliders[0]['gambar'])) ?>" alt="<?= e($sliders[0]['judul']) ?>" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-gradient-to-t from-cypress-950/80 to-transparent"></div>
-                    </div>
-                <?php else: ?>
-                    
-                    <!-- Header Widget -->
-                    <div class="bg-cypress-900/90 backdrop-blur-md rounded-3xl border border-antique-500/40 p-6 sm:p-7 shadow-2xl relative overflow-hidden">
-                        <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-8 h-8 rounded-lg bg-cypress-950 border border-antique-500/40 flex items-center justify-center text-antique-400">
-                                    <i class="fa-regular fa-clock"></i>
-                                </div>
-                                <div>
-                                    <span class="font-classic text-sm font-bold text-white block">Jadwal Shalat Hari Ini</span>
-                                    <span class="text-[10px] text-antique-300 block"><?= tanggal_indo(date('Y-m-d'), true) ?></span>
-                                </div>
+        <div id="heroSliderContainer" class="relative">
+            <?php foreach ($sliders as $idx => $s): 
+                $targetUrl = app_url(!empty($s['link_url']) ? $s['link_url'] : 'donasi-online');
+            ?>
+                <div class="hero-slide-item transition-all duration-700 ease-in-out <?= $idx === 0 ? 'block opacity-100' : 'hidden opacity-0' ?>" data-slide-index="<?= $idx ?>">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                        
+                        <!-- Hero Text Content -->
+                        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                            <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-cypress-900/80 border border-antique-500/40 text-antique-300 text-xs font-semibold uppercase tracking-widest shadow-sm">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span>Pusat Dakwah &amp; Ibadah Ummat</span>
                             </div>
-                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                WITA
-                            </span>
-                        </div>
 
-                        <!-- Grid Waktu Shalat -->
-                        <div class="grid grid-cols-5 gap-2 text-center">
-                            <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Subuh</span>
-                                <span class="text-xs sm:text-sm font-bold text-white block mt-1">05:08</span>
-                            </div>
-                            <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Dzuhur</span>
-                                <span class="text-xs sm:text-sm font-bold text-white block mt-1">12:28</span>
-                            </div>
-                            <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Ashar</span>
-                                <span class="text-xs sm:text-sm font-bold text-white block mt-1">15:40</span>
-                            </div>
-                            <div class="p-2.5 rounded-xl bg-antique-500/20 border border-antique-500/50 shadow-inner">
-                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Maghrib</span>
-                                <span class="text-xs sm:text-sm font-bold text-antique-300 block mt-1">18:30</span>
-                            </div>
-                            <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                                <span class="text-[10px] text-antique-300 uppercase block font-semibold">Isya</span>
-                                <span class="text-xs sm:text-sm font-bold text-white block mt-1">19:39</span>
-                            </div>
-                        </div>
+                            <h1 class="text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight leading-tight">
+                                <?= e($s['judul'] ?? 'Makmurkan Rumah Allah') ?><br class="hidden sm:inline">
+                                <span class="gold-gradient-text font-classic">Alirkan Pahala Abadi</span>
+                            </h1>
 
-                        <!-- Highlight Quick Kas Mini -->
-                        <div class="mt-6 pt-5 border-t border-white/10 bg-cypress-950/60 -mx-6 -mb-6 p-6 rounded-b-3xl">
-                            <div class="flex items-center justify-between text-xs mb-2">
-                                <span class="text-stone-300 font-medium">Saldo Kas Transparan (Terbuka)</span>
-                                <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Audit Terkini</span>
-                            </div>
-                            <div class="flex items-baseline justify-between">
-                                <span class="text-2xl font-bold text-antique-300 font-classic">
-                                    <?= format_rupiah($saldoKasPublik) ?>
-                                </span>
-                                <a href="home/transparansi.php" class="text-xs text-stone-300 hover:text-white flex items-center gap-1 underline underline-offset-4">
-                                    <span>Detail</span>
-                                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            <p class="text-stone-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                                <?= e($s['subjudul'] ?? 'Mari bersama menegakkan syiar Islam, mendukung kegiatan taklim, dan menyalurkan kepedulian bagi anak-anak yatim serta dhuafa melalui sistem donasi masjid yang transparan, amanah, dan akuntabel.') ?>
+                            </p>
+
+                            <!-- Action Buttons -->
+                            <div class="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                                <a href="<?= e($targetUrl) ?>" class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 hover:from-antique-400 hover:to-antique-500 text-cypress-950 font-bold text-sm tracking-wide shadow-lg shadow-antique-500/25 transition-luxury flex items-center gap-2.5">
+                                    <i class="fa-solid fa-hand-holding-heart text-base"></i>
+                                    <span>Infaq / Donasi Sekarang</span>
+                                </a>
+                                <a href="<?= e(app_url('transparansi')) ?>" class="px-6 py-3.5 rounded-xl bg-cypress-900/90 hover:bg-cypress-800 border border-antique-500/40 text-antique-200 hover:text-white font-semibold text-sm transition-luxury flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-pie text-sm text-antique-400"></i>
+                                    <span>Lihat Transparansi Kas</span>
                                 </a>
                             </div>
+
+                            <!-- Fast Ayat/Hadith Box -->
+                            <div class="pt-4 border-t border-white/10 text-xs text-stone-300/80 flex items-start gap-3">
+                                <i class="fa-solid fa-quote-left text-antique-500 text-lg shrink-0 mt-0.5"></i>
+                                <p class="italic leading-relaxed">
+                                    "Perumpamaan orang yang menginfakkan hartanya di jalan Allah seperti sebutir biji yang menumbuhkan tujuh tangkai, pada setiap tangkai ada seratus biji." <span class="text-antique-400 font-semibold">(QS. Al-Baqarah: 261)</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Hero Slider Image -->
+                        <div class="lg:col-span-5">
+                            <?php if (!empty($s['gambar'])): ?>
+                                <div class="relative h-96 rounded-3xl overflow-hidden border border-antique-500/40 shadow-2xl">
+                                    <img src="<?= e(upload_url($s['gambar'])) ?>" alt="<?= e($s['judul']) ?>" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-cypress-950/80 to-transparent"></div>
+                                </div>
+                            <?php else: ?>
+                                
+                                <!-- Header Widget -->
+                                <div class="bg-cypress-900/90 backdrop-blur-md rounded-3xl border border-antique-500/40 p-6 sm:p-7 shadow-2xl relative overflow-hidden">
+                                    <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-lg bg-cypress-950 border border-antique-500/40 flex items-center justify-center text-antique-400">
+                                                <i class="fa-regular fa-clock"></i>
+                                            </div>
+                                            <div>
+                                                <span class="font-classic text-sm font-bold text-white block">Jadwal Shalat Hari Ini</span>
+                                                <span class="text-[10px] text-antique-300 block"><?= tanggal_indo(date('Y-m-d'), true) ?></span>
+                                            </div>
+                                        </div>
+                                        <span class="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                            WITA
+                                        </span>
+                                    </div>
+
+                                    <!-- Grid Waktu Shalat -->
+                                    <div class="grid grid-cols-5 gap-2 text-center">
+                                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Subuh</span>
+                                            <span class="text-xs sm:text-sm font-bold text-white block mt-1">05:08</span>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Dzuhur</span>
+                                            <span class="text-xs sm:text-sm font-bold text-white block mt-1">12:28</span>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Ashar</span>
+                                            <span class="text-xs sm:text-sm font-bold text-white block mt-1">15:40</span>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-antique-500/20 border border-antique-500/50 shadow-inner">
+                                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Maghrib</span>
+                                            <span class="text-xs sm:text-sm font-bold text-antique-300 block mt-1">18:30</span>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-white/5 border border-white/10">
+                                            <span class="text-[10px] text-antique-300 uppercase block font-semibold">Isya</span>
+                                            <span class="text-xs sm:text-sm font-bold text-white block mt-1">19:39</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Highlight Quick Kas Mini -->
+                                    <div class="mt-6 pt-5 border-t border-white/10 bg-cypress-950/60 -mx-6 -mb-6 p-6 rounded-b-3xl">
+                                        <div class="flex items-center justify-between text-xs mb-2">
+                                            <span class="text-stone-300 font-medium">Saldo Kas Transparan (Terbuka)</span>
+                                            <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Audit Terkini</span>
+                                        </div>
+                                        <div class="flex items-baseline justify-between">
+                                            <span class="text-2xl font-bold text-antique-300 font-classic">
+                                                <?= format_rupiah($saldoKasPublik) ?>
+                                            </span>
+                                            <a href="<?= e(app_url('transparansi')) ?>" class="text-xs text-stone-300 hover:text-white flex items-center gap-1 underline underline-offset-4">
+                                                <span>Detail</span>
+                                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                     </div>
-                <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
 
+            <?php if (count($sliders) > 1): ?>
+                <!-- Slider Navigasi & Dots -->
+                <div class="flex items-center justify-center lg:justify-start gap-3 pt-8">
+                    <button type="button" onclick="heroGeserSlide(-1)" class="w-9 h-9 rounded-xl bg-cypress-900/90 hover:bg-antique-500 hover:text-cypress-950 text-antique-300 border border-antique-500/30 flex items-center justify-center transition text-xs shadow-md" title="Slide Sebelumnya">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <div class="flex items-center gap-2" id="heroSlideDots">
+                        <?php foreach ($sliders as $idx => $s): ?>
+                            <button type="button" onclick="heroPilihSlide(<?= $idx ?>)" class="h-2.5 rounded-full transition-all duration-300 <?= $idx === 0 ? 'w-8 bg-antique-400' : 'w-2.5 bg-white/30 hover:bg-white/60' ?>" aria-label="Slide <?= $idx + 1 ?>"></button>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" onclick="heroGeserSlide(1)" class="w-9 h-9 rounded-xl bg-cypress-900/90 hover:bg-antique-500 hover:text-cypress-950 text-antique-300 border border-antique-500/30 flex items-center justify-center transition text-xs shadow-md" title="Slide Berikutnya">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+                <script>
+                    let curHeroSlide = 0;
+                    const totalHero = <?= count($sliders) ?>;
+                    let heroSlideTimer = null;
+
+                    function heroTampilkanSlide(idx) {
+                        const slides = document.querySelectorAll('.hero-slide-item');
+                        const dots = document.querySelectorAll('#heroSlideDots button');
+                        if (!slides.length) return;
+
+                        curHeroSlide = (idx + totalHero) % totalHero;
+
+                        slides.forEach((sl, i) => {
+                            if (i === curHeroSlide) {
+                                sl.classList.remove('hidden');
+                                setTimeout(() => {
+                                    sl.classList.remove('opacity-0');
+                                    sl.classList.add('opacity-100');
+                                }, 30);
+                            } else {
+                                sl.classList.remove('opacity-100');
+                                sl.classList.add('opacity-0');
+                                sl.classList.add('hidden');
+                            }
+                        });
+
+                        dots.forEach((d, i) => {
+                            if (i === curHeroSlide) {
+                                d.className = 'h-2.5 rounded-full transition-all duration-300 w-8 bg-antique-400';
+                            } else {
+                                d.className = 'h-2.5 rounded-full transition-all duration-300 w-2.5 bg-white/30 hover:bg-white/60';
+                            }
+                        });
+                    }
+
+                    function heroGeserSlide(dir) {
+                        heroTampilkanSlide(curHeroSlide + dir);
+                        mulaiHeroTimer();
+                    }
+
+                    function heroPilihSlide(idx) {
+                        heroTampilkanSlide(idx);
+                        mulaiHeroTimer();
+                    }
+
+                    function mulaiHeroTimer() {
+                        if (heroSlideTimer) clearInterval(heroSlideTimer);
+                        heroSlideTimer = setInterval(() => {
+                            heroTampilkanSlide(curHeroSlide + 1);
+                        }, 6000);
+                    }
+
+                    mulaiHeroTimer();
+                </script>
+            <?php endif; ?>
         </div>
     </div>
 </section>
@@ -228,7 +309,7 @@ require_once __DIR__ . '/layouts/public_header.php';
             </p>
         </div>
 
-        <a href="home/program.php" class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-cypress-700 hover:text-cypress-900 transition underline underline-offset-4 shrink-0">
+        <a href="<?= e(app_url('program')) ?>" class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-cypress-700 hover:text-cypress-900 transition underline underline-offset-4 shrink-0">
             <span>Lihat Semua Program</span>
             <i class="fa-solid fa-arrow-right"></i>
         </a>
@@ -285,10 +366,10 @@ require_once __DIR__ . '/layouts/public_header.php';
                 <!-- Footer Card Action -->
                 <div class="p-6 pt-0">
                     <div class="pt-4 border-t border-antique-100 flex items-center gap-3">
-                        <a href="home/program-detail.php?id=<?= $prog['id'] ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-warm-50 hover:bg-warm-100 border border-antique-300/50 text-warm-800 text-xs font-semibold transition">
+                        <a href="<?= e(app_url('program-detail?id=' . $prog['id'])) ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-warm-50 hover:bg-warm-100 border border-antique-300/50 text-warm-800 text-xs font-semibold transition">
                             Rincian Program
                         </a>
-                        <a href="home/donasi-online.php?program_id=<?= $prog['id'] ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md shadow-cypress-900/10 transition">
+                        <a href="<?= e(app_url('donasi-online?program_id=' . $prog['id'])) ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md shadow-cypress-900/10 transition">
                             Donasi
                         </a>
                     </div>
@@ -339,7 +420,7 @@ require_once __DIR__ . '/layouts/public_header.php';
                 </div>
 
                 <div>
-                    <a href="home/transparansi.php" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 text-cypress-950 font-bold text-xs shadow-lg hover:brightness-110 transition">
+                    <a href="<?= e(app_url('transparansi')) ?>" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 text-cypress-950 font-bold text-xs shadow-lg hover:brightness-110 transition">
                         <i class="fa-solid fa-file-invoice-dollar"></i>
                         <span>Buka Halaman Laporan Keuangan Lengkap</span>
                     </a>
@@ -372,7 +453,7 @@ require_once __DIR__ . '/layouts/public_header.php';
                 </div>
 
                 <div class="pt-2 text-center">
-                    <a href="home/donasi-online.php" class="inline-flex items-center gap-2 text-xs text-antique-300 hover:text-white font-semibold">
+                    <a href="<?= e(app_url('donasi-online')) ?>" class="inline-flex items-center gap-2 text-xs text-antique-300 hover:text-white font-semibold">
                         <i class="fa-solid fa-qrcode text-antique-500"></i>
                         <span>Ingin Donasi dengan QRIS Instan? Klik di Sini</span>
                     </a>
@@ -401,7 +482,7 @@ require_once __DIR__ . '/layouts/public_header.php';
             </p>
         </div>
 
-        <a href="home/kajian.php" class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-cypress-700 hover:text-cypress-900 transition underline underline-offset-4 shrink-0">
+        <a href="<?= e(app_url('kajian')) ?>" class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-cypress-700 hover:text-cypress-900 transition underline underline-offset-4 shrink-0">
             <span>Lihat Semua Video</span>
             <i class="fa-solid fa-arrow-right"></i>
         </a>
@@ -463,7 +544,7 @@ require_once __DIR__ . '/layouts/public_header.php';
                 </p>
             </div>
 
-            <a href="home/berita.php" class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-cypress-700 hover:text-cypress-900 transition underline underline-offset-4 shrink-0">
+            <a href="<?= e(app_url('berita')) ?>" class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-cypress-700 hover:text-cypress-900 transition underline underline-offset-4 shrink-0">
                 <span>Lihat Semua Berita</span>
                 <i class="fa-solid fa-arrow-right"></i>
             </a>
@@ -490,7 +571,7 @@ require_once __DIR__ . '/layouts/public_header.php';
                                 <i class="fa-regular fa-calendar mr-1"></i> <?= tanggal_indo($b['tanggal_publikasi']) ?>
                             </span>
                             <h3 class="font-bold text-base text-warm-900 font-classic group-hover:text-cypress-700 transition line-clamp-2">
-                                <a href="home/berita-detail.php?id=<?= $b['id'] ?>"><?= e($b['judul']) ?></a>
+                                <a href="<?= e(app_url('berita-detail?id=' . $b['id'])) ?>"><?= e($b['judul']) ?></a>
                             </h3>
                             <p class="text-xs text-warm-800/70 line-clamp-3 leading-relaxed">
                                 <?= e($b['ringkasan']) ?>
@@ -498,7 +579,7 @@ require_once __DIR__ . '/layouts/public_header.php';
                         </div>
                     </div>
                     <div class="p-6 pt-0">
-                        <a href="home/berita-detail.php?id=<?= $b['id'] ?>" class="inline-flex items-center gap-1.5 text-xs font-semibold text-cypress-700 hover:text-antique-600 transition">
+                        <a href="<?= e(app_url('berita-detail?id=' . $b['id'])) ?>" class="inline-flex items-center gap-1.5 text-xs font-semibold text-cypress-700 hover:text-antique-600 transition">
                             <span>Baca Selengkapnya</span>
                             <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </a>

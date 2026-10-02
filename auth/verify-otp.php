@@ -9,17 +9,17 @@ $purpose = $_GET['purpose'] ?? '';
 
 // Validasi purpose
 if (!in_array($purpose, ['register', 'forgot_password'])) {
-    header('Location: login.php');
+    header('Location: login');
     exit;
 }
 
 // Pastikan ada session pendukung
 if ($purpose === 'register' && empty($_SESSION['pending_register'])) {
-    header('Location: register.php');
+    header('Location: register');
     exit;
 }
 if ($purpose === 'forgot_password' && empty($_SESSION['pending_forgot'])) {
-    header('Location: forgot-password.php');
+    header('Location: forgot-password');
     exit;
 }
 
@@ -33,7 +33,7 @@ $otpSimulasi = $_SESSION['otp_simulasi'] ?? null;
 
 // Jika session pendukung hilang, kembalikan ke titik awal
 if ($email === '') {
-    header('Location: ' . ($purpose === 'register' ? 'register.php' : 'forgot-password.php'));
+    header('Location: ' . ($purpose === 'register' ? 'register' : 'forgot-password'));
     exit;
 }
 
@@ -42,14 +42,25 @@ $tipe  = '';
 
 // ── Kirim ulang OTP ─────────────────────────────────────────
 if (isset($_GET['resend']) && $_GET['resend'] === '1') {
-    try {
-        $otp = generate_otp($email, $purpose);
-        send_otp_email($email, $nama, $otp, $purpose);
-        $pesan = 'Kode OTP baru telah dikirimkan ke email Anda. Cek inbox atau folder spam.';
-        $tipe  = 'info';
-    } catch (\Exception $e) {
-        $pesan = 'Gagal mengirim ulang email OTP. Pastikan email valid dan coba lagi.';
+    $clientIP = get_client_ip();
+    $rate_key = 'resend_otp_' . md5($clientIP . '_' . $email);
+    $rate = rate_limit($rate_key, 3, 5);
+    
+    if (!$rate['allowed']) {
+        $minutes = floor($rate['wait_seconds'] / 60);
+        $seconds = $rate['wait_seconds'] % 60;
+        $pesan = sprintf('Terlalu sering permintaan ulang. Tunggu %02d:%02d sebelum kirim lagi.', $minutes, $seconds);
         $tipe  = 'error';
+    } else {
+        try {
+            $otp = generate_otp($email, $purpose);
+            send_otp_email($email, $nama, $otp, $purpose);
+            $pesan = 'Kode OTP baru telah dikirimkan ke email Anda. Cek inbox atau folder spam.';
+            $tipe  = 'info';
+        } catch (\Exception $e) {
+            $pesan = 'Gagal mengirim ulang email OTP. Pastikan email valid dan coba lagi.';
+            $tipe  = 'error';
+        }
     }
 }
 
@@ -65,62 +76,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (strlen($otpInput) !== 6 || !ctype_digit($otpInput)) {
         $pesan = 'Masukkan 6 digit kode OTP yang valid.';
         $tipe  = 'error';
-    } elseif (!verify_otp($email, $otpInput, $purpose)) {
-        $pesan = 'Kode OTP tidak valid atau sudah kedaluwarsa. Silakan minta kode baru.';
-        $tipe  = 'error';
     } else {
-        // OTP Benar ✓
-        if ($purpose === 'register') {
-            // Buat akun dari session
-            $data = $_SESSION['pending_register'];
-            $pdo->beginTransaction();
-            try {
-                $stmt = $pdo->prepare(
-                    "INSERT INTO users (username, email, no_hp, password, nama_lengkap, role, status)
-                     VALUES (?, ?, ?, ?, ?, 'donatur', 'aktif')"
-                );
-                $stmt->execute([
-                    $data['username'], $data['email'], $data['no_hp'],
-                    $data['password'], $data['nama'],
-                ]);
-                $newId = $pdo->lastInsertId();
-
-                // Notifikasi sambutan
-                $pdo->prepare(
-                    "INSERT INTO notifikasi (user_id, judul, pesan, tipe) VALUES (?, ?, ?, 'sistem')"
-                )->execute([
-                    $newId,
-                    'Selamat Datang di Portal Donatur!',
-                    'Ahlan wa sahlan! Akun donatur Anda telah aktif. Anda dapat memantau riwayat donasi dan mengunduh kwitansi resmi di sini.',
-                ]);
-                $pdo->commit();
-            } catch (Exception $e) {
-                $pdo->rollBack();
-                $pesan = 'Terjadi kesalahan saat membuat akun. Silakan coba lagi.';
-                $tipe  = 'error';
-                goto render;
-            }
-
-            // Auto-login
-            $_SESSION['user'] = [
-                'id'       => $newId,
-                'username' => $data['username'],
-                'nama'     => $data['nama'],
-                'role'     => 'donatur',
-                'email'    => $data['email'],
-            ];
-            unset($_SESSION['pending_register'], $_SESSION['otp_simulasi']);
-
-            header('Location: ../donatur/portal-donatur.php?welcome=1');
-            exit;
-
+        if (!verify_otp($email, $otpInput, $purpose)) {
+            $pesan = 'Kode OTP tidak valid atau sudah kedaluwarsa. Silakan minta kode baru.';
+            $tipe  = 'error';
         } else {
-            // forgot_password — simpan otorisasi reset ke session
-            $_SESSION['otp_verified_email'] = $email;
-            unset($_SESSION['pending_forgot'], $_SESSION['otp_simulasi']);
+            // OTP Benar ✓
+            if ($purpose === 'register') {
+                // Buat akun dari session
+                $data = $_SESSION['pending_register'];
+                $pdo->beginTransaction();
+                try {
+                    $stmt = $pdo->prepare(
+                        "INSERT INTO users (username, email, no_hp, password, nama_lengkap, role, status)
+                         VALUES (?, ?, ?, ?, ?, 'donatur', 'aktif')"
+                    );
+                    $stmt->execute([
+                        $data['username'], $data['email'], $data['no_hp'],
+                        $data['password'], $data['nama'],
+                    ]);
+                    $newId = $pdo->lastInsertId();
 
-            header('Location: reset-password.php');
-            exit;
+                    // Notifikasi sambutan
+                    $pdo->prepare(
+                        "INSERT INTO notifikasi (user_id, judul, pesan, tipe) VALUES (?, ?, ?, 'sistem')"
+                    )->execute([
+                        $newId,
+                        'Selamat Datang di Portal Donatur!',
+                        'Ahlan wa sahlan! Akun donatur Anda telah aktif. Anda dapat memantau riwayat donasi dan mengunduh kwitansi resmi di sini.',
+                    ]);
+                    $pdo->commit();
+                } catch (Exception $e) {
+                    $pdo->rollBack();
+                    $pesan = 'Terjadi kesalahan saat membuat akun. Silakan coba lagi.';
+                    $tipe  = 'error';
+                    goto render;
+                }
+
+                // Auto-login
+                $_SESSION['user'] = [
+                    'id'       => $newId,
+                    'username' => $data['username'],
+                    'nama'     => $data['nama'],
+                    'role'     => 'donatur',
+                    'email'    => $data['email'],
+                ];
+                unset($_SESSION['pending_register'], $_SESSION['otp_simulasi']);
+
+                header('Location: ' . base_url() . '/donatur/portal-donatur?welcome=1');
+                exit;
+
+            } else {
+                // forgot_password — simpan otorisasi reset ke session
+                $_SESSION['otp_verified_email'] = $email;
+                unset($_SESSION['pending_forgot'], $_SESSION['otp_simulasi']);
+
+                header('Location: reset-password');
+                exit;
+            }
         }
     }
 }
@@ -270,7 +283,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                         </svg>
                         <span><?= e($tanggalMasehi) ?></span>
                     </div>
-                    <a href="../index.php" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
+                    <a href="../" class="px-2 py-0.5 rounded bg-cypress-900/80 border border-antique-500/30 text-[10px] text-antique-300 hover:bg-cypress-800 transition">
                         ← Beranda
                     </a>
                 </div>
@@ -322,7 +335,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     <?php endif; ?>
 
                     <!-- Form OTP — 6 Kotak Digit -->
-                    <form method="POST" action="verify-otp.php?purpose=<?= e($purpose) ?>" id="otpForm" class="space-y-6">
+                    <form method="POST" action="verify-otp?purpose=<?= e($purpose) ?>" id="otpForm" class="space-y-6">
 
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-warm-800/80 mb-4 text-center">
@@ -371,12 +384,12 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     <!-- Kirim Ulang & Kembali -->
                     <div class="mt-6 pt-5 border-t border-warm-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-warm-800/70">
                         <span>Tidak menerima kode?
-                            <a href="verify-otp.php?purpose=<?= e($purpose) ?>&resend=1"
+                            <a href="verify-otp?purpose=<?= e($purpose) ?>&resend=1"
                                class="text-cypress-700 font-bold hover:underline" id="resendLink">
                                 Kirim Ulang OTP
                             </a>
                         </span>
-                        <a href="<?= $purpose === 'register' ? 'register.php' : 'forgot-password.php' ?>"
+                        <a href="<?= $purpose === 'register' ? 'register' : 'forgot-password' ?>"
                            class="text-antique-600 hover:text-antique-700 hover:underline">
                             ← Kembali
                         </a>

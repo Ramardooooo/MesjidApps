@@ -1,5 +1,5 @@
 <?php
-// kajian.php - Integrasi Video Kajian & Live Streaming YouTube (Scope 10)
+// kajian - Integrasi Video Kajian & Live Streaming YouTube (Scope 10)
 require_once __DIR__ . '/../config/database.php';
 mulai_session();
 
@@ -43,16 +43,16 @@ require_once __DIR__ . '/../layouts/public_header.php';
     
     <!-- Filter Kategori Video -->
     <div class="flex items-center gap-2 overflow-x-auto pb-2 text-xs font-semibold">
-        <a href="kajian.php" class="px-4 py-2 rounded-xl whitespace-nowrap transition <?= $kategori === '' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
+        <a href="kajian" class="px-4 py-2 rounded-xl whitespace-nowrap transition <?= $kategori === '' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
             Semua Video
         </a>
-        <a href="kajian.php?kategori=live_streaming" class="px-4 py-2 rounded-xl whitespace-nowrap transition <?= $kategori === 'live_streaming' ? 'bg-red-700 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
+        <a href="kajian?kategori=live_streaming" class="px-4 py-2 rounded-xl whitespace-nowrap transition <?= $kategori === 'live_streaming' ? 'bg-red-700 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
             <i class="fa-solid fa-broadcast-tower mr-1.5"></i> Live Streaming
         </a>
-        <a href="kajian.php?kategori=kajian" class="px-4 py-2 rounded-xl whitespace-nowrap transition <?= $kategori === 'kajian' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
+        <a href="kajian?kategori=kajian" class="px-4 py-2 rounded-xl whitespace-nowrap transition <?= $kategori === 'kajian' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
             Kajian Tematik
         </a>
-        <a href="kajian.php?kategori=dokumentasi" class="px-4 py-2 rounded-xl whitespace-nowrap transition <?= $kategori === 'dokumentasi' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
+        <a href="kajian?kategori=dokumentasi" class="px-4 py-2 rounded-xl whitespace-nowrap transition <?= $kategori === 'dokumentasi' ? 'bg-cypress-800 text-white shadow-xs' : 'bg-white text-warm-800 border border-antique-200 hover:bg-warm-50' ?>">
             Dokumentasi Kegiatan
         </a>
     </div>

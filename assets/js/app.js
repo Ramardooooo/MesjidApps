@@ -286,15 +286,34 @@
         }
     });
 
-    function reenableModalCleanup() {
-        /* placeholder untuk membership sesudah tutup modal tertentu */
+    /* =========================================================
+     * MODAL: Pindahkan semua modal fixed ke document.body
+     * agar efek blur menutupi 100% layar (termasuk sidebar & header)
+     * ========================================================= */
+    function attachModalsToBody() {
+        document.querySelectorAll('[id^="modal"], .fixed[tabindex="-1"], .fixed[role="dialog"]').forEach(function (m) {
+            if (m.classList.contains('fixed') && m.parentElement !== document.body && m.id !== 'mainSidebar' && m.id !== 'sidebarOverlay') {
+                document.body.appendChild(m);
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachModalsToBody);
+    } else {
+        attachModalsToBody();
     }
 
     /* =========================================================
-     * Keyboard: ESC menutup modal konfirmasi
+     * Keyboard: ESC menutup modal konfirmasi & modal aktif
      * ========================================================= */
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') hideConfirm();
+        if (e.key === 'Escape') {
+            hideConfirm();
+            document.querySelectorAll('[id^="modal"].fixed:not(.hidden)').forEach(function (m) {
+                m.classList.add('hidden');
+            });
+        }
     });
 
     injectStyles();
