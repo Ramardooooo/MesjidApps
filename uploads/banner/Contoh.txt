@@ -1,0 +1,1 @@
+Ini cuman file contoh, jadi semua bentuk foto/img otomatis ke upload disini kalo udah masuk database. Gak Perlu Manual!
