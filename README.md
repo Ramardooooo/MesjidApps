@@ -448,9 +448,6 @@ Rincian lengkap riwayat pembaruan dapat dibaca pada [release.md](release.md).
 | [release.md](release.md) | Catatan rilis lengkap dan changelog per versi |
 | [WALKTHROUGH.md](WALKTHROUGH.md) | Panduan lengkap alur penggunaan dan peran sistem |
 | [PROGRESS.md](PROGRESS.md) | Status perkembangan fitur dan roadmap masa depan |
-| [docs/panduan-user.php](docs/panduan-user.php) | Halaman panduan tata cara donasi untuk jamaah |
-| [docs/panduan-admin.php](docs/panduan-admin.php) | Halaman panduan pengelolaan kas & konten untuk admin |
-
 ---
 
 ## Lisensi
