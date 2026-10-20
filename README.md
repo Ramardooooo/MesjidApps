@@ -96,10 +96,11 @@ mesjid-donasi-main/
 |   |-- helpers.php                 Helper global (app_url, CSRF, pagination, sanitasi)
 |   |-- mail.php                    Konfigurasi SMTP PHPMailer
 |
-|-- db/                             Skema Database & Migrasi
-|   |-- MesjidApps.sql              Skema database utama
-|   |-- MesjidAppsV1.1.sql          Skema update V1.1 terintegrasi
-|   |-- DataMesjidApps.sql          Data seeder & contoh awal
+|-- db/                                  Skema Database & Migrasi
+|   |-- MesjidAppsV1.0.sql               Skema Database Utama
+|   |-- MesjidAppsV1.1.sql               Migrasi Database V1.1
+|   |-- MesjidAppsV1.2.sql               Migrasi Database V1.2
+|   |-- DataMesjidApps.sql               Data Seeder & Contoh Awal
 |
 |-- docs/                           Pusat Dokumentasi & Legalitas
 |   |-- panduan-user.php            Panduan interaktif jamaah & donatur
