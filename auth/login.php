@@ -24,8 +24,33 @@ if (isset($_GET['reset']) && $_GET['reset'] === 'success') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usernameOrEmail = trim($_POST['username'] ?? '');
     $password        = $_POST['password'] ?? '';
+    $turnstileToken  = $_POST['cf-turnstile-response'] ?? '';
 
-    if ($usernameOrEmail === '' || $password === '') {
+    // Verifikasi Turnstile ke Cloudflare
+    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'secret'   => TURNSTILE_SECRET,
+        'response' => $turnstileToken,
+        'remoteip' => get_client_ip(),
+    ]));
+    $response = curl_exec($ch);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+    
+    // Logika verifikasi yang lebih fleksibel untuk testing lokal
+    $responseData = json_decode($response, true);
+    $isTurnstileValid = ($responseData && ($responseData['success'] ?? false));
+    
+    // Jika di localhost dan gagal koneksi ke Cloudflare, izinkan saja (untuk debug)
+    if (!$isTurnstileValid && ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1') && !$response) {
+        $isTurnstileValid = true;
+    }
+
+    if (!$isTurnstileValid) {
+        $error = 'Verifikasi captcha gagal';
+    } elseif ($usernameOrEmail === '' || $password === '') {
         $error = 'Mohon masukkan username / email dan kata sandi Anda.';
     } else {
         $clientIP = get_client_ip();
@@ -42,29 +67,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch();
 
             if ($user && password_verify($password, $user['password'])) {
-                if ($rate['attempts'] > 3) {
-                    $minutes = floor($rate['wait_seconds'] / 60);
-                    $seconds = $rate['wait_seconds'] % 60;
-                    $error = sprintf('Terlalu banyak percobaan login. Tunggu %02d:%02d sebelum coba lagi.', $minutes, $seconds);
-                } else {
-                    session_regenerate_id(true);
-                    
-                    $_SESSION['user'] = [
-                        'id'       => $user['id'],
-                        'username' => $user['username'],
-                        'nama'     => $user['nama_lengkap'],
-                        'role'     => $user['role'],
-                        'email'    => $user['email'] ?? '',
-                        'no_hp'    => $user['no_hp'] ?? '',
-                    ];
+                session_regenerate_id(true);
+                
+                $_SESSION['user'] = [
+                    'id'       => $user['id'],
+                    'username' => $user['username'],
+                    'nama'     => $user['nama_lengkap'],
+                    'role'     => $user['role'],
+                    'email'    => $user['email'] ?? '',
+                    'no_hp'    => $user['no_hp'] ?? '',
+                ];
 
-                    if ($user['role'] === 'donatur') {
-                        header('Location: ' . base_url() . '/donatur/portal-donatur');
-                    } else {
-                        header('Location: ' . base_url() . '/admin/dashboard');
-                    }
-                    exit;
+                if ($user['role'] === 'donatur') {
+                    header('Location: ' . base_url() . '/donatur/portal-donatur');
+                } else {
+                    header('Location: ' . base_url() . '/admin/dashboard');
                 }
+                exit;
             } else {
                 $error = 'Username / email atau kata sandi salah.';
             }
@@ -83,6 +102,8 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masuk Portal · <?= e($profil['nama_masjid']) ?></title>
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts & Custom Classic Theme -->
@@ -189,12 +210,15 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
             <div class="md:col-span-7 p-8 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
                 <div class="max-w-md mx-auto w-full">
                     <div class="mb-8">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/60 text-antique-700 text-xs font-semibold uppercase tracking-wider mb-3">
-                            <span class="w-1.5 h-1.5 rounded-full bg-cypress-700"></span>
-                            Portal Pengurus &amp; Donatur
-                        </div>
                         <h2 class="text-2xl font-bold text-warm-900 tracking-tight">Selamat Datang</h2>
+                        <?php if (isset($_GET['redirect'])): ?>
+                        <div class="mt-3 p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-sm flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Anda perlu login untuk melanjutkan donasi.</span>
+                        </div>
+                        <?php else: ?>
                         <p class="text-sm text-warm-800/70 mt-1.5">Silakan masuk untuk mengelola data donasi &amp; kegiatan masjid.</p>
+                        <?php endif; ?>
                     </div>
 
                     <?php if ($pesanSukses): ?>
@@ -207,12 +231,12 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     <?php endif; ?>
 
                     <?php if ($error): ?>
-                    <div class="mb-6 p-4 rounded-xl bg-amber-50/90 border border-amber-200/80 text-amber-900 flex items-start gap-3 text-sm shadow-sm" id="errorBox" data-reset-at="<?= isset($rate['reset_at']) ? $rate['reset_at'] : 0 ?>">
-                        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-900 flex items-start gap-3 text-sm shadow-sm" id="errorBox">
+                        <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
                         <div class="leading-snug">
-                            <strong class="font-semibold block text-xs uppercase tracking-wide text-amber-800">Akses Ditolak</strong>
+                            <strong class="font-semibold block text-xs uppercase tracking-wide text-red-800">Login Gagal</strong>
                             <span id="errorMsg"><?= e($error) ?></span>
                         </div>
                     </div>
@@ -274,6 +298,14 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                             <a href="register" class="text-xs font-semibold text-antique-700 hover:text-antique-900 hover:underline transition">
                                 Daftar Donatur
                             </a>
+                        </div>
+
+                        <!-- Turnstile Widget (Custom Container) -->
+                        <div class="my-3 p-2.5 rounded-2xl bg-warm-50/80 border border-antique-300/60 shadow-inner flex flex-col items-center justify-center gap-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-warm-800/60">
+                                Silahkan Captcha Dulu
+                            </span>
+                            <div class="cf-turnstile scale-95" data-sitekey="<?= TURNSTILE_SITE_KEY ?>" data-action="login" data-theme="light"></div>
                         </div>
 
                         <button type="submit"

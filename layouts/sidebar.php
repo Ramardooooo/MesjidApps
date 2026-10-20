@@ -5,6 +5,17 @@ mulai_session();
 $user = $_SESSION['user'] ?? ['nama' => 'Pengurus', 'role' => 'admin'];
 $userRole = $user['role'] ?? 'admin';
 
+// Ambil avatar user dari database
+$userAvatar = null;
+if (isset($user['id'])) {
+    $stmtAvatar = $pdo->prepare("SELECT avatar FROM users WHERE id = ? LIMIT 1");
+    $stmtAvatar->execute([$user['id']]);
+    $userData = $stmtAvatar->fetch();
+    if ($userData && !empty($userData['avatar'])) {
+        $userAvatar = upload_url($userData['avatar']);
+    }
+}
+
 $activeMenu   = $activeMenu ?? 'dashboard';
 $pageSubtitle = $pageSubtitle ?? 'Portal Administrasi & Pembukuan Masjid';
 
@@ -206,17 +217,22 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $bulanSekarang . ' ' . da
         </a>
 
         <!-- Profil Akun Pengurus -->
-        <div class="flex items-center justify-between gap-3 pt-1">
+        <a href="profil-saya" class="flex items-center justify-between gap-3 pt-1 hover:bg-white/5 rounded-lg p-2 -m-2 transition">
             <div class="flex items-center gap-2.5 overflow-hidden">
-                <div class="w-9 h-9 rounded-full bg-cypress-800 border border-antique-500/50 flex items-center justify-center text-antique-300 font-bold text-xs shrink-0">
-                    <?= strtoupper(substr($user['nama'] ?? 'A', 0, 1)) ?>
-                </div>
+                <?php if ($userAvatar): ?>
+                    <img src="<?= e($userAvatar) ?>" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-antique-500/50 shrink-0">
+                <?php else: ?>
+                    <div class="w-9 h-9 rounded-full bg-cypress-800 border border-antique-500/50 flex items-center justify-center text-antique-300 font-bold text-xs shrink-0">
+                        <?= strtoupper(substr($user['nama'] ?? 'A', 0, 1)) ?>
+                    </div>
+                <?php endif; ?>
                 <div class="truncate">
                     <span class="text-xs font-bold text-white block truncate leading-tight"><?= e($user['nama'] ?? 'Pengurus') ?></span>
                     <span class="text-[10px] text-antique-300 uppercase tracking-widest block font-semibold"><?= e(str_replace('_', ' ', $userRole)) ?></span>
                 </div>
             </div>
-        </div>
+            <i class="fa-solid fa-pen-to-square text-xs text-antique-400"></i>
+        </a>
 
         <a href="../auth/logout" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-200 text-xs font-medium transition-luxury">
             <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
@@ -234,7 +250,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $bulanSekarang . ' ' . da
     <!-- Header Desktop -->
     <header class="hidden lg:flex bg-white/70 backdrop-blur-md sticky top-0 z-20 border-b border-antique-300/40 px-8 py-3.5 items-center justify-between no-print shadow-xs">
         <div class="flex items-center gap-2.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
+            
             <span class="text-xs font-semibold text-warm-900"><?= e($pageSubtitle) ?></span>
         </div>
 

@@ -137,10 +137,6 @@ require_once __DIR__ . '/../layouts/sidebar.php';
 
     <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/50 text-antique-800 text-xs font-semibold uppercase tracking-wider mb-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                <span>Portal Resmi Pengurus DKM</span>
-            </div>
             <h1 class="text-2xl sm:text-3xl font-bold text-warm-900 tracking-tight font-classic">
                 Assalamu’alaikum, <span class="text-cypress-700"><?= e($user['nama']) ?></span>
             </h1>

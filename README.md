@@ -6,15 +6,38 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.x-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![PHPMailer](https://img.shields.io/badge/PHPMailer-7.x-31A4DB?style=flat-square&logo=maildotru&logoColor=white)](https://github.com/PHPMailer/PHPMailer)
+[![Cloudflare Turnstile](https://img.shields.io/badge/Turnstile-Protected-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://www.cloudflare.com/products/turnstile/)
 [![Apache](https://img.shields.io/badge/Apache-2.4-D22128?style=flat-square&logo=apache&logoColor=white)](https://httpd.apache.org)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](#lisensi)
-[![Release](https://img.shields.io/badge/Release-v1.1.0-0e90f0?style=flat-square)](RELEASE.md)
+[![Release](https://img.shields.io/badge/Release-v1.2.0-0e90f0?style=flat-square)](release.md)
+
+---
+
+## Daftar Isi
+- [Tentang Proyek](#tentang-proyek)
+- [Fitur Utama](#fitur-utama)
+- [Struktur Folder](#struktur-folder)
+- [Database & Skema](#database--skema)
+- [Panduan Integrasi Cloudflare Turnstile](#panduan-integrasi-cloudflare-turnstile)
+- [Panduan Instalasi & Deployment Lengkap](#panduan-instalasi--deployment-lengkap)
+  - [1. Kebutuhan Sistem & Ekstensi PHP](#1-kebutuhan-sistem--ekstensi-php)
+  - [2. Konfigurasi Web Server Apache & Virtual Host](#2-konfigurasi-web-server-apache--virtual-host)
+  - [3. Setup Database (Fresh Install vs Migrasi)](#3-setup-database-fresh-install-vs-migrasi)
+  - [4. Konfigurasi Email SMTP (PHPMailer & Gmail App Password)](#4-konfigurasi-email-smtp-phpmailer--gmail-app-password)
+  - [5. Izin Berkas & Keamanan Direktori Uploads](#5-izin-berkas--keamanan-direktori-uploads)
+  - [6. Checklist Sebelum Go-Live (Production)](#6-checklist-sebelum-go-live-production)
+- [Tema & Desain](#tema--desain)
+- [Catatan Rilis](#catatan-rilis)
+- [Dokumentasi Pendukung](#dokumentasi-pendukung)
+- [Lisensi](#lisensi)
 
 ---
 
 ## Tentang Proyek
 
-Aplikasi web terintegrasi untuk pengelolaan masjid yang mencakup **website publik**, **sistem pembukuan kas**, **platform donasi online**, **e-kwitansi berlapis**, dan **portal donatur**. Dibangun dengan arsitektur modular PHP murni tanpa framework, dirancang untuk transparansi keuangan, kemudahan administrasi DKM, dan pengalaman jamaah yang modern.
+Aplikasi web terpadu untuk digitalisasi dan tata kelola masjid modern yang mencakup **website profil & syiar publik**, **sistem pembukuan kas akuntabel**, **platform donasi & infaq online**, **e-kwitansi dengan Security Lock berlapis**, **notifikasi email otomatis donatur**, **direktori tim pengurus DKM**, **portal donatur modular**, serta **pusat dokumentasi & panduan pengguna**. 
+
+Dibangun dengan arsitektur PHP murni modern tanpa framework (*vanilla PHP*), aplikasi dirancang untuk memberikan performa tinggi yang ringan, transparansi penuh bagi para jamaah, keamanan berlapis anti-bot & brute-force, dan kemudahan pengoperasian oleh pengurus DKM.
 
 ---
 
@@ -22,233 +45,449 @@ Aplikasi web terintegrasi untuk pengelolaan masjid yang mencakup **website publi
 
 | Modul | Deskripsi |
 |-------|-----------|
-| **Website Publik** | Beranda, profil masjid & pengurus DKM, program donasi, berita/kegiatan, kajian YouTube, transparansi keuangan, kontak |
-| **Admin Panel** | Dashboard keuangan, manajemen berita, program donasi, pengguna, banner, rekening & QRIS, video YouTube, laporan |
-| **Pembukuan Kas** | Pencatatan pemasukan/pengeluaran, kategori transaksi, bukti transaksi, filter periode, ekspor CSV/Excel, laporan cetak |
-| **Donasi Online** | Formulir donasi via QRIS & transfer bank, validasi MIME upload, format rupiah realtime, verifikasi admin |
-| **e-Kwitansi Berlapis** | Security lock 3 status: Pending (DRAFT/watermark), Diverifikasi (stempel DKM resmi), Ditolak (keterangan alasan) |
-| **Inbox Pesan Kontak** | Admin baca & balas pesan jamaah via WhatsApp/Email, badge unread realtime di sidebar |
-| **Portal Donatur** | Dashboard donatur, riwayat donasi, update profil, cetak kwitansi mandiri |
-| **Autentikasi** | Login multi-role (admin, bendahara, content_admin, donatur), registrasi, lupa/reset password via OTP |
-| **Transparansi Kas** | Laporan keuangan publik, saldo kas terbuka |
-| **Integrasi YouTube** | Embed video kajian, live streaming, dokumentasi kegiatan |
+| **Website Publik & Hero Slider** | Beranda dengan interactive multi-slide hero banner, widget Jadwal Shalat WITA, counter saldo kas audit, profil masjid, katalog program, warta berita, video kajian YouTube, dan formulir kontak |
+| **Proteksi Anti-Bot & Brute-Force** | Integrasi **Cloudflare Turnstile CAPTCHA** pada login, register, reset password, dan formulir donasi. Proteksi **Database-backed Rate Limiting** dengan UI live countdown timer |
+| **Notifikasi Email Donasi** | Otomatis mengirim email notifikasi ke donatur via PHPMailer saat donasi berhasil diverifikasi (lengkap tautan kwitansi sah) atau ditolak (beserta alasan) |
+| **Direktori Pengurus & Tim Kami** | Halaman publik Tim Kami (`/tim-kami`), detail profil staff pengurus (`/profil-staff?id=X`) dengan counter view, widget DKM di profil masjid, dan panel pengurus mandiri (`/admin/profil-saya`) |
+| **Portal Donatur Modular** | Dashboard donatur berbasis komponen modular (`donatur/includes/`) dengan tab statistik infaq, riwayat donasi berstatus, edit profil & avatar, serta keamanan sandi |
+| **e-Kwitansi Security Lock** | Proteksi 3 status kwitansi: Pending (DRAFT/watermark/kunci cetak), Diverifikasi (stempel resmi DKM, tanda tangan, QR validasi aktif, PDF), Ditolak (alasan penolakan) |
+| **Pusat Dokumentasi (Docs)** | Halaman Panduan Pengguna (`/docs/panduan-user`), Panduan Khusus Admin (`/docs/panduan-admin`), Kebijakan Privasi, dan Syarat & Ketentuan |
+| **Pembukuan Kas Akuntabel** | Pencatatan pemasukan/pengeluaran, kategori transaksi, unggah bukti fisik, filter periode, server-side pagination, ekspor CSV/Excel, dan laporan siap cetak |
+| **Verifikasi Donasi Otomatis** | Verifikasi satu klik yang otomatis mencatat donasi ke kas masuk, memperbarui dana terkumpul pada program terkait, dan mengirim email ke donatur |
+| **Inbox Pesan Jamaah** | Admin menerima pesan dari form kontak, notifikasi badge unread di sidebar, dan fasilitas Quick Reply via WhatsApp Web atau Email |
+| **Keamanan & Sesi** | Proteksi CSRF token terpadu, regenerasi session ID, auto-logout idle 2 jam, sanitasi input XSS (`e()`), PDO prepared statements, dan upload validation (MIME check) |
 
 ---
 
 ## Struktur Folder
 
 ```
-mesjid-website/
+mesjid-donasi-main/
 |
-|-- admin/                          Panel Administrator
-|   |-- dashboard.php               Dashboard keuangan & eksekutif
-|   |-- berita-admin.php            Manajemen berita & artikel
-|   |-- banner-admin.php            Manajemen slider & banner
-|   |-- program-admin.php           CRUD program donasi
-|   |-- rekening-admin.php          Kelola rekening donasi & QRIS
-|   |-- transaksi.php               Pembukuan kas
-|   |-- verifikasi-donasi.php       Verifikasi & persetujuan donasi
-|   |-- laporan.php                 Laporan keuangan & cetak
-|   |-- profil-admin.php            Edit profil & pengaturan masjid
-|   |-- youtube-admin.php           Kelola video YouTube & kajian
-|   |-- users-admin.php             Manajemen pengguna & hak akses
-|   |-- pesan-admin.php             [NEW v1.1] Inbox pesan kontak jamaah
+|-- admin/                          Panel Administrator & Pengurus
+|   |-- dashboard.php               Dashboard keuangan eksekutif & grafik 6 bulan
+|   |-- berita-admin.php            Manajemen warta berita & kegiatan
+|   |-- banner-admin.php            Manajemen banner/slider & one-click toggle aktif
+|   |-- program-admin.php           CRUD program donasi & target dana
+|   |-- rekening-admin.php          Kelola rekening bank & QRIS resmi
+|   |-- transaksi.php               Pembukuan kas (pemasukan/pengeluaran & pagination)
+|   |-- verifikasi-donasi.php       Verifikasi donasi masuk + auto-mail notification
+|   |-- laporan.php                 Laporan keuangan & cetak periode
+|   |-- profil-admin.php            Edit profil masjid & pengaturan umum
+|   |-- profil-saya.php             Pengaturan profil personal pengurus & publikasi staff
+|   |-- youtube-admin.php           Kelola video kajian YouTube & streaming
+|   |-- users-admin.php             Manajemen pengguna & hak akses RBAC
+|   |-- pesan-admin.php             Inbox pesan kontak jamaah + Quick Reply WA/Email
 |
 |-- assets/
 |   |-- css/classic-theme.css       Tema klasik Islami (Deep Cypress + Antique Gold)
-|   |-- js/app.js                   Interaksi frontend (modal, toast, clipboard, form)
+|   |-- js/app.js                   Interaksi frontend (modal, clipboard, toast, attach)
 |
 |-- auth/                           Autentikasi & Manajemen Sesi
-|   |-- login.php / register.php / logout.php
-|   |-- forgot-password.php / verify-otp.php / reset-password.php
+|   |-- login.php                   Login multi-role + Cloudflare Turnstile + Rate Limit
+|   |-- register.php                Registrasi akun donatur + Turnstile + OTP
+|   |-- forgot-password.php         Lupa kata sandi via OTP email
+|   |-- verify-otp.php              Verifikasi token OTP email
+|   |-- reset-password.php          Reset kata sandi baru
+|   |-- logout.php                  Pembersihan sesi dan redirect
 |
 |-- config/
-|   |-- database.php                Koneksi DB (PDO), session, helper upload
-|   |-- mail.php                    Konfigurasi SMTP (Gmail App Password)
-|   |-- helpers.php                 Fungsi bantu: base_url, pagination, RBAC, upload
+|   |-- database.php                Koneksi database PDO & sinkronisasi timezone
+|   |-- helpers.php                 Helper global (app_url, CSRF, pagination, sanitasi)
+|   |-- mail.php                    Konfigurasi SMTP PHPMailer
 |
-|-- db/
-|   |-- MesjidApps.sql              Skema database lengkap (16 tabel)
+|-- db/                             Skema Database & Migrasi
+|   |-- MesjidApps.sql              Skema database utama
+|   |-- MesjidAppsV1.1.sql          Skema update V1.1 terintegrasi
 |   |-- DataMesjidApps.sql          Data seeder & contoh awal
+|   |-- create_rate_limits_table.sql Tabel proteksi rate limiting
+|   |-- add_staff_profile_columns.sql Kolom profil pengurus/staff
+|   |-- add_columns.sql             Kolom tracking notifikasi & metadata
+|   |-- add_indexes.sql             Index performa query
+|   |-- add_foreign_keys.sql        Relasi integritas foreign key
+|   |-- README_MIGRATIONS.md        Panduan eksekusi migrasi database
 |
-|-- donatur/
-|   |-- portal-donatur.php          Dashboard mandiri donatur
-|   |-- kwitansi.php                e-Kwitansi dengan Security Lock 3 status [v1.1]
+|-- docs/                           Pusat Dokumentasi & Legalitas
+|   |-- panduan-user.php            Panduan interaktif jamaah & donatur
+|   |-- panduan-admin.php           Panduan operasional administrator panel
+|   |-- privacy.php                 Kebijakan privasi data pengguna
+|   |-- terms.php                   Syarat & ketentuan layanan donasi
 |
-|-- home/                           Halaman Publik
-|   |-- profil.php / program.php / program-detail.php
-|   |-- donasi-online.php           Formulir donasi (format rupiah realtime) [v1.1]
-|   |-- transparansi.php / berita.php / berita-detail.php
-|   |-- kajian.php / kontak.php
+|-- donatur/                        Area Donatur Terdaftar
+|   |-- portal-donatur.php          Halaman utama portal donatur
+|   |-- kwitansi.php                e-Kwitansi resmi dengan Security Lock 3 status
+|   |-- includes/                   Arsitektur komponen modular portal donatur
+|       |-- portal-controller.php   Pengendali logika donatur & keamanan sandi
+|       |-- portal-header.php       Header hero & profil ringkas donatur
+|       |-- portal-status.php       Widget ringkasan statistik kontribusi
+|       |-- portal-history.php      Tabel riwayat donasi & unduh kwitansi
+|       |-- portal-profile.php      Formulir update data profil & avatar
+|       |-- portal-account.php      Pengaturan keamanan akun & ubah password
+|       |-- portal-modal.php        Modal dialog interaktif portal
+|       |-- portal-scripts.php      Script navigasi tab & preview upload
+|       |-- portal-footer.php       Footer antarmuka portal
 |
-|-- layouts/                        Komponen Layout
-|   |-- header.php / footer.php / sidebar.php  (admin)
-|   |-- public_header.php / public_footer.php   (publik)
+|-- home/                           Halaman Website Publik
+|   |-- profil.php                  Tentang masjid, sejarah, visi misi & DKM
+|   |-- tim-kami.php                Direktori publik tim pengurus harian DKM
+|   |-- profil-staff.php            Detail biografi & sosmed individual staff
+|   |-- profil-staff-dkm.php        Widget tim pengelola di profil masjid
+|   |-- program.php                 Katalog seluruh program infaq & wakaf aktif
+|   |-- program-detail.php          Rincian program + form donasi kilat
+|   |-- donasi-online.php           Formulir donasi online + Turnstile + Rupiah realtime
+|   |-- transparansi.php            Buku kas terbuka & transparansi publik
+|   |-- berita.php / berita-detail.php Warta & artikel kegiatan masjid
+|   |-- kajian.php                  Video kajian & arsip ceramah YouTube
+|   |-- kontak.php                  Formulir kontak & informasi sekretariat
 |
-|-- otp/                            Modul OTP Email
-|-- uploads/                        Direktori Unggahan
-|-- vendor/                         Dependensi Composer (PHPMailer)
+|-- layouts/                        Komponen Tata Letak (Layout)
+|   |-- public_header.php           Navbar sticky modern, dropdown navigasi & CTA
+|   |-- public_footer.php           Footer islami elegan, quick copy rekening & WA float
+|   |-- sidebar.php                 Sidebar admin dengan avatar pengurus & badge pesan
+|   |-- footer.php                  Footer admin & universal delete confirmation modal
 |
-|-- index.php                       Beranda utama
-|-- .htaccess                       Rewrite URL bersih + proteksi keamanan
-|-- RELEASE.md                      Catatan rilis lengkap
-|-- WALKTHROUGH.md                  Panduan alur penggunaan
-|-- PROGRESS.md                     Status fitur & roadmap
+|-- otp/                            Layanan Email & Notifikasi
+|   |-- email-template.php          Template email OTP
+|   |-- otp.php                     Fungsi pengiriman & verifikasi OTP
+|   |-- send_donasi_notification.php Fungsi pengiriman email status donasi
+|
+|-- uploads/                        Direktori Unggahan Berkas (Banner, Berita, Bukti, Avatar)
+|-- vendor/                         Dependensi Pustaka PHPMailer
+|-- index.php                       Beranda utama dengan multi-slide hero & jadwal shalat
+|-- .htaccess                       Apache rewrite URL bersih, HTTPS & proteksi berkas
+|-- release.md                      Catatan rilis lengkap per versi
+|-- WALKTHROUGH.md                  Panduan alur navigasi & alur pengguna
+|-- PROGRESS.md                     Status fitur & roadmap pengembangan
 |-- README.md                       Dokumentasi proyek ini
 ```
 
 ---
 
-## Database
+## Database & Skema
 
-Sistem menggunakan **16 tabel** dengan engine InnoDB dan charset `utf8mb4_unicode_ci`.
+Sistem didukung oleh **17 tabel** relasional dengan engine InnoDB dan charset `utf8mb4_unicode_ci`:
 
-| # | Tabel | Fungsi |
-|---|-------|--------|
-| 1 | `users` | Pengguna & multi-role RBAC |
-| 2 | `profil_masjid` | Profil, sejarah, visi-misi, sosial media |
-| 3 | `pengurus_masjid` | Data pengurus DKM |
-| 4 | `rekening_donasi` | Rekening bank & QRIS |
-| 5 | `program_donasi` | Program donasi (target, terkumpul, status) |
-| 6 | `kategori_transaksi` | Master kategori pemasukan & pengeluaran |
-| 7 | `transaksi_keuangan` | Buku kas terintegrasi |
-| 8 | `donasi_online` | Donasi masuk (pending/diverifikasi/ditolak) |
-| 9 | `berita` | Berita, artikel & kegiatan |
-| 10 | `banners` | Slider & banner beranda |
-| 11 | `youtube_videos` | Video YouTube (kajian, live) |
-| 12 | `notifikasi` | Notifikasi pengguna & donatur |
-| 13 | `pesan_kontak` | Pesan masuk formulir kontak jamaah |
-| 14 | `otp_codes` | Kode OTP verifikasi |
-| 15 | `donasi` | (Legacy) Donasi manual versi awal |
-| 16 | `kegiatan` | (Legacy) Kegiatan versi awal |
+| # | Tabel | Deskripsi |
+|---|-------|-----------|
+| 1 | `users` | Akun pengguna, multi-role RBAC, avatar, bio, jabatan & profil staff |
+| 2 | `rate_limits` | Pencatatan rate limit, IP, attempts & waktu penguncian brute-force |
+| 3 | `profil_masjid` | Profil masjid, identitas, kontak, dan saldo awal kas |
+| 4 | `pengurus_masjid` | Data susunan kepengurusan DKM |
+| 5 | `rekening_donasi` | Rekening bank tujuan dan QRIS resmi |
+| 6 | `program_donasi` | Program donasi (target, dana terkumpul, status) |
+| 7 | `kategori_transaksi` | Kategori pemasukan dan pengeluaran kas |
+| 8 | `transaksi_keuangan` | Buku kas digital terpadu |
+| 9 | `donasi_online` | Catatan transaksi donasi online & metadata notifikasi email |
+| 10 | `berita` | Berita, artikel, dan warta kegiatan masjid |
+| 11 | `banners` | Slider beranda interaktif & banner promosi |
+| 12 | `youtube_videos` | Video kajian, ceramah, dan siaran langsung |
+| 13 | `notifikasi` | Pemberitahuan sistem untuk pengurus & donatur |
+| 14 | `pesan_kontak` | Pesan masuk dari formulir kontak jamaah |
+| 15 | `otp_codes` | Kode token OTP verifikasi email |
+| 16 | `donasi` | *(Legacy)* Pencatatan donasi manual versi awal |
+| 17 | `kegiatan` | *(Legacy)* Jadwal kegiatan versi awal |
 
-### Akun Default
+### Akun Bawaan Pengujian
 
-| Role | Username | Password |
-|------|----------|----------|
+| Peran (Role) | Username | Password |
+|--------------|----------|----------|
 | Administrator | `admin` | `admin123` |
-| Bendahara | `bendahara` | `bendahara123` |
-| Content Admin | `konten` | `konten123` |
-| Donatur | `donatur` | `donatur123` |
+| Bendahara Kas | `bendahara` | `bendahara123` |
+| Pengelola Konten | `konten` | `konten123` |
+| Akun Donatur | `donatur` | `donatur123` |
 
-> ⚠️ **Ganti semua password default sebelum deployment ke production.**
-
----
-
-## Persyaratan
-
-- **PHP** >= 8.0 (PDO MySQL, mbstring, json, openssl, **fileinfo**)
-- **MySQL** >= 8.0 / MariaDB >= 10.5
-- **Apache** dengan `mod_rewrite` aktif (atau **Laragon** / **XAMPP**)
-- **Composer**
+> ⚠️ **Peringatan Keamanan:** Selalu ubah kata sandi akun-akun default di atas sebelum mempublikasikan sistem ke server production.
 
 ---
 
-## Instalasi
+## Panduan Integrasi Cloudflare Turnstile
 
-### 1. Clone Repository
+Sistem menggunakan **Cloudflare Turnstile** sebagai pengganti reCAPTCHA konvensional. Turnstile melindungi formulir dari bot tanpa memerlukan tantangan teka-teki gambar yang mengganggu kenyamanan jamaah.
 
-```bash
-git clone https://github.com/username/mesjid-website.git
-cd mesjid-website
-```
+### 1. Cara Mendapatkan Kredensial Turnstile
+1. Buka dan login ke [Cloudflare Dashboard](https://dash.cloudflare.com/).
+2. Pada navigasi sidebar kiri, pilih menu **Turnstile**.
+3. Klik tombol **Add Widget**.
+4. Isi data konfigurasi:
+   - **Widget Name**: Contoh `Masjid Jami' Nurul Iman`.
+   - **Domains**: 
+     - Masukkan domain website produksi Anda (misal: `masjidnuruliman.id` atau `donasi.masjidnuruliman.id`).
+     - **Penting untuk Pengujian Lokal**: Tambahkan juga domain `localhost` dan `127.0.0.1` agar widget dapat muncul di komputer lokal Anda.
+   - **Widget Mode**: Pilih **Managed** (direkomendasikan karena Cloudflare otomatis memutuskan tingkat interaksi pengunjung secara cerdas).
+5. Klik tombol **Create**.
+6. Anda akan mendapatkan dua kunci:
+   - **Site Key**: Kunci publik untuk menampilkan widget di antarmuka frontend HTML.
+   - **Secret Key**: Kunci rahasia untuk validasi respon token dari server backend PHP.
 
-### 2. Konfigurasi Web Server
-
-Jika menggunakan **Laragon**, copy folder ke `C:\laragon\www\` dan akses via `http://localhost/mesjid-website/`.
-
-Pastikan `mod_rewrite` aktif di Apache.
-
-### 3. Buat Database
-
-```bash
-mysql -u root -p < db/MesjidApps.sql
-mysql -u root -p mesjid_website < db/DataMesjidApps.sql
-```
-
-Atau gunakan phpMyAdmin untuk mengimpor kedua file secara berurutan.
-
-### 4. Konfigurasi Koneksi
-
-Edit `config/database.php`:
+### 2. Memasang Kunci pada Aplikasi
+Buka file `config/database.php`, lalu masukkan kedua kunci tersebut:
 
 ```php
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'mesjid_website');
+// Cloudflare Turnstile Credentials
+define('TURNSTILE_SITE_KEY', '0x4AAAAAAFcTxJ1R4nVL_gYW'); // Ganti dengan Site Key Anda
+define('TURNSTILE_SECRET', '0x4AAAAAAFcTxMgMG6u4eUV812AM_eB_AOM'); // Ganti dengan Secret Key Anda
 ```
 
-### 5. Install Dependensi
+### 3. Alur Verifikasi Server-Side & Fallback Lokal
+Validasi token dilakukan melalui cURL POST ke endpoint Cloudflare:
+`https://challenges.cloudflare.com/turnstile/v0/siteverify`
 
+```php
+$ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+    'secret'   => TURNSTILE_SECRET,
+    'response' => $turnstileToken,
+    'remoteip' => get_client_ip(),
+]));
+$response = curl_exec($ch);
+curl_close($ch);
+```
+
+> 💡 **Fallback Cerdas untuk Developer:**  
+> Jika aplikasi dijalankan di lingkungan lokal (`127.0.0.1` atau `::1`) dan komputer tidak terhubung ke internet atau cURL gagal menjangkau server Cloudflare, sistem akan secara otomatis mengizinkan verifikasi (*fail-open for localhost*) sehingga developer tetap dapat melakukan pengujian sistem tanpa terhalang.
+
+---
+
+## Panduan Instalasi & Deployment Lengkap
+
+### 1. Kebutuhan Sistem & Ekstensi PHP
+
+- **PHP Version**: PHP 8.0, 8.1, 8.2, atau 8.3.
+- **Ekstensi PHP Wajib**:
+  Pastikan ekstensi berikut telah diaktifkan pada file `php.ini` Anda:
+  ```ini
+  extension=pdo_mysql
+  extension=mbstring
+  extension=openssl
+  extension=curl
+  extension=fileinfo
+  extension=gd
+  extension=zip
+  ```
+- **Rekomendasi Konfigurasi `php.ini` untuk Server Produksi**:
+  ```ini
+  upload_max_filesize = 10M
+  post_max_size = 12M
+  memory_limit = 256M
+  max_execution_time = 120
+  display_errors = Off
+  display_startup_errors = Off
+  log_errors = On
+  error_log = /var/log/php_errors.log
+  date.timezone = Asia/Makassar
+  ```
+
+---
+
+### 2. Konfigurasi Web Server Apache & Virtual Host
+
+Aplikasi mengandalkan modul `mod_rewrite` dan `mod_headers` untuk URL bersih (*Clean URLs*) dan pengamanan HTTP Headers.
+
+#### A. Mengaktifkan Modul Apache (Linux / Ubuntu / Debian)
 ```bash
-composer install
+sudo a2enmod rewrite
+sudo a2enmod headers
+sudo systemctl restart apache2
 ```
 
-Konfigurasi SMTP di `config/mail.php` menggunakan Gmail **App Password**.
+#### B. Konfigurasi Virtual Host Apache
+Pastikan direktori web Anda disetel dengan `AllowOverride All` agar file `.htaccess` di root proyek berfungsi:
 
-### 6. Akses Aplikasi
+```apache
+<VirtualHost *:80>
+    ServerName masjidnuruliman.id
+    ServerAlias www.masjidnuruliman.id
+    DocumentRoot "/var/www/mesjid-donasi-main"
 
-| URL | Deskripsi |
-|-----|-----------|
-| `http://localhost/mesjid-website/` | Beranda publik |
-| `http://localhost/mesjid-website/login` | Halaman login |
-| `http://localhost/mesjid-website/dashboard` | Dashboard admin |
-| `http://localhost/mesjid-website/donasi-online` | Formulir donasi |
+    <Directory "/var/www/mesjid-donasi-main">
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/mesjid_error.log
+    CustomLog ${APACHE_LOG_DIR}/mesjid_access.log combined
+</VirtualHost>
+```
+
+#### C. Penanganan Subfolder (Laragon / XAMPP)
+Jika Anda menggunakan web server lokal seperti Laragon atau XAMPP, proyek dapat ditempatkan di subfolder:
+- Laragon: `C:\laragon\www\mesjid-donasi-main`
+- XAMPP: `C:\xampp\htdocs\mesjid-donasi-main`
+
+Sistem secara dinamis mendeteksi prefix path melalui fungsi helper `base_url()` dan `app_url()` di `config/helpers.php`, sehingga Anda **tidak perlu mengubah kode routing** meskipun berpindah dari subfolder lokal ke root domain di VPS/cPanel.
+
+---
+
+### 3. Setup Database (Fresh Install vs Migrasi)
+
+#### Opsi A: Instalasi Baru dari Nol (Fresh Installation)
+1. Buat database baru di MySQL/MariaDB:
+   ```sql
+   CREATE DATABASE mesjid_website CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+2. Impor skema dan data awal secara berurutan:
+   ```bash
+   # Masuk ke folder proyek
+   cd /path/to/mesjid-donasi-main
+
+   # Eksekusi via terminal mysql
+   mysql -u root -p mesjid_website < db/MesjidAppsV1.1.sql
+   mysql -u root -p mesjid_website < db/DataMesjidApps.sql
+   ```
+   *(Atau impor kedua file `.sql` di atas melalui tab Import di phpMyAdmin).*
+
+#### Opsi B: Migrasi Database dari Versi Sebelumnya (v1.0.0 ke v1.2.0)
+Jika Anda sudah memiliki database berjalan dan ingin memperbarui struktur tanpa menghapus data yang ada, ikuti urutan migrasi berikut (sesuai panduan `db/README_MIGRATIONS.md`):
+
+1. **Lakukan Backup Database Terlebih Dahulu!**
+   ```bash
+   mysqldump -u root -p mesjid_website > backup_mesjid_sebelum_migrasi.sql
+   ```
+2. **Jalankan Skrip Migrasi Secara Bertahap**:
+   ```bash
+   # 1. Tabel Rate Limiting untuk proteksi brute force
+   mysql -u root -p mesjid_website < db/create_rate_limits_table.sql
+
+   # 2. Tambahkan Index untuk mempercepat performa query
+   mysql -u root -p mesjid_website < db/add_indexes.sql
+
+   # 3. Tambahkan Kolom Profil Pengurus & Staff
+   mysql -u root -p mesjid_website < db/add_staff_profile_columns.sql
+
+   # 4. Tambahkan Kolom Tracking Notifikasi Email
+   mysql -u root -p mesjid_website < db/add_columns.sql
+   ```
+3. **Pembersihan Data Orphaned (Sebelum Menambahkan Foreign Key)**:
+   ```sql
+   -- Bersihkan foreign key user_id jika ada data donatur yang user-nya sudah terhapus
+   UPDATE donasi_online SET user_id = NULL WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users);
+   UPDATE donasi_online SET verified_by = NULL WHERE verified_by IS NOT NULL AND verified_by NOT IN (SELECT id FROM users);
+   UPDATE berita SET penulis_id = NULL WHERE penulis_id NOT IN (SELECT id FROM users);
+   ```
+4. **Terapkan Foreign Key Relasional**:
+   ```bash
+   mysql -u root -p mesjid_website < db/add_foreign_keys.sql
+   mysql -u root -p mesjid_website < db/add_user_id_to_pengurus.sql
+   ```
+
+---
+
+### 4. Konfigurasi Email SMTP (PHPMailer & Gmail App Password)
+
+Aplikasi menggunakan **PHPMailer** untuk mengirimkan kode OTP dan notifikasi status donasi. Disarankan menggunakan **Gmail SMTP dengan App Password**.
+
+#### Langkah Mendapatkan Gmail App Password:
+1. Login ke akun Google masjid / panitia.
+2. Buka [Google Account Security](https://myaccount.google.com/security).
+3. Pastikan **Verifikasi 2 Langkah (2-Step Verification)** dalam keadaan **Aktif**.
+4. Cari menu **Sandi Aplikasi (App Passwords)** atau akses langsung ke [Google App Passwords](https://myaccount.google.com/apppasswords).
+5. Masukkan nama aplikasi, contoh: `MesjidApps Server`, lalu klik **Buat (Create)**.
+6. Salin 16 karakter sandi khusus yang muncul di layar (misal: `abcd efgh ijkl mnop`).
+
+#### Pengaturan di `config/mail.php`:
+Buka file `config/mail.php` dan sesuaikan parameter berikut:
+
+```php
+<?php
+// config/mail.php
+define('MAIL_HOST', 'smtp.gmail.com');
+define('MAIL_PORT', 587);
+define('MAIL_USERNAME', 'panitia.nuruliman@gmail.com');      // Email Gmail Anda
+define('MAIL_PASSWORD', 'abcdefghijklmnop');                 // 16 Karakter Sandi Aplikasi (tanpa spasi)
+define('MAIL_FROM', 'panitia.nuruliman@gmail.com');          // Email Pengirim
+define('MAIL_FROM_NAME', 'DKM Masjid Jami\' Nurul Iman');     // Nama Pengirim
+define('MAIL_SECURE', 'tls');                                // 'tls' (port 587) atau 'ssl' (port 465)
+```
+
+---
+
+### 5. Izin Berkas & Keamanan Direktori Uploads
+
+Sistem mengunggah berbagai berkas media (foto profil staff, gambar program donasi, banner beranda, warta berita, dan bukti transfer donatur) ke direktori `uploads/`.
+
+#### A. Mengatur Hak Akses Direktori (Di Server Linux/VPS):
+```bash
+# Berikan kepemilikan kepada user web server (misalnya www-data atau nginx)
+sudo chown -R www-data:www-data /var/www/mesjid-donasi-main/uploads
+
+# Atur permission direktori ke 755 dan berkas ke 644
+sudo find /var/www/mesjid-donasi-main/uploads -type d -exec chmod 755 {} \;
+sudo find /var/www/mesjid-donasi-main/uploads -type f -exec chmod 644 {} \;
+```
+
+#### B. Proteksi Eksekusi Script di Folder Uploads:
+Di dalam folder `uploads/` terdapat file `uploads/.htaccess` yang secara ketat memblokir eksekusi skrip PHP:
+
+```apache
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps|sh|cgi|pl)$">
+    Require all denied
+</FilesMatch>
+```
+Hal ini memastikan bahwa bahkan jika ada peretas yang mencoba mengunggah berkas web shell dengan ekstensi `.php` melalui formulir upload bukti, berkas tersebut tidak akan pernah dapat dieksekusi oleh web server.
+
+---
+
+### 6. Checklist Sebelum Go-Live (Production)
+
+Gunakan daftar periksa berikut sebelum mempublikasikan website ke publik:
+
+- [ ] **Ganti Kredensial Default**: Ganti kata sandi seluruh akun default (`admin`, `bendahara`, `konten`, `donatur`) melalui menu Users Admin atau Portal Profil.
+- [ ] **Ganti Kunci Turnstile**: Pastikan `TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET` menggunakan domain produksi Anda, bukan kunci testing localhost.
+- [ ] **Konfigurasi Database Production**: Pastikan `DB_USER` dan `DB_PASS` di `config/database.php` menggunakan akun MySQL berhak akses terbatas (bukan user `root` tanpa password).
+- [ ] **Uji Coba Pengiriman Email**: Lakukan registrasi akun pengujian atau submit donasi untuk memastikan email OTP dan email kwitansi terkirim tanpa kendala SMTP.
+- [ ] **Aktifkan Sertifikat SSL/HTTPS**: Pastikan domain telah memiliki sertifikat SSL aktif (misalnya melalui Let's Encrypt / Certbot atau Cloudflare Flexible/Full SSL).
+- [ ] **Matikan Debugging & Error Display**: Pastikan `display_errors = Off` diatur pada server agar struktur internal aplikasi tidak bocor saat terjadi pengecualian.
+- [ ] **Verifikasi Folder Uploads**: Pastikan web server memiliki izin tulis (*writeable*) pada folder `uploads/bukti`, `uploads/banner`, `uploads/berita`, `uploads/pengurus`, dan `uploads/profil`.
 
 ---
 
 ## Tema & Desain
 
-Tema klasik Islami dengan palet warna:
-
-| Warna | Kode | Penggunaan |
-|-------|------|------------|
-| Deep Cypress Green | `#183728` | Primer, header, navbar |
-| Antique Brass Gold | `#c5a059` | Aksen emas, judul, highlight |
-| Warm Alabaster | `#fbf9f5` | Background body |
-
-**Font:** Plus Jakarta Sans (body), Amiri & Cinzel (heading klasik Islami)
+Desain antarmuka memadukan keanggunan arsitektur Islam klasik dengan kesederhanaan tata letak web modern:
+- **Deep Cypress Green (`#183728`)**: Warna primer bernuansa hijau hutan pinus yang mencerminkan keteduhan, kedamaian, dan keikhlasan.
+- **Antique Brass Gold (`#c5a059`)**: Aksen emas antik melambangkan kemuliaan syiar dan transparansi pengelolaan amanah umat.
+- **Warm Alabaster (`#fbf9f5`)**: Latar belakang lembut yang nyaman di mata pada segala kondisi pencahayaan layar.
+- **Arabesque Pattern**: Tekstur ornamen geometris Islam halus yang diterapkan pada header dan footer.
 
 ---
 
 ## Catatan Rilis
 
-### v1.1.0 *(2026-09-21)*
-- **e-Kwitansi Security Lock** — pengamanan 3 status (pending/diverifikasi/ditolak)
-- **Inbox Pesan Kontak Admin** — baca & balas via WA/Email
-- **Format Rupiah Realtime** — titik ribuan otomatis saat input nominal
-- **Validasi Upload MIME** — cek file asli via `finfo_open`
-- **Fix redirect** — donasi selesai langsung ke kwitansi
-- **Fix form action** — POST ke URL absolut
+### v1.2.0 *(2026-10-20)*
+- **Security Hardening**: Cloudflare Turnstile CAPTCHA di semua form, Database Rate Limiting dengan countdown timer, CSRF Token protection, dan Session Idle Timeout.
+- **Email Notifications**: Otomatisasi pengiriman email verifikasi dan penolakan donasi via PHPMailer.
+- **Direktori Pengurus DKM & Staff**: Halaman Tim Kami publik, detail staff individual, counter view profil, dan panel Profil Saya pengurus.
+- **Arsitektur Modular Portal Donatur**: Pemecahan modul `donatur/includes/` (controller, header, status, history, profile, account, modal, scripts).
+- **Pusat Dokumentasi**: Halaman Panduan Pengguna, Panduan Admin, Kebijakan Privasi, dan Syarat Ketentuan di folder `docs/`.
+- **UX & Interaktivitas**: Multi-slide hero banner interaktif, widget jadwal shalat WITA, live copy nomor rekening, one-click toggle status banner, dan server-side pagination.
 
-### v1.0.0 *(2026-09-04)*
-- Rilis perdana — website publik, admin panel, pembukuan kas, donasi online, portal donatur, autentikasi OTP, clean URL
-
-Detail lengkap ada di [RELEASE.md](RELEASE.md).
+Rincian lengkap riwayat pembaruan dapat dibaca pada [release.md](release.md).
 
 ---
 
-## Dokumentasi Lanjutan
+## Dokumentasi Pendukung
 
-| Dokumen | Isi |
-|---------|-----|
-| [RELEASE.md](RELEASE.md) | Changelog & catatan rilis lengkap per versi |
-| [WALKTHROUGH.md](WALKTHROUGH.md) | Panduan alur penggunaan per peran |
-| [PROGRESS.md](PROGRESS.md) | Status fitur, todo, dan roadmap |
+| Dokumen | Deskripsi |
+|---------|-----------|
+| [release.md](release.md) | Catatan rilis lengkap dan changelog per versi |
+| [WALKTHROUGH.md](WALKTHROUGH.md) | Panduan lengkap alur penggunaan dan peran sistem |
+| [PROGRESS.md](PROGRESS.md) | Status perkembangan fitur dan roadmap masa depan |
+| [db/README_MIGRATIONS.md](db/README_MIGRATIONS.md) | Panduan migrasi skema database |
+| [docs/panduan-user.php](docs/panduan-user.php) | Halaman panduan tata cara donasi untuk jamaah |
+| [docs/panduan-admin.php](docs/panduan-admin.php) | Halaman panduan pengelolaan kas & konten untuk admin |
 
 ---
 
 ## Lisensi
 
-Proyek ini menggunakan lisensi **MIT**. Bebas digunakan, dimodifikasi, dan didistribusikan.
-
----
+Proyek ini dirilis di bawah lisensi **MIT License**. Bebas digunakan, dipelajari, dan dikembangkan demi kemaslahatan umat serta kemakmuran masjid.
 
 <div align="center">
 
-**"Memakmurkan Masjid, Mensejahterakan Ummat"**
-
-*Masjid Jami' Nurul Iman &mdash; Pusat Dakwah, Ibadah, dan Pemberdayaan Ummat*
+**"Memakmurkan Masjid, Mensejahterakan Ummat"**  
+*Masjid Jami' Nurul Iman &mdash; Pusat Ibadah, Tarbiyah, dan Amanah Sosial Ummat*
 
 </div>

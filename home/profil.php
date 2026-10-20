@@ -6,17 +6,21 @@ $profil = get_profil_masjid();
 $pageTitle = 'Profil & Struktur DKM · ' . $profil['nama_masjid'];
 $activeNav = 'profil';
 
-$pengurus = $pdo->query("SELECT * FROM pengurus_masjid ORDER BY urutan ASC, id ASC")->fetchAll();
+$pengurus = $pdo->query("
+    SELECT 
+        pm.id, pm.jabatan, pm.bidang, pm.urutan, pm.user_id,
+        u.id as uid, u.nama_lengkap, u.avatar, u.bio, u.is_public_profile
+    FROM pengurus_masjid pm
+    LEFT JOIN users u ON pm.user_id = u.id
+    WHERE u.status = 'aktif' OR pm.user_id IS NULL
+    ORDER BY pm.urutan ASC, pm.id ASC
+")->fetchAll();
 require_once __DIR__ . '/../layouts/public_header.php';
 ?>
 
 <div class="bg-cypress-950 text-white py-14 relative pattern-arabesque-dark border-b border-antique-500/30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3 relative z-10">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cypress-900 border border-antique-500/40 text-antique-300 text-xs font-semibold uppercase tracking-wider">
-            <i class="fa-solid fa-mosque text-emerald-400"></i>
-            <span>Mengenal Lebih Dekat</span>
-        </div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-classic text-white">
+<h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-classic text-white">
             Profil &amp; Kepengurusan DKM
         </h1>
         <p class="text-stone-300 text-xs sm:text-sm max-w-xl mx-auto">
@@ -29,11 +33,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
         <div class="lg:col-span-7 space-y-5">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/50 text-antique-700 text-xs font-semibold uppercase tracking-wider">
-                <i class="fa-solid fa-landmark text-cypress-700"></i>
-                <span>Kilasan Sejarah</span>
-            </div>
-            <h2 class="text-2xl sm:text-3xl font-bold text-warm-900 tracking-tight font-classic">
+<h2 class="text-2xl sm:text-3xl font-bold text-warm-900 tracking-tight font-classic">
                 Sejarah Singkat <?= e($profil['nama_masjid']) ?>
             </h2>
             <div class="prose prose-sm text-warm-800/80 leading-relaxed space-y-4">
@@ -98,11 +98,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
     <!-- Bagian 3: Struktur Pengurus DKM -->
     <div class="space-y-8">
         <div class="text-center max-w-2xl mx-auto space-y-2">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/50 text-antique-700 text-xs font-semibold uppercase tracking-wider">
-                <i class="fa-solid fa-users text-cypress-700"></i>
-                <span>Dewan Kemakmuran Masjid</span>
-            </div>
-            <h2 class="text-2xl sm:text-3xl font-bold text-warm-900 font-classic">
+<h2 class="text-2xl sm:text-3xl font-bold text-warm-900 font-classic">
                 Susunan Pengurus DKM Periode 2024–2028
             </h2>
             <p class="text-xs sm:text-sm text-warm-800/70">
@@ -111,18 +107,45 @@ require_once __DIR__ . '/../layouts/public_header.php';
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <?php foreach ($pengurus as $p): ?>
-                <div class="bg-white rounded-2xl p-6 border border-antique-300/40 shadow-xs hover:shadow-md transition flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-2xl bg-cypress-900 border border-antique-500/40 flex items-center justify-center text-antique-300 font-bold text-lg shrink-0">
-                        <?= strtoupper(substr($p['nama'], 0, 1)) ?>
+            <?php foreach ($pengurus as $p): 
+                $avatarPath = !empty($p['avatar']) ? trim((string)$p['avatar']) : '';
+                $avatarUrl = $avatarPath !== '' ? upload_url($avatarPath) : '';
+                
+                $namaDisplay = !empty($p['nama_lengkap']) ? $p['nama_lengkap'] : $p['nama'];
+                $namaBersih = preg_replace('/[^A-Za-z0-9]/', '', $namaDisplay);
+                $initials = strtoupper(substr($namaBersih, 0, 2));
+                if ($initials === '') {
+                    $initials = strtoupper(substr($namaDisplay, 0, 1));
+                }
+            ?>
+                <div class="bg-white rounded-2xl p-6 border border-antique-300/40 shadow-xs hover:shadow-md transition">
+                    <div class="flex items-start gap-4 mb-3">
+                        <?php if ($avatarUrl): ?>
+                            <img src="<?= e($avatarUrl) ?>" alt="<?= e($namaDisplay) ?>" class="w-16 h-16 rounded-2xl object-cover border-2 border-antique-300 shrink-0">
+                        <?php else: ?>
+                            <div class="w-16 h-16 rounded-2xl bg-cypress-900 border-2 border-antique-500/40 flex items-center justify-center text-antique-300 font-bold text-xl shrink-0">
+                                <?= e($initials) ?>
+                            </div>
+                        <?php endif; ?>
+                        <div class="flex-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-antique-700 bg-antique-50 px-2 py-0.5 rounded border border-antique-200 block w-fit mb-1">
+                                <?= e($p['jabatan']) ?>
+                            </span>
+                            <h4 class="font-bold text-sm text-warm-900 leading-snug"><?= e($namaDisplay) ?></h4>
+                            <span class="text-xs text-warm-800/60 block mt-0.5"><?= e($p['bidang'] ?: 'Pengurus Harian') ?></span>
+                        </div>
                     </div>
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-antique-700 bg-antique-50 px-2 py-0.5 rounded border border-antique-200 block w-fit mb-1">
-                            <?= e($p['jabatan']) ?>
-                        </span>
-                        <h4 class="font-bold text-sm text-warm-900 leading-snug"><?= e($p['nama']) ?></h4>
-                        <span class="text-xs text-warm-800/60 block mt-0.5"><?= e($p['bidang'] ?: 'Pengurus Harian') ?></span>
-                    </div>
+                    <?php if (!empty($p['bio'])): ?>
+                        <p class="text-xs text-warm-700/70 italic line-clamp-2 mb-2 pl-1 border-l-2 border-antique-200">
+                            "<?= e(substr($p['bio'], 0, 80)) ?><?= strlen($p['bio']) > 80 ? '...' : '' ?>"
+                        </p>
+                    <?php endif; ?>
+                    <?php if (!empty($p['uid']) && $p['is_public_profile']): ?>
+                        <a href="<?= base_url() ?>/home/profil-staff?id=<?= $p['uid'] ?>" class="inline-flex items-center gap-1 text-xs font-semibold text-cypress-700 hover:text-cypress-900 transition mt-2">
+                            <i class="fa-solid fa-user-circle"></i>
+                            <span>Lihat Profil Lengkap</span>
+                        </a>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </div>

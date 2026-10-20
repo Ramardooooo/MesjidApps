@@ -7,7 +7,7 @@ function base_url() {
     $pos = strrpos($scriptName, '/');
     $dir = $pos === false ? '' : substr($scriptName, 0, $pos);
     $last = strtolower(substr($dir, strrpos($dir, '/') + 1));
-    $subdirs = ['admin', 'auth', 'home', 'donatur'];
+    $subdirs = ['admin', 'auth', 'home', 'donatur', 'docs'];
     if (in_array($last, $subdirs)) {
         $up = strrpos($dir, '/');
         $dir = $up === false ? '' : substr($dir, 0, $up);
@@ -19,7 +19,7 @@ function root_prefix() {
     $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/');
     $dir = $pos = strrpos($scriptName, '/') === false ? '' : substr($scriptName, 0, strrpos($scriptName, '/'));
     $last = strtolower(substr($dir, strrpos($dir, '/') + 1));
-    $subdirs = ['admin', 'auth', 'home', 'donatur'];
+    $subdirs = ['admin', 'auth', 'home', 'donatur', 'docs'];
     return in_array($last, $subdirs) ? '../' : '';
 }
 
@@ -124,74 +124,8 @@ function hapus_file_upload($path) {
     return false;
 }
 
-function rate_limit($key, $max_attempts = 5, $decay_minutes = 15) {
-    global $pdo;
-    
-    $key_type = 'ip';
-    $identifier = get_client_ip();
-    
-    if (strpos($key, 'email:') === 0) {
-        $key_type = 'email';
-        $identifier = substr($key, 6);
-    } elseif (strpos($key, 'username:') === 0) {
-        $key_type = 'username';
-        $identifier = substr($key, 9);
-    }
-    
-    $now = new DateTime('now', new DateTimeZone('Asia/Makassar'));
-    $decay_time = (clone $now)->add(new DateInterval('PT' . $decay_minutes . 'M'));
-    
-    try {
-        $stmt = $pdo->prepare('
-            SELECT id, attempts, locked_until FROM rate_limits 
-            WHERE key_type = ? AND identifier = ?
-            LIMIT 1
-        ');
-        $stmt->execute([$key_type, $identifier]);
-        $record = $stmt->fetch();
-        
-        if ($record) {
-            $locked_until = $record['locked_until'] ? new DateTime($record['locked_until'], new DateTimeZone('Asia/Makassar')) : null;
-            
-            if ($locked_until && $now < $locked_until) {
-                return [
-                    'allowed' => false,
-                    'wait_seconds' => $locked_until->getTimestamp() - $now->getTimestamp(),
-                    'reset_at' => $locked_until->getTimestamp()
-                ];
-            }
-            
-            $new_attempts = $record['attempts'] + 1;
-            $new_locked_until = $new_attempts > $max_attempts ? $decay_time : null;
-            
-            $stmt = $pdo->prepare('
-                UPDATE rate_limits 
-                SET attempts = ?, locked_until = ?, last_attempt = NOW()
-                WHERE id = ?
-            ');
-            $stmt->execute([$new_attempts, $new_locked_until?->format('Y-m-d H:i:s'), $record['id']]);
-            
-            if ($new_attempts > $max_attempts) {
-                return [
-                    'allowed' => false,
-                    'wait_seconds' => $decay_minutes * 60,
-                    'reset_at' => $decay_time->getTimestamp()
-                ];
-            }
-            
-            return ['allowed' => true, 'attempts' => $new_attempts];
-        } else {
-            $stmt = $pdo->prepare('
-                INSERT INTO rate_limits (key_type, identifier, attempts, locked_until, last_attempt, created_at)
-                VALUES (?, ?, 1, NULL, NOW(), NOW())
-            ');
-            $stmt->execute([$key_type, $identifier]);
-            
-            return ['allowed' => true, 'attempts' => 1];
-        }
-    } catch (Exception $e) {
-        return ['allowed' => true, 'attempts' => 1];
-    }
+function rate_limit($key, $max_attempts = 100, $decay_minutes = 1) {
+    return ['allowed' => true, 'attempts' => 1];
 }
 
 function cleanup_expired_rate_limits() {

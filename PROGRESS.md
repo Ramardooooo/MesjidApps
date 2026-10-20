@@ -3,47 +3,64 @@
 
 ---
 
-## ✅ Selesai (v1.0.0 — v1.1.0)
+## ✅ Selesai (v1.0.0 — v1.2.0)
 
 ### 🌐 Website Publik (Frontend)
-- [x] Beranda (`index.php`) — hero, statistik, program unggulan, berita terbaru, galeri, CTA donasi
-- [x] Profil Masjid (`/profil`) — sejarah, visi-misi, pengurus DKM dengan foto
-- [x] Katalog Program Donasi (`/program`) — list semua program aktif + progress bar
+- [x] Beranda (`index.php`) — **[v1.2]** Interactive multi-slide hero slider, widget Jadwal Shalat (WITA), statistik, program unggulan, warta terkini, CTA donasi
+- [x] Profil Masjid (`/profil`) — sejarah, visi-misi, pengurus DKM, **[v1.2]** widget tim pengelola DKM
+- [x] **[NEW v1.2]** Direktori Tim Pengurus (`/tim-kami`) — jajaran pengurus harian dan teknis masjid
+- [x] **[NEW v1.2]** Detail Profil Staff (`/profil-staff?id=X`) — biografi staff, foto avatar, sosmed, dan counter pengunjung profil
+- [x] Katalog Program Donasi (`/program`) — list semua program aktif + progress bar dana terkumpul
 - [x] Detail Program (`/program-detail?id=X`) — rincian + form donasi cepat
-- [x] Berita & Artikel (`/berita`, `/berita-detail`) — pagination, kategori, thumbnail
+- [x] Berita & Artikel (`/berita`, `/berita-detail`) — pagination server-side, kategori, thumbnail
 - [x] Kajian YouTube (`/kajian`) — embed video, playlist live streaming
 - [x] Transparansi Keuangan (`/transparansi`) — saldo kas terbuka, riwayat transaksi publik
 - [x] Kontak & Pesan Jamaah (`/kontak`) — form validasi, peta lokasi
-- [x] Donasi Online (`/donasi-online`) — QRIS + transfer bank, format rupiah realtime, upload bukti
+- [x] Donasi Online (`/donasi-online`) — QRIS + transfer bank, format rupiah realtime, upload bukti MIME check, **[v1.2]** Cloudflare Turnstile CAPTCHA
 
-### 🔐 Autentikasi
-- [x] Login multi-role (`/login`)
-- [x] Registrasi akun donatur (`/register`) + OTP verifikasi email
-- [x] Lupa password (`/forgot-password`) via OTP email
+### 🔐 Autentikasi & Keamanan
+- [x] Login multi-role (`/login`) — **[v1.2]** Cloudflare Turnstile, Database Rate Limiting (5x gagal/15 menit), UI countdown timer, session regeneration
+- [x] Registrasi akun donatur (`/register`) — OTP verifikasi email + Turnstile
+- [x] Lupa password (`/forgot-password`) — via OTP email + Turnstile
 - [x] Verifikasi OTP (`/verify-otp`)
-- [x] Reset password (`/reset-password`)
+- [x] Reset password (`/reset-password`) + Turnstile
 - [x] Logout (`/logout`)
+- [x] **[NEW v1.2]** Session idle timeout otomatis setelah 2 jam (7200 detik)
+- [x] **[NEW v1.2]** Proteksi token CSRF terpadu (`csrf_token`, `verify_csrf`)
+- [x] **[NEW v1.2]** Sinkronisasi timezone PHP & MySQL ke `Asia/Makassar` (`+08:00`)
 
 ### 🏛️ Admin Panel
-- [x] Dashboard eksekutif (`/dashboard`) — statistik kas, grafik pemasukan/pengeluaran, donasi terbaru
-- [x] Manajemen Berita (`/berita-admin`) — CRUD + upload thumbnail
-- [x] Manajemen Banner (`/banner-admin`) — slider beranda, CRUD + upload
+- [x] Dashboard eksekutif (`/dashboard`) — statistik kas, grafik 6 bulan (single SQL query teroptimasi), donasi pending
+- [x] Manajemen Berita (`/berita-admin`) — CRUD + upload thumbnail + server-side pagination
+- [x] Manajemen Banner (`/banner-admin`) — slider beranda, CRUD, **[v1.2]** one-click toggle status aktif (`toggle=ID`), auto URL clean
 - [x] Manajemen Program Donasi (`/program-admin`) — CRUD + target + gambar
 - [x] Manajemen Rekening (`/rekening-admin`) — rekening bank & QRIS aktif
 - [x] Manajemen YouTube (`/youtube-admin`) — CRUD video kajian
-- [x] Manajemen Pengguna (`/users-admin`) — CRUD + role management
+- [x] Manajemen Pengguna (`/users-admin`) — CRUD + role management (RBAC)
 - [x] Profil & Pengaturan Masjid (`/profil-admin`) — info masjid, pengurus, sosial media
-- [x] Pembukuan Kas (`/transaksi`) — pemasukan/pengeluaran + bukti + filter + export CSV
+- [x] **[NEW v1.2]** Profil Saya (`/admin/profil-saya`) — kelola profil pribadi pengurus, bio, avatar, sosmed, dan switch publikasi staff
+- [x] Pembukuan Kas (`/transaksi`) — pemasukan/pengeluaran + bukti + filter + export CSV + **[v1.2]** server-side pagination & file cleanup otomatis
 - [x] Laporan Keuangan (`/laporan`) — filter periode + cetak
-- [x] Verifikasi Donasi (`/verifikasi-donasi`) — approve/tolak + auto bukukan ke kas
-- [x] **[NEW v1.1]** Inbox Pesan Kontak (`/pesan-admin`) — baca, reply WA/Email, badge unread
+- [x] Verifikasi Donasi (`/verifikasi-donasi`) — approve/tolak + auto bukukan ke kas + **[v1.2]** auto kirim notifikasi email
+- [x] Inbox Pesan Kontak (`/pesan-admin`) — baca, reply WA/Email, badge unread
 
-### 🧾 e-Kwitansi & Donatur
-- [x] e-Kwitansi Donasi (`/kwitansi?no=...`) — **[v1.1]** Receipt Security Lock 3 status
+### 🧾 e-Kwitansi & Portal Donatur
+- [x] e-Kwitansi Donasi (`/kwitansi?no=...`) — Receipt Security Lock 3 status
   - [x] Status `pending` — watermark DRAFT, cetak dikunci, stempel tersembunyi
   - [x] Status `diverifikasi` — kwitansi resmi, stempel DKM, QR validasi, cetak PDF aktif
   - [x] Status `ditolak` — keterangan alasan + watermark merah
-- [x] Portal Donatur (`/portal-donatur`) — riwayat donasi, update profil, notifikasi
+  - [x] **[v1.2]** Ownership guard — kwitansi diproteksi sesuai kepemilikan akun donatur
+- [x] Portal Donatur (`/portal-donatur`) — **[v1.2]** Arsitektur modular (`donatur/includes/`):
+  - [x] Tab status & metrik kontribusi infaq
+  - [x] Tab riwayat donasi lengkap
+  - [x] Tab profil saya & upload avatar
+  - [x] Tab keamanan akun & ubah password
+
+### 📚 Pusat Dokumentasi (`docs/`)
+- [x] **[NEW v1.2]** Panduan Pengguna (`/docs/panduan-user.php`)
+- [x] **[NEW v1.2]** Panduan Admin Panel (`/docs/panduan-admin.php`)
+- [x] **[NEW v1.2]** Kebijakan Privasi (`/docs/privacy.php`)
+- [x] **[NEW v1.2]** Syarat & Ketentuan (`/docs/terms.php`)
 
 ### 🔒 Keamanan & Infrastruktur
 - [x] Clean URL tanpa ekstensi `.php` (mod_rewrite Apache)
@@ -55,31 +72,28 @@
 - [x] Output escaping fungsi `e()` — anti XSS
 - [x] MIME type check upload file via `finfo_open`
 - [x] Validasi nominal minimum & wajib upload bukti
-- [x] **[v1.1]** Fix redirect kwitansi setelah donasi
-- [x] **[v1.1]** Fix form action POST donasi ke URL absolut
-- [x] **[v1.1]** Modal full-viewport blur (attach ke `document.body`)
+- [x] Modal full-viewport blur & universal modal delete
 
 ---
 
 ## 🚧 Dalam Pengembangan / Planned
 
 ### Prioritas Tinggi
-- [ ] **Notifikasi email otomatis** ke donatur saat status berubah (verified/rejected)
-- [ ] **Gateway pembayaran** — Midtrans / Duitku / QRIS dinamis dengan webhook
-- [ ] **Export PDF** laporan keuangan & kwitansi berkualitas cetak
+- [ ] **Gateway pembayaran otomatis** — Midtrans / Duitku / QRIS dinamis dengan webhook IPN
+- [ ] **Export PDF murni** untuk laporan keuangan & e-kwitansi (Dompdf / TCPDF)
 
 ### Prioritas Menengah
 - [ ] **API publik** — endpoint JSON untuk status donasi & transparansi keuangan
-- [ ] **Grafik keuangan lanjutan** — per kategori, per bulan, perbandingan tahun
-- [ ] **Jadwal sholat** — integrasi API waktu sholat otomatis
-- [ ] **Pengumuman masjid** — notifikasi kegiatan, jadwal kajian
+- [ ] **Grafik keuangan lanjutan** — per kategori, perbandingan tahunan
+- [ ] **Integrasi API waktu sholat otomatis** (sinkronisasi online via koordinat GPS)
+- [ ] **Broadcast pesan WhatsApp Gateway** ke donatur terdaftar
 
 ### Prioritas Rendah
 - [ ] **Tema gelap** (dark mode)
 - [ ] **Multibahasa** (i18n) — Indonesia + Arab + Inggris
 - [ ] **Unit & Integration Tests** (PHPUnit)
 - [ ] **CI/CD Pipeline**
-- [ ] **Push notification** browser
+- [ ] **Push notification** browser / Web Push
 - [ ] **Aplikasi mobile** (PWA)
 
 ---
@@ -88,13 +102,15 @@
 
 | Komponen | File | Keterangan |
 |----------|------|------------|
-| Admin Panel | 12 file | dashboard, transaksi, verifikasi, laporan, dll |
-| Halaman Publik | 9 file | beranda, donasi, profil, berita, dll |
+| Admin Panel | 13 file | dashboard, transaksi, verifikasi, laporan, profil-saya, dll |
+| Halaman Publik | 12 file | beranda, donasi, profil, tim-kami, profil-staff, berita, dll |
+| Pusat Dokumentasi | 4 file | panduan-user, panduan-admin, privacy, terms |
+| Portal Donatur | 10 file | kwitansi, portal + 8 modul di `donatur/includes/` |
 | Autentikasi | 6 file | login, register, OTP, reset |
-| Portal Donatur | 2 file | kwitansi, portal |
 | Layouts | 5 file | header, footer, sidebar (admin & publik) |
 | Config & Helper | 3 file | database, mail, helpers |
-| Database | 16 tabel | InnoDB + utf8mb4 |
+| Otp & Notifikasi | 3 file | template, otp, send_donasi_notification |
+| Database | 17 tabel | InnoDB + utf8mb4 (termasuk `rate_limits`) |
 
 ---
 
@@ -102,9 +118,10 @@
 
 | Tanggal | Versi | Catatan |
 |---------|-------|---------|
-| 2026-09-04 | v1.0.0 | Rilis perdana — website publik, admin panel, pembukuan, donasi, portal donatur |
+| 2026-10-20 | v1.2.0 | Cloudflare Turnstile, Database Rate Limiting, Email Notifikasi PHPMailer, Direktori Tim Kami & Profil Staff, Modular Portal Donatur, Pusat Docs, Hero Slider Interaktif |
 | 2026-09-21 | v1.1.0 | Receipt Security Lock, Inbox Pesan Kontak, format Rupiah realtime, fix redirect kwitansi |
+| 2026-09-04 | v1.0.0 | Rilis perdana — website publik, admin panel, pembukuan, donasi, portal donatur |
 
 ---
 
-*Terakhir diperbarui: 2026-09-21*
+*Terakhir diperbarui: 2026-10-20*

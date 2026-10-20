@@ -7,6 +7,10 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'mesjid_website');
 
+// Cloudflare Turnstile Credentials
+define('TURNSTILE_SITE_KEY', '0x4AAAAAAFcTxJ1R4nVL_gYW');
+define('TURNSTILE_SECRET', '0x4AAAAAAFcTxMgMG6u4eUV812AM_eB_AOM');
+
 try {
     $pdo = new PDO(
         'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4',

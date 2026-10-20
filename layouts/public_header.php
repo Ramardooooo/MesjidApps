@@ -85,152 +85,251 @@ $base = base_url();
 </head>
 <body class="pattern-arabesque-light min-h-screen text-warm-900 flex flex-col justify-between antialiased selection:bg-antique-500 selection:text-white">
 
-    <!-- Topbar Syiar & Kontak Cepat -->
-    <div class="bg-cypress-950 text-white text-xs border-b border-white/10 py-2 px-4 sm:px-8 hidden md:block">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-6 text-antique-200/90">
-                <span class="inline-flex items-center gap-2">
-                    <i class="fa-solid fa-mosque text-antique-500"></i>
-                    <span><?= e($profil['slogan']) ?></span>
-                </span>
-                <span class="inline-flex items-center gap-2">
-                    <i class="fa-solid fa-location-dot text-antique-500"></i>
-                   <span><?= e($profil['kota'] ?? '') ?></span>
-                </span>
-            </div>
-
-            <div class="flex items-center gap-4 text-xs">
-                <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $profil['whatsapp']) ?>" target="_blank" class="hover:text-antique-300 transition flex items-center gap-1.5 text-emerald-300">
-                    <i class="fa-brands fa-whatsapp"></i>
-                    <span>WhatsApp Layanan DKM</span>
-                </a>
-                <span class="text-white/20">|</span>
-                <?php if ($currentUser): ?>
-                    <a href="<?= in_array($currentUser['role'], ['admin', 'bendahara', 'content_admin']) ? $base . '/admin/dashboard' : $base . '/donatur/portal-donatur' ?>" class="text-antique-300 font-semibold hover:text-white transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-user"></i>
-                        <span><?= e($currentUser['nama']) ?> (<?= ucfirst($currentUser['role']) ?>)</span>
-                    </a>
-                <?php else: ?>
-                    <a href="<?= $base ?>/auth/login" class="text-antique-300 hover:text-white transition flex items-center gap-1">
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                        <span>Masuk Akun / Portal</span>
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-
     <!-- Navigasi Utama Sticky -->
-    <header class="sticky top-0 z-40 bg-cypress-900/95 backdrop-blur-md border-b border-antique-500/30 text-white shadow-lg transition-all duration-300" id="navbar">
+    <header class="sticky top-0 z-40 bg-cypress-900 border-b border-antique-500/30 text-white shadow-lg transition-all duration-300" id="navbar">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-20">
+            <div class="flex items-center justify-between h-16">
                 
-                <!-- Logo Brand -->
-                <a href="<?= $base ?>/" class="flex items-center gap-3 group">
-                    <div class="w-12 h-12 rounded-2xl bg-cypress-950 border border-antique-500/50 flex items-center justify-center text-antique-400 group-hover:scale-105 transition-all shadow-inner shadow-antique-500/10">
-                        <i class="fa-solid fa-mosque text-xl text-antique-400"></i>
+                <!-- Logo & Brand -->
+                <a href="<?= $base ?>/" class="flex items-center gap-2 group shrink-0">
+                    <div class="w-10 h-10 rounded-lg bg-cypress-950 border border-antique-500/40 flex items-center justify-center text-antique-400 group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-mosque text-base"></i>
                     </div>
                     <div>
-                        <span class="font-classic text-lg font-bold tracking-wider block text-white leading-tight">
-                            <?= strtoupper(e($profil['nama_masjid'])) ?>
+                        <span class="font-classic text-sm font-bold tracking-wide block text-white leading-tight">
+                            MASJID JAMI'
                         </span>
-                        <span class="text-[11px] text-antique-300/90 font-medium tracking-widest block uppercase">
-                            <?= e($profil['sebutan']) ?>
+                        <span class="text-[10px] text-antique-300 font-semibold tracking-widest block">
+                            NURUL IMAN
                         </span>
                     </div>
                 </a>
 
-                <!-- Desktop Menu Links -->
-                <nav class="hidden lg:flex items-center gap-1.5 xl:gap-2 text-xs font-semibold tracking-wide">
-                    <a href="<?= $base ?>/" class="px-3.5 py-2 rounded-xl transition <?= $activeNav === 'beranda' ? 'bg-cypress-800 text-antique-300 border border-antique-500/40 shadow-xs' : 'text-stone-200 hover:text-white hover:bg-white/5' ?>">
+                <!-- Desktop Menu -->
+                <nav class="hidden lg:flex items-center gap-0.5 text-xs font-medium tracking-wide">
+                    <a href="<?= $base ?>/" class="px-4 py-2 rounded-lg transition <?= $activeNav === 'beranda' ? 'text-antique-300 bg-cypress-800/50' : 'text-stone-300 hover:text-white hover:bg-white/5' ?>">
                         Beranda
                     </a>
-                    <a href="<?= $base ?>/profil" class="px-3.5 py-2 rounded-xl transition <?= $activeNav === 'profil' ? 'bg-cypress-800 text-antique-300 border border-antique-500/40 shadow-xs' : 'text-stone-200 hover:text-white hover:bg-white/5' ?>">
-                        Profil &amp; DKM
-                    </a>
-                    <a href="<?= $base ?>/program" class="px-3.5 py-2 rounded-xl transition <?= $activeNav === 'program' ? 'bg-cypress-800 text-antique-300 border border-antique-500/40 shadow-xs' : 'text-stone-200 hover:text-white hover:bg-white/5' ?>">
-                        Program Donasi
-                    </a>
-                    <a href="<?= $base ?>/transparansi" class="px-3.5 py-2 rounded-xl transition <?= $activeNav === 'transparansi' ? 'bg-cypress-800 text-antique-300 border border-antique-500/40 shadow-xs' : 'text-stone-200 hover:text-white hover:bg-white/5' ?>">
-                        Transparansi Kas
-                    </a>
-                    <a href="<?= $base ?>/berita" class="px-3.5 py-2 rounded-xl transition <?= $activeNav === 'berita' ? 'bg-cypress-800 text-antique-300 border border-antique-500/40 shadow-xs' : 'text-stone-200 hover:text-white hover:bg-white/5' ?>">
-                        Berita &amp; Agenda
-                    </a>
-                    <a href="<?= $base ?>/kajian" class="px-3.5 py-2 rounded-xl transition <?= $activeNav === 'kajian' ? 'bg-cypress-800 text-antique-300 border border-antique-500/40 shadow-xs' : 'text-stone-200 hover:text-white hover:bg-white/5' ?>">
-                        Video Kajian
-                    </a>
-                    <a href="<?= $base ?>/kontak" class="px-3.5 py-2 rounded-xl transition <?= $activeNav === 'kontak' ? 'bg-cypress-800 text-antique-300 border border-antique-500/40 shadow-xs' : 'text-stone-200 hover:text-white hover:bg-white/5' ?>">
+
+                    <!-- Dropdown Profil -->
+                    <div class="relative group">
+                        <button class="px-4 py-2 rounded-lg transition flex items-center gap-1 <?= in_array($activeNav, ['profil', 'tim-kami']) ? 'text-antique-300 bg-cypress-800/50' : 'text-stone-300 hover:text-white hover:bg-white/5' ?>">
+                            Profil <i class="fa-solid fa-chevron-down text-[8px] mt-0.5 group-hover:rotate-180 transition-transform"></i>
+                        </button>
+                        <div class="absolute top-full left-0 mt-0 pt-2 hidden group-hover:block z-50">
+                            <div class="bg-cypress-950 border border-antique-500/30 rounded-lg shadow-lg py-1 min-w-48 overflow-hidden">
+                                <a href="<?= $base ?>/profil" class="block px-4 py-2.5 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span class="font-medium">Tentang Masjid</span>
+                                    <span class="text-stone-500 text-[9px] block mt-0.5">Sejarah, visi misi</span>
+                                </a>
+                                <a href="<?= $base ?>/profil#kepengurusan" class="block px-4 py-2.5 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span class="font-medium">Kepengurusan DKM</span>
+                                    <span class="text-stone-500 text-[9px] block mt-0.5">Tim pengurus & pengawas</span>
+                                </a>
+                                <a href="<?= $base ?>/tim-kami" class="block px-4 py-2.5 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span class="font-medium">Tim Kami</span>
+                                    <span class="text-stone-500 text-[9px] block mt-0.5">Admin & staff profesional</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Program -->
+                    <div class="relative group">
+                        <button class="px-4 py-2 rounded-lg transition flex items-center gap-1 <?= in_array($activeNav, ['program']) ? 'text-antique-300 bg-cypress-800/50' : 'text-stone-300 hover:text-white hover:bg-white/5' ?>">
+                            Program <i class="fa-solid fa-chevron-down text-[8px] mt-0.5 group-hover:rotate-180 transition-transform"></i>
+                        </button>
+                        <div class="absolute top-full left-0 mt-0 pt-2 hidden group-hover:block z-50">
+                            <div class="bg-cypress-950 border border-antique-500/30 rounded-lg shadow-lg py-1 min-w-48 overflow-hidden">
+                                <a href="<?= $base ?>/program" class="block px-4 py-2.5 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span class="font-medium">Program Donasi</span>
+                                    <span class="text-stone-500 text-[9px] block mt-0.5">Program aktif masjid</span>
+                                </a>
+                                <a href="<?= $base ?>/berita" class="block px-4 py-2.5 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span class="font-medium">Kegiatan & Berita</span>
+                                    <span class="text-stone-500 text-[9px] block mt-0.5">Update kegiatan masjid</span>
+                                </a>
+                                <a href="<?= $base ?>/kajian" class="block px-4 py-2.5 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span class="font-medium">Video Kajian</span>
+                                    <span class="text-stone-500 text-[9px] block mt-0.5">Ceramah & pembelajaran</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Lainnya -->
+                    <div class="relative group">
+                        <button class="px-4 py-2 rounded-lg transition flex items-center gap-1 <?= in_array($activeNav, ['transparansi']) ? 'text-antique-300 bg-cypress-800/50' : 'text-stone-300 hover:text-white hover:bg-white/5' ?>">
+                            Lainnya <i class="fa-solid fa-chevron-down text-[8px] mt-0.5 group-hover:rotate-180 transition-transform"></i>
+                        </button>
+                        <div class="absolute top-full left-0 mt-0 pt-2 hidden group-hover:block z-50">
+                            <div class="bg-cypress-950 border border-antique-500/30 rounded-lg shadow-lg py-1 min-w-48 overflow-hidden">
+                                <a href="<?= $base ?>/transparansi" class="block px-4 py-2.5 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span class="font-medium">Transparansi Kas</span>
+                                    <span class="text-stone-500 text-[9px] block mt-0.5">Laporan keuangan terbuka</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Dokumentasi -->
+                    <div class="relative group">
+                        <button class="px-4 py-2 rounded-lg transition flex items-center gap-1 <?= in_array($activeNav, ['panduan', 'panduan-user']) ? 'text-antique-300 bg-cypress-800/50' : 'text-stone-300 hover:text-white hover:bg-white/5' ?>">
+                            Docs <i class="fa-solid fa-chevron-down text-[8px] mt-0.5 group-hover:rotate-180 transition-transform"></i>
+                        </button>
+                        <div class="absolute top-full left-0 mt-0 pt-2 hidden group-hover:block z-50">
+                            <div class="bg-cypress-950 border border-antique-500/30 rounded-lg shadow-lg py-1 min-w-48 overflow-hidden">
+                                <a href="<?= $base ?>/docs/panduan-user.php" class="block px-4 py-2.5 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span class="font-medium">Panduan Pengguna</span>
+                                    <span class="text-stone-500 text-[9px] block mt-0.5">Cara donasi & transparansi</span>
+                                </a>
+                                <?php if (isset($_SESSION['user']) && in_array($_SESSION['user']['role'], ['admin', 'bendahara', 'content_admin'])): ?>
+                                <a href="<?= $base ?>/docs/panduan-admin.php" class="block px-4 py-2.5 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span class="font-medium">Panduan Admin</span>
+                                    <span class="text-stone-500 text-[9px] block mt-0.5">Kelola kas & konten</span>
+                                </a>
+                                <?php endif; ?>
+                                <div class="border-t border-white/10 my-1"></div>
+                                <a href="<?= $base ?>/docs/privacy.php" class="block px-4 py-2 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span>Kebijakan Privasi</span>
+                                </a>
+                                <a href="<?= $base ?>/docs/terms.php" class="block px-4 py-2 text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition">
+                                    <span>Syarat & Ketentuan</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="<?= $base ?>/kontak" class="px-4 py-2 rounded-lg transition <?= $activeNav === 'kontak' ? 'text-antique-300 bg-cypress-800/50' : 'text-stone-300 hover:text-white hover:bg-white/5' ?>">
                         Kontak
                     </a>
                 </nav>
 
-                <!-- Action Button -->
-                <div class="hidden sm:flex items-center gap-3">
-                    <a href="<?= $base ?>/donasi-online" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-antique-600 via-antique-500 to-antique-600 text-cypress-950 font-bold text-xs shadow-md shadow-antique-500/20 hover:brightness-110 active:scale-95 transition-all">
-                        <i class="fa-solid fa-hand-holding-heart text-sm"></i>
-                        <span>Donasi Infaq</span>
+                <!-- Action Buttons (Desktop) -->
+                <div class="hidden sm:flex items-center gap-3 shrink-0">
+                    <a href="<?= $base ?>/donasi-online" class="px-4 py-2 rounded-lg bg-antique-600 hover:bg-antique-500 text-cypress-950 font-bold text-xs transition">
+                        Donasi
                     </a>
                     <?php if ($currentUser): ?>
-                        <a href="<?= in_array($currentUser['role'], ['admin', 'bendahara', 'content_admin']) ? $base . '/admin/dashboard' : $base . '/donatur/portal-donatur' ?>" class="p-2.5 rounded-xl bg-cypress-800 border border-antique-500/40 text-antique-300 hover:text-white hover:bg-cypress-700 transition" title="Buka Portal">
+                        <a href="<?= in_array($currentUser['role'], ['admin', 'bendahara', 'content_admin']) ? $base . '/admin/dashboard' : $base . '/donatur/portal-donatur' ?>" class="p-2 rounded-lg bg-cypress-800/60 border border-antique-500/30 text-antique-300 hover:text-white hover:bg-cypress-700 transition text-xs" title="Buka Portal">
                             <i class="fa-solid fa-gauge-high"></i>
                         </a>
                     <?php else: ?>
-                        <a href="<?= $base ?>/auth/login" class="p-2.5 rounded-xl bg-cypress-800 border border-antique-500/40 text-antique-300 hover:text-white hover:bg-cypress-700 transition" title="Masuk">
-                            <i class="fa-solid fa-user-shield"></i>
+                        <a href="<?= $base ?>/auth/login" class="p-2 rounded-lg bg-cypress-800/60 border border-antique-500/30 text-antique-300 hover:text-white hover:bg-cypress-700 transition text-xs" title="Masuk">
+                            <i class="fa-solid fa-user"></i>
                         </a>
                     <?php endif; ?>
                 </div>
 
                 <!-- Mobile Menu Button -->
-                <div class="flex lg:hidden items-center gap-2">
-                    <a href="<?= $base ?>/donasi-online" class="px-3 py-1.5 rounded-lg bg-antique-500 text-cypress-950 font-bold text-xs">
+                <div class="lg:hidden flex items-center gap-2">
+                    <a href="<?= $base ?>/donasi-online" class="px-3 py-1.5 rounded-lg bg-antique-600 hover:bg-antique-500 text-cypress-950 font-bold text-xs transition">
                         Donasi
                     </a>
-                    <button type="button" id="mobileMenuBtn" class="p-2 rounded-xl bg-cypress-800 border border-antique-500/40 text-antique-300 hover:text-white focus:outline-none" aria-label="Toggle Menu">
-                        <i class="fa-solid fa-bars text-lg"></i>
+                    <button type="button" id="mobileMenuBtn" class="p-2 rounded-lg bg-cypress-800 border border-antique-500/30 text-antique-300 hover:text-white focus:outline-none transition" aria-label="Toggle Menu">
+                        <i class="fa-solid fa-bars text-base"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Mobile Drawer Menu -->
-        <div id="mobileMenu" class="hidden lg:hidden bg-cypress-950/98 border-t border-antique-500/20 px-4 pt-3 pb-6 space-y-2">
-            <a href="<?= $base ?>/" class="block px-3.5 py-2.5 rounded-xl <?= $activeNav === 'beranda' ? 'bg-cypress-800 text-antique-300 font-bold' : 'text-stone-300 hover:bg-white/5' ?> text-sm">
-                <i class="fa-solid fa-home mr-2 text-antique-500"></i> Beranda
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden lg:hidden bg-cypress-950/98 border-t border-antique-500/20 px-4 py-3 space-y-1 pb-4">
+            <a href="<?= $base ?>/" class="block px-3 py-2.5 rounded-lg text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition <?= $activeNav === 'beranda' ? 'text-antique-300 bg-cypress-800/50' : '' ?>">
+                Beranda
             </a>
-            <a href="<?= $base ?>/profil" class="block px-3.5 py-2.5 rounded-xl <?= $activeNav === 'profil' ? 'bg-cypress-800 text-antique-300 font-bold' : 'text-stone-300 hover:bg-white/5' ?> text-sm">
-                <i class="fa-solid fa-mosque mr-2 text-antique-500"></i> Profil &amp; DKM
-            </a>
-            <a href="<?= $base ?>/program" class="block px-3.5 py-2.5 rounded-xl <?= $activeNav === 'program' ? 'bg-cypress-800 text-antique-300 font-bold' : 'text-stone-300 hover:bg-white/5' ?> text-sm">
-                <i class="fa-solid fa-hand-holding-dollar mr-2 text-antique-500"></i> Program Donasi
-            </a>
-            <a href="<?= $base ?>/transparansi" class="block px-3.5 py-2.5 rounded-xl <?= $activeNav === 'transparansi' ? 'bg-cypress-800 text-antique-300 font-bold' : 'text-stone-300 hover:bg-white/5' ?> text-sm">
-                <i class="fa-solid fa-chart-line mr-2 text-antique-500"></i> Transparansi Keuangan
-            </a>
-            <a href="<?= $base ?>/berita" class="block px-3.5 py-2.5 rounded-xl <?= $activeNav === 'berita' ? 'bg-cypress-800 text-antique-300 font-bold' : 'text-stone-300 hover:bg-white/5' ?> text-sm">
-                <i class="fa-solid fa-newspaper mr-2 text-antique-500"></i> Berita &amp; Agenda
-            </a>
-            <a href="<?= $base ?>/kajian" class="block px-3.5 py-2.5 rounded-xl <?= $activeNav === 'kajian' ? 'bg-cypress-800 text-antique-300 font-bold' : 'text-stone-300 hover:bg-white/5' ?> text-sm">
-                <i class="fa-brands fa-youtube mr-2 text-antique-500"></i> Video Kajian
-            </a>
-            <a href="<?= $base ?>/kontak" class="block px-3.5 py-2.5 rounded-xl <?= $activeNav === 'kontak' ? 'bg-cypress-800 text-antique-300 font-bold' : 'text-stone-300 hover:bg-white/5' ?> text-sm">
-                <i class="fa-solid fa-envelope mr-2 text-antique-500"></i> Kontak Masjid
-            </a>
-            <div class="pt-3 border-t border-white/10 flex flex-col gap-2">
-                <?php if ($currentUser): ?>
-                    <a href="<?= in_array($currentUser['role'], ['admin', 'bendahara', 'content_admin']) ? $base . '/admin/dashboard' : $base . '/donatur/portal-donatur' ?>" class="w-full text-center py-2.5 rounded-xl bg-cypress-800 text-antique-300 font-semibold text-xs border border-antique-500/30">
-                        Buka Portal (<?= e($currentUser['nama']) ?>)
+            
+            <!-- Mobile Accordion: Profil -->
+            <div class="space-y-1">
+                <button type="button" class="mobile-accordion w-full text-left px-3 py-2.5 rounded-lg text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition flex items-center justify-between">
+                    Profil <i class="fa-solid fa-chevron-down text-[8px] transition-transform"></i>
+                </button>
+                <div class="mobile-accordion-content hidden pl-2 space-y-1">
+                    <a href="<?= $base ?>/home/profil.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Tentang Masjid
                     </a>
-                    <a href="<?= $base ?>/auth/logout" class="w-full text-center py-2 rounded-xl text-red-300 hover:text-white text-xs">
+                    <a href="<?= $base ?>/home/profil.php#kepengurusan" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Kepengurusan DKM
+                    </a>
+                    <a href="<?= $base ?>/home/tim-kami.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Tim Kami
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mobile Accordion: Program -->
+            <div class="space-y-1">
+                <button type="button" class="mobile-accordion w-full text-left px-3 py-2.5 rounded-lg text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition flex items-center justify-between">
+                    Program <i class="fa-solid fa-chevron-down text-[8px] transition-transform"></i>
+                </button>
+                <div class="mobile-accordion-content hidden pl-2 space-y-1">
+                    <a href="<?= $base ?>/home/program.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Program Donasi
+                    </a>
+                    <a href="<?= $base ?>/home/berita.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Kegiatan & Berita
+                    </a>
+                    <a href="<?= $base ?>/home/kajian.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Video Kajian
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mobile Accordion: Lainnya -->
+            <div class="space-y-1">
+                <button type="button" class="mobile-accordion w-full text-left px-3 py-2.5 rounded-lg text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition flex items-center justify-between">
+                    Lainnya <i class="fa-solid fa-chevron-down text-[8px] transition-transform"></i>
+                </button>
+                <div class="mobile-accordion-content hidden pl-2 space-y-1">
+                    <a href="<?= $base ?>/home/transparansi.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Transparansi Kas
+                    </a>
+                </div>
+            </div>
+
+                    <!-- Mobile Accordion: Dokumentasi -->
+            <div class="space-y-1">
+                <button type="button" class="mobile-accordion w-full text-left px-3 py-2.5 rounded-lg text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition flex items-center justify-between">
+                    Docs <i class="fa-solid fa-chevron-down text-[8px] transition-transform"></i>
+                </button>
+                <div class="mobile-accordion-content hidden pl-2 space-y-1">
+                    <a href="<?= $base ?>/docs/panduan-user.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Panduan Pengguna
+                    </a>
+                    <?php if (isset($_SESSION['user']) && in_array($_SESSION['user']['role'], ['admin', 'bendahara', 'content_admin'])): ?>
+                    <a href="<?= $base ?>/docs/panduan-admin.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Panduan Admin
+                    </a>
+                    <?php endif; ?>
+                    <div class="border-t border-white/10 my-1"></div>
+                    <a href="<?= $base ?>/docs/privacy.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Kebijakan Privasi
+                    </a>
+                    <a href="<?= $base ?>/docs/terms.php" class="block px-3 py-2 rounded-lg text-xs text-stone-400 hover:text-white hover:bg-cyan-800/40 transition">
+                        Syarat & Ketentuan
+                    </a>
+                </div>
+            </div>
+
+            <a href="<?= $base ?>/home/kontak.php" class="block px-3 py-2.5 rounded-lg text-xs text-stone-300 hover:text-white hover:bg-cypress-800/60 transition <?= $activeNav === 'kontak' ? 'text-antique-300 bg-cypress-800/50' : '' ?>">
+                Kontak
+            </a>
+
+            <!-- Mobile Account Section -->
+            <div class="pt-3 border-t border-white/10 space-y-2">
+                <?php if ($currentUser): ?>
+                    <a href="<?= in_array($currentUser['role'], ['admin', 'bendahara', 'content_admin']) ? $base . '/admin/dashboard' : $base . '/donatur/portal-donatur' ?>" class="block w-full text-center py-2 rounded-lg bg-cypress-800 text-antique-300 font-semibold text-xs border border-antique-500/30 hover:text-white transition">
+                        Portal (<?= e(substr($currentUser['nama'], 0, 15)) ?>)
+                    </a>
+                    <a href="<?= $base ?>/auth/logout" class="block w-full text-center py-2 rounded-lg text-red-300 hover:text-white text-xs transition">
                         Keluar
                     </a>
                 <?php else: ?>
-                    <a href="<?= $base ?>/auth/login" class="w-full text-center py-2.5 rounded-xl bg-cypress-800 text-antique-300 font-semibold text-xs border border-antique-500/30">
-                        Masuk Pengurus / Donatur
+                    <a href="<?= $base ?>/auth/login" class="block w-full text-center py-2 rounded-lg bg-cypress-800 text-antique-300 font-semibold text-xs border border-antique-500/30 hover:text-white transition">
+                        Masuk
                     </a>
-                    <a href="<?= $base ?>/auth/register" class="w-full text-center py-2 rounded-xl text-stone-300 hover:text-white text-xs">
-                        Daftar Donatur Baru
+                    <a href="<?= $base ?>/auth/register" class="block w-full text-center py-2 rounded-lg text-stone-300 hover:text-white text-xs transition">
+                        Daftar
                     </a>
                 <?php endif; ?>
             </div>
@@ -238,9 +337,20 @@ $base = base_url();
     </header>
 
     <script>
+        // Mobile menu toggle
         document.getElementById('mobileMenuBtn')?.addEventListener('click', function() {
             const menu = document.getElementById('mobileMenu');
             menu.classList.toggle('hidden');
+        });
+
+        // Mobile accordion
+        document.querySelectorAll('.mobile-accordion').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const content = this.nextElementSibling;
+                const icon = this.querySelector('i');
+                content.classList.toggle('hidden');
+                icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+            });
         });
     </script>
     <main class="flex-1">

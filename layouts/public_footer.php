@@ -168,6 +168,10 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
             <div class="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-400 gap-4">
                 <p>&copy; <?= date('Y') ?> <?= e($profil['nama_masjid']) ?>. Seluruh hak cipta dilindungi.</p>
                 <div class="flex items-center gap-4 text-xs">
+                    <a href="<?= $base ?>/docs/privacy.php" class="hover:text-antique-300">Kebijakan Privasi</a>
+                    <span>•</span>
+                    <a href="<?= $base ?>/docs/terms.php" class="hover:text-antique-300">Syarat &amp; Ketentuan</a>
+                    <span>•</span>
                     <a href="<?= $base ?>/transparansi" class="hover:text-antique-300">Laporan Publik</a>
                     <span>•</span>
                     <a href="<?= $base ?>/auth/login" class="hover:text-antique-300">Portal Pengurus &amp; Donatur</a>

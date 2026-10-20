@@ -73,19 +73,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
     $profil = get_profil_masjid(); // Refresh data
 }
 
-// 2. TAMBAH PENGURUS DKM
+// 2. TAMBAH PENGURUS DKM (pilih User manual)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah_pengurus') {
-    $namaPengurus = trim($_POST['nama'] ?? '');
-    $jabatan      = trim($_POST['jabatan'] ?? '');
-    $bidang       = trim($_POST['bidang'] ?? '');
-    $noHp         = trim($_POST['no_hp'] ?? '');
-    $urutan       = (int)($_POST['urutan'] ?? 1);
-
-    if (!empty($namaPengurus) && !empty($jabatan)) {
-        $stmt = $pdo->prepare("INSERT INTO pengurus_masjid (nama, jabatan, bidang, no_hp, urutan) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$namaPengurus, $jabatan, $bidang, $noHp, $urutan]);
-        $pesan = "Pengurus DKM '{$namaPengurus}' berhasil ditambahkan!";
-        $tipe  = 'success';
+    $userId  = (int)($_POST['user_id'] ?? 0);
+    $jabatan = trim($_POST['jabatan'] ?? '');
+    $bidang  = trim($_POST['bidang'] ?? '');
+    $noHp    = trim($_POST['no_hp'] ?? '');
+    $urutan  = (int)($_POST['urutan'] ?? 1);
+    if ($userId > 0 && !empty($jabatan)) {
+        $u = $pdo->prepare("SELECT nama_lengkap FROM users WHERE id = ? AND status = 'aktif'");
+        $u->execute([$userId]);
+        $rowU = $u->fetch();
+        if ($rowU) {
+            $namaPengurus = $rowU['nama_lengkap'];
+            $hasCol = $pdo->query("SHOW COLUMNS FROM pengurus_masjid LIKE 'user_id'")->fetch();
+            if ($hasCol) {
+                $stmt = $pdo->prepare("INSERT INTO pengurus_masjid (nama, jabatan, bidang, no_hp, urutan, user_id) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$namaPengurus, $jabatan, $bidang, $noHp, $urutan, $userId]);
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO pengurus_masjid (nama, jabatan, bidang, no_hp, urutan) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$namaPengurus, $jabatan, $bidang, $noHp, $urutan]);
+            }
+            $pesan = "Pengurus DKM '{$namaPengurus}' berhasil ditambahkan!";
+            $tipe  = 'success';
+        } else {
+            $pesan = "User tidak ditemukan / tidak aktif!";
+            $tipe  = 'error';
+        }
+    } else {
+        $pesan = "Pilih user dan isi jabatan!";
+        $tipe  = 'error';
     }
 }
 
@@ -99,6 +116,7 @@ if (isset($_GET['hapus_pengurus'])) {
 
 $pag = paginate_data($pdo, "SELECT * FROM pengurus_masjid ORDER BY urutan ASC, id ASC", [], 10);
 $pengurusList = $pag['items'];
+$daftarUsers = $pdo->query("SELECT id, nama_lengkap, role FROM users WHERE status = 'aktif' AND role IN ('admin','bendahara','content_admin') ORDER BY nama_lengkap ASC")->fetchAll();
 
 $pageTitle    = 'Pengaturan Profil Masjid & DKM · ' . $profil['nama_masjid'];
 $activeMenu   = 'profil-admin';
@@ -249,11 +267,17 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </div>
             <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Pengurus</span>
 
-            <!-- Form Tambah Pengurus Langsung -->
+            <!-- Form Tambah Pengurus: Pilih User -->
             <form method="POST" action="" class="flex flex-wrap items-center gap-2 text-xs">
                 <input type="hidden" name="aksi" value="tambah_pengurus">
-                <input type="text" name="nama" required placeholder="Nama Pengurus..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
-                <input type="text" name="jabatan" required placeholder="Jabatan (Ketua, Bendahara)..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
+                <select name="user_id" required class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
+                    <option value="">-- Pilih User --</option>
+                    <?php foreach ($daftarUsers as $du): ?>
+                        <option value="<?= $du['id'] ?>"><?= e($du['nama_lengkap']) ?> (<?= e($du['role']) ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+                <input type="text" name="jabatan" required placeholder="Jabatan (Ketua DKM)..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
+                <input type="text" name="bidang" placeholder="Bidang..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
                 <input type="number" name="urutan" value="1" min="1" class="w-16 px-2 py-1.5 rounded-xl bg-warm-50 border border-antique-300 font-bold">
                 <button type="submit" class="px-3 py-1.5 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white font-bold">
                     + Tambah

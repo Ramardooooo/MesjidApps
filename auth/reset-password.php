@@ -160,11 +160,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                 <div class="max-w-md mx-auto w-full">
 
                     <div class="mb-8">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/60 text-antique-700 text-xs font-semibold uppercase tracking-wider mb-3">
-                            <span class="w-1.5 h-1.5 rounded-full bg-cypress-700"></span>
-                            Atur Kata Sandi Baru
-                        </div>
-                        <h2 class="text-2xl font-bold text-warm-900 tracking-tight">Buat Kata Sandi Baru</h2>
+<h2 class="text-2xl font-bold text-warm-900 tracking-tight">Buat Kata Sandi Baru</h2>
                         <p class="text-sm text-warm-800/70 mt-1.5">Untuk akun <strong><?= e($user['nama_lengkap']) ?></strong> · <?= e($user['email']) ?></p>
                     </div>
 

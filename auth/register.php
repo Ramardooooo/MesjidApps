@@ -24,8 +24,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     $konfirm  = $_POST['password_confirm'] ?? '';
+    $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
 
-    if (empty($nama) || empty($email) || empty($password)) {
+    // Verifikasi Turnstile
+    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'secret'   => TURNSTILE_SECRET,
+        'response' => $turnstileToken,
+        'remoteip' => get_client_ip(),
+    ]));
+    $response = curl_exec($ch);
+    curl_close($ch);
+    $responseData = json_decode($response, true);
+    $isTurnstileValid = ($responseData && ($responseData['success'] ?? false));
+    if (!$isTurnstileValid && ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1') && !$response) {
+        $isTurnstileValid = true;
+    }
+
+    if (!$isTurnstileValid) {
+        $pesan = 'Verifikasi captcha gagal';
+        $tipe = 'error';
+    } elseif (empty($nama) || empty($email) || empty($password)) {
         $pesan = 'Nama lengkap, email, dan kata sandi wajib diisi.';
         $tipe  = 'error';
     } elseif ($password !== $konfirm) {
@@ -126,6 +147,8 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Akun Donatur · <?= e($profil['nama_masjid']) ?></title>
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts & Custom Classic Theme -->
@@ -232,11 +255,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
             <div class="md:col-span-7 p-8 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
                 <div class="max-w-md mx-auto w-full">
                     <div class="mb-8">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/60 text-antique-700 text-xs font-semibold uppercase tracking-wider mb-3">
-                            <span class="w-1.5 h-1.5 rounded-full bg-cypress-700"></span>
-                            Daftar Akun Donatur
-                        </div>
-                        <h2 class="text-2xl font-bold text-warm-900 tracking-tight">Buat Akun Baru</h2>
+<h2 class="text-2xl font-bold text-warm-900 tracking-tight">Buat Akun Baru</h2>
                         <p class="text-sm text-warm-800/70 mt-1.5">Pantau riwayat infaq Anda &amp; unduh kwitansi resmi digital.</p>
                     </div>
 
@@ -303,6 +322,14 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                                 <input type="password" id="password_confirm" name="password_confirm" required placeholder="Ulangi sandi"
                                        class="w-full px-4 py-3 rounded-xl border border-warm-200 bg-warm-50/60 text-warm-900 placeholder-warm-800/40 text-sm focus:outline-none focus:bg-white focus:border-cypress-700 focus:ring-2 focus:ring-cypress-700/15 transition-luxury">
                             </div>
+                        </div>
+
+                        <!-- Turnstile Widget -->
+                        <div class="my-3 p-2.5 rounded-2xl bg-warm-50/80 border border-antique-300/60 shadow-inner flex flex-col items-center justify-center gap-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-warm-800/60">
+                                Silahkan Captcha Dulu
+                            </span>
+                            <div class="cf-turnstile scale-95" data-sitekey="<?= TURNSTILE_SITE_KEY ?>" data-action="register" data-theme="light"></div>
                         </div>
 
                         <button type="submit"

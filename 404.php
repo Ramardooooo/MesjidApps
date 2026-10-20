@@ -56,8 +56,8 @@ if (function_exists('base_url')) {
 }
 
 // --- Tentukan halaman "kembali" sesuai role ---
-$targetBeranda = $base . '/login';
-$backLabel     = 'Halaman Masuk';
+$targetBeranda = $base . '/';
+$backLabel     = 'Beranda';
 
 if ($isLoggedIn && $userRole) {
     switch ($userRole) {
@@ -248,17 +248,10 @@ $requestedUri = $_SERVER['REQUEST_URI'] ?? '/';
                             <span>Halaman Sebelumnya</span>
                         </button>
 
-                        <?php if ($isLoggedIn): ?>
-                            <a href="<?= htmlspecialchars($linkDonasi) ?>"
-                               class="px-4 py-2.5 rounded-lg border border-antique-300/60 hover:bg-antique-50 text-antique-700 text-xs font-medium transition-luxury">
-                                Kelola Donasi
-                            </a>
-                        <?php else: ?>
-                            <a href="<?= htmlspecialchars($base . '/') ?>"
-                               class="px-4 py-2.5 rounded-lg border border-antique-300/60 hover:bg-antique-50 text-antique-700 text-xs font-medium transition-luxury">
-                                Beranda
-                            </a>
-                        <?php endif; ?>
+                        <a href="<?= htmlspecialchars($base . '/') ?>"
+                           class="px-4 py-2.5 rounded-lg border border-antique-300/60 hover:bg-antique-50 text-antique-700 text-xs font-medium transition-luxury">
+                            Beranda
+                        </a>
                     </div>
                 </div>
 

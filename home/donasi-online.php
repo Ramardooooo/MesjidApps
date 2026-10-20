@@ -7,11 +7,20 @@ $profil = get_profil_masjid();
 $pageTitle = 'Formulir Infaq & Donasi Online · ' . $profil['nama_masjid'];
 $activeNav = 'program';
 
+// Cloudflare Turnstile Script
+echo '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>';
+
 $selectedProgramId = (int)($_GET['program_id'] ?? 0);
 $programs = $pdo->query("SELECT id, nama_program, target_donasi, dana_terkumpul FROM program_donasi WHERE status = 'aktif' ORDER BY is_featured DESC, id DESC")->fetchAll();
 $rekeningList = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1 ORDER BY urutan ASC")->fetchAll();
 
 $user = $_SESSION['user'] ?? null;
+
+// Wajib login untuk donasi online
+if (!$user) {
+    header('Location: ' . base_url() . '/auth/login?redirect=' . urlencode(base_url() . '/home/donasi-online' . ($selectedProgramId ? '?program_id=' . $selectedProgramId : '')));
+    exit;
+}
 $pesan = '';
 $tipe = '';
 
@@ -26,8 +35,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $metode       = $_POST['metode_pembayaran'] ?? 'qris';
     $bank_tujuan  = trim($_POST['bank_tujuan'] ?? 'QRIS Standar');
     $doa_donatur  = trim($_POST['doa_donatur'] ?? '');
+    $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
 
-    if ($is_anonim && empty($nama_donatur)) {
+    // Verifikasi Turnstile
+    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'secret'   => TURNSTILE_SECRET,
+        'response' => $turnstileToken,
+        'remoteip' => get_client_ip(),
+    ]));
+    $response = curl_exec($ch);
+    curl_close($ch);
+    $responseData = json_decode($response, true);
+    $isTurnstileValid = ($responseData && ($responseData['success'] ?? false));
+    if (!$isTurnstileValid && ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1') && !$response) {
+        $isTurnstileValid = true;
+    }
+
+    if (!$isTurnstileValid) {
+        $pesan = 'Verifikasi captcha gagal';
+        $tipe = 'error';
+    } elseif ($is_anonim && empty($nama_donatur)) {
         $nama_donatur = 'Hamba Allah';
     }
 
@@ -113,11 +143,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
 <!-- Header Banner -->
 <div class="bg-cypress-950 text-white py-12 relative pattern-arabesque-dark border-b border-antique-500/30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2 relative z-10">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cypress-900 border border-antique-500/40 text-antique-300 text-xs font-semibold uppercase tracking-wider">
-            <i class="fa-solid fa-heart text-emerald-400"></i>
-            <span>Kemudahan Berinfaq Digital</span>
-        </div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-classic text-white">
+<h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-classic text-white">
             Formulir Infaq &amp; Donasi Online
         </h1>
         <p class="text-stone-300 text-xs sm:text-sm max-w-lg mx-auto">
@@ -290,11 +316,11 @@ require_once __DIR__ . '/../layouts/public_header.php';
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-warm-800 mb-1">Nomor WhatsApp (Aktif) <span class="text-red-500">*</span></label>
-                        <input type="text" name="no_wa" required placeholder="Contoh: 081234567890" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none">
+                        <input type="text" name="no_wa" value="<?= e($user['no_hp'] ?? '') ?>" <?= !empty($user['no_hp']) ? 'readonly class="w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-300 text-xs sm:text-sm text-gray-500 cursor-not-allowed"' : 'required placeholder="Contoh: 081234567890" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none"' ?>>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-warm-800 mb-1">Alamat Email (Opsional)</label>
-                        <input type="email" name="email" value="<?= e($user['email'] ?? '') ?>" placeholder="nama@email.com" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none">
+                        <input type="email" name="email" value="<?= e($user['email'] ?? '') ?>" <?= !empty($user['email']) ? 'readonly class="w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-300 text-xs sm:text-sm text-gray-500 cursor-not-allowed"' : 'placeholder="nama@email.com" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none"' ?>>
                     </div>
                 </div>
 
@@ -309,6 +335,12 @@ require_once __DIR__ . '/../layouts/public_header.php';
                     <label class="block text-xs font-bold text-warm-800 mb-1">Upload Bukti Transfer / Screenshot Pembayaran</label>
                     <input type="file" name="bukti_pembayaran" accept="image/jpeg,image/png,image/webp" required class="w-full px-4 py-2 rounded-xl bg-warm-50 border border-antique-300 text-xs text-warm-900 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cypress-800 file:text-white hover:file:bg-cypress-900">
                     <span class="text-[11px] text-warm-800/60 block mt-1"><i class="fa-solid fa-shield-halved text-emerald-500 mr-1"></i>Format yang diterima: JPG, PNG, WEBP · Maksimal 3MB · Wajib diisi untuk proses verifikasi.</span>
+                </div>
+
+                <!-- Turnstile Widget (Premium Design) -->
+                <div class="my-4 p-4 rounded-3xl bg-cypress-950/5 border border-antique-500/20 shadow-sm flex flex-col items-center gap-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-warm-900/60">Silahkan Captcha Dulu</span>
+                    <div class="cf-turnstile" data-sitekey="<?= TURNSTILE_SITE_KEY ?>" data-action="donasi" data-theme="light"></div>
                 </div>
             </div>
         </div>

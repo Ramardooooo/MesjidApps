@@ -58,11 +58,7 @@ require_once __DIR__ . '/layouts/public_header.php';
                         
                         <!-- Hero Text Content -->
                         <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-                            <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-cypress-900/80 border border-antique-500/40 text-antique-300 text-xs font-semibold uppercase tracking-widest shadow-sm">
-                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                <span>Pusat Dakwah &amp; Ibadah Ummat</span>
-                            </div>
-
+                            
                             <h1 class="text-3xl sm:text-4xl xl:text-5xl font-extrabold tracking-tight leading-tight">
                                 <?= e($s['judul'] ?? 'Makmurkan Rumah Allah') ?><br class="hidden sm:inline">
                                 <span class="gold-gradient-text font-classic">Alirkan Pahala Abadi</span>
@@ -297,11 +293,7 @@ require_once __DIR__ . '/layouts/public_header.php';
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
     <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
         <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/50 text-antique-700 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fa-solid fa-hand-holding-dollar text-cypress-700"></i>
-                <span>Wakaf, Infaq &amp; Sedekah</span>
-            </div>
-            <h2 class="text-2xl sm:text-3xl font-bold text-warm-900 tracking-tight font-classic">
+<h2 class="text-2xl sm:text-3xl font-bold text-warm-900 tracking-tight font-classic">
                 Program Donasi &amp; Pembangunan Masjid
             </h2>
             <p class="text-xs sm:text-sm text-warm-800/70 mt-1 max-w-xl">
@@ -387,12 +379,7 @@ require_once __DIR__ . '/layouts/public_header.php';
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             
             <div class="lg:col-span-6 space-y-6">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cypress-900 border border-antique-500/40 text-antique-300 text-xs font-semibold uppercase tracking-wider">
-                    <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-                    <span>Akuntabilitas &amp; Transparansi Publik</span>
-                </div>
-
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
+<h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
                     Pengelolaan Dana Kas Terbuka, <br class="hidden sm:inline">
                     <span class="gold-gradient-text font-classic">Amanah &amp; Dapat Dipertanggungjawabkan</span>
                 </h2>
@@ -470,11 +457,7 @@ require_once __DIR__ . '/layouts/public_header.php';
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
     <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
         <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-xs font-semibold uppercase tracking-wider mb-2">
-                <i class="fa-brands fa-youtube text-red-600"></i>
-                <span>Syiar Dakwah Digital</span>
-            </div>
-            <h2 class="text-2xl sm:text-3xl font-bold text-warm-900 tracking-tight font-classic">
+<h2 class="text-2xl sm:text-3xl font-bold text-warm-900 tracking-tight font-classic">
                 Video Kajian &amp; Live Streaming Masjid
             </h2>
             <p class="text-xs sm:text-sm text-warm-800/70 mt-1 max-w-xl">
@@ -532,11 +515,7 @@ require_once __DIR__ . '/layouts/public_header.php';
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
             <div>
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/50 text-antique-700 text-xs font-semibold uppercase tracking-wider mb-2">
-                    <i class="fa-solid fa-newspaper text-cypress-700"></i>
-                    <span>Warta &amp; Informasi</span>
-                </div>
-                <h2 class="text-2xl sm:text-3xl font-bold text-warm-900 tracking-tight font-classic">
+<h2 class="text-2xl sm:text-3xl font-bold text-warm-900 tracking-tight font-classic">
                     Berita &amp; Agenda Kegiatan Terkini
                 </h2>
                 <p class="text-xs sm:text-sm text-warm-800/70 mt-1 max-w-xl">

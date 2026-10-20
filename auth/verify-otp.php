@@ -297,11 +297,7 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
 
                     <!-- Header Section -->
                     <div class="mb-8">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-antique-50 border border-antique-300/60 text-antique-700 text-xs font-semibold uppercase tracking-wider mb-3">
-                            <span class="w-1.5 h-1.5 rounded-full bg-cypress-700"></span>
-                            <?= e($labelBadge) ?>
-                        </div>
-                        <h2 class="text-2xl font-bold text-warm-900 tracking-tight"><?= e($labelJudul) ?></h2>
+<h2 class="text-2xl font-bold text-warm-900 tracking-tight"><?= e($labelJudul) ?></h2>
                         <p class="text-sm text-warm-800/70 mt-1.5"><?= $labelSub ?></p>
                     </div>
 

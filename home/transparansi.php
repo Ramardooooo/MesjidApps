@@ -64,11 +64,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
 <!-- Header Banner -->
 <div class="bg-cypress-950 text-white py-14 relative pattern-arabesque-dark border-b border-antique-500/30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3 relative z-10">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cypress-900 border border-antique-500/40 text-antique-300 text-xs font-semibold uppercase tracking-wider">
-            <i class="fa-solid fa-chart-line text-emerald-400"></i>
-            <span>Akuntabilitas &amp; Keterbukaan Publik</span>
-        </div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-classic text-white">
+<h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-classic text-white">
             Laporan Transparansi Keuangan Kas Masjid
         </h1>
         <p class="text-stone-300 text-xs sm:text-sm max-w-xl mx-auto">
