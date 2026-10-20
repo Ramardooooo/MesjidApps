@@ -100,12 +100,6 @@ mesjid-donasi-main/
 |   |-- MesjidApps.sql              Skema database utama
 |   |-- MesjidAppsV1.1.sql          Skema update V1.1 terintegrasi
 |   |-- DataMesjidApps.sql          Data seeder & contoh awal
-|   |-- create_rate_limits_table.sql Tabel proteksi rate limiting
-|   |-- add_staff_profile_columns.sql Kolom profil pengurus/staff
-|   |-- add_columns.sql             Kolom tracking notifikasi & metadata
-|   |-- add_indexes.sql             Index performa query
-|   |-- add_foreign_keys.sql        Relasi integritas foreign key
-|   |-- README_MIGRATIONS.md        Panduan eksekusi migrasi database
 |
 |-- docs/                           Pusat Dokumentasi & Legalitas
 |   |-- panduan-user.php            Panduan interaktif jamaah & donatur
