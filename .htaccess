@@ -1,31 +1,136 @@
 # ==============================================================================
-# Konfigurasi Apache (.htaccess) - Masjid Website
+# Konfigurasi Apache (.htaccess) — Masjid Jami' Nurul Iman
 # ==============================================================================
 
-# Cegah penampilan daftar isi folder secara terbuka (Directory Listing)
-Options -Indexes
+Options -Indexes +FollowSymLinks
+DirectoryIndex index.php index.html
+AddDefaultCharset UTF-8
 
-# Lindungi berkas sensitif dari akses langsung browser
-<FilesMatch "\.(sql|env|log|bak|git.*)$">
+# ------------------------------------------------------------------------------
+# CUSTOM ERROR PAGES
+# ------------------------------------------------------------------------------
+ErrorDocument 400 /400.php
+ErrorDocument 401 /401.php
+ErrorDocument 403 /403.php
+ErrorDocument 404 /404.php
+ErrorDocument 500 /500.php
+ErrorDocument 503 /maintenance.php
+
+# ------------------------------------------------------------------------------
+# LINDUNGI BERKAS SENSITIF
+# ------------------------------------------------------------------------------
+<FilesMatch "^(403|404|500|maintenance)\.php$">
+    Require all granted
+</FilesMatch>
+
+<FilesMatch "\.(sql|env|log|bak|old|ini|conf|sh|md|lock|yml|yaml|json)$">
     Require all denied
 </FilesMatch>
 
-# Blokir akses langsung ke folder internal tertentu jika diperlukan
-<IfModule mod_authz_core.c>
-    <Files "config/database.php">
-        # Tetap bisa di-include oleh skrip PHP lokal, tapi diblok jika diakses URL langsung
-    </Files>
-</IfModule>
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
 
-# Pengalihan Halaman Tidak Ditemukan (404 Handling)
+# Proteksi folder sensitif dipindah ke dalam blok RewriteRule (lihat bawah)
+# CATATAN: RedirectMatch dengan pola ^/  TIDAK berfungsi di .htaccess (per-directory context)
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Jika berkas atau folder yang diminta memang tidak ada di server
+    # Force HTTPS (production only - skip localhost/127.0.0.1)
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Security Headers
+    <IfModule mod_headers.c>
+        Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        Header set X-XSS-Protection "1; mode=block"
+        Header set X-Content-Type-Options "nosniff"
+        Header set X-Frame-Options "SAMEORIGIN"
+        Header set Referrer-Policy "strict-origin-when-cross-origin"
+    </IfModule>
+
+    # 0. PROTEKSI FOLDER SENSITIF (403 Forbidden)
+    # Diberlakukan DULUAN agar aturan routing di bawah tidak mengeksekusi file di dalamnya
+    RewriteRule ^(config|db|otp|layouts)(/|$) - [F,L]
+    RewriteRule ^uploads/home(/|$) - [F,L]
+    RewriteRule ^vendor(/|$) - [F,L]
+    RewriteCond %{REQUEST_URI} /\.(sql|env|log|bak|old|ini|conf|sh|md|lock|yml|yaml|json)$ [NC]
+    RewriteRule ^ - [F,L]
+
+    # 1. Hapus ekstensi .php dari address bar browser (301 Permanent Redirect)
+    # Hanya berlaku untuk permintaan GET langsung dari klien agar form POST tidak terganggu
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
+    RewriteCond %{REQUEST_METHOD} =GET
+    RewriteCond %{THE_REQUEST} \s/([^?]+?)\.php[?\s] [NC]
+    RewriteRule ^ /%1 [R=301,L,NE]
+
+    # 2. Jika permintaan adalah file nyata fisik (CSS, JS, font, gambar, berkas upload), layani langsung
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # 3. Jika permintaan adalah folder direktori nyata fisik, layani langsung (DirectoryIndex)
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 4. Routing Halaman Publik dari folder home/ (tanpa perlu menulis home/)
+    # Contoh: /profil -> home/profil.php, /transparansi -> home/transparansi.php
+    # Existence check dibuat fleksibel supaya jalan di localhost/subfolder & virtual host
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond home/$1.php -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/home/$1.php -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/Mesjid-Donasi-main/home/$1.php -f
+    RewriteRule ^([^/]+)$ home/$1.php [QSA,L]
+
+    # 5. Routing Otomatis ke file .php yang sesuai di root atau subfolder
+    # Contoh: /admin/dashboard -> admin/dashboard.php, /auth/login -> auth/login.php
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.*)$ $1.php [QSA,L]
+
+    # 6. Shortcut Pintas Langsung dari Root ke Modul Admin
+    RewriteRule ^dashboard$ admin/dashboard.php [QSA,L]
+    RewriteRule ^transaksi$ admin/transaksi.php [QSA,L]
+    RewriteRule ^verifikasi-donasi$ admin/verifikasi-donasi.php [QSA,L]
+    RewriteRule ^laporan$ admin/laporan.php [QSA,L]
+    RewriteRule ^berita-admin$ admin/berita-admin.php [QSA,L]
+    RewriteRule ^banner-admin$ admin/banner-admin.php [QSA,L]
+    RewriteRule ^program-admin$ admin/program-admin.php [QSA,L]
+    RewriteRule ^youtube-admin$ admin/youtube-admin.php [QSA,L]
+    RewriteRule ^rekening-admin$ admin/rekening-admin.php [QSA,L]
+    RewriteRule ^profil-admin$ admin/profil-admin.php [QSA,L]
+    RewriteRule ^users-admin$ admin/users-admin.php [QSA,L]
+    RewriteRule ^pesan-admin$ admin/pesan-admin.php [QSA,L]
+
+    # Shortcut Pintas Langsung dari Root ke Modul Auth
+    RewriteRule ^login$ auth/login.php [QSA,L]
+    RewriteRule ^register$ auth/register.php [QSA,L]
+    RewriteRule ^logout$ auth/logout.php [QSA,L]
+    RewriteRule ^forgot-password$ auth/forgot-password.php [QSA,L]
+    RewriteRule ^reset-password$ auth/reset-password.php [QSA,L]
+    RewriteRule ^verify-otp$ auth/verify-otp.php [QSA,L]
+
+    # Shortcut Pintas Langsung dari Root ke Modul Donatur
+    RewriteRule ^portal-donatur$ donatur/portal-donatur.php [QSA,L]
+    RewriteRule ^kwitansi$ donatur/kwitansi.php [QSA,L]
+
+
+    
+    # 7. Fallback Error 404 jika halaman tidak ditemukan
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^ 404.php [L]
 </IfModule>
 
-# Fallback ErrorDocument standar
-ErrorDocument 404 404.php
+# --- TEST SEMENTARA (hapus nanti) ---
+<FilesMatch "^tes-error-403\.txt">
+    Require all denied
+</FilesMatch>
+
+
+<FilesMatch "^tes-rahasia\.html$">
+    Require all denied
+</FilesMatch>
+
