@@ -1,94 +1,31 @@
 <?php
 /**
- * 404.php — Halaman Error Tidak Ditemukan
+ * 404.php
+ * Minimal Modern Error Page
  * Masjid Jami' Nurul Iman
- *
- * Ditampilkan ketika halaman yang diminta tidak ditemukan.
- * Fallback dari .htaccess: RewriteRule ^ 404.php [L]
  */
 
-// HTTP status 404
 http_response_code(404);
 
-// Cegah caching halaman error
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-// --- Bootstrap: config & helpers dengan error handling ---
-$configPath  = __DIR__ . '/config/database.php';
-$helpersPath = __DIR__ . '/config/helpers.php';
+// Base URL otomatis
+$scriptDir = str_replace(
+    '\\',
+    '/',
+    dirname($_SERVER['SCRIPT_NAME'] ?? '')
+);
 
-try {
-    if (file_exists($configPath)) {
-        require_once $configPath;
-    }
-} catch (Throwable $e) {
-    // Silent fail
+$base = rtrim($scriptDir, '/');
+
+if ($base === '/' || $base === '.') {
+    $base = '';
 }
 
-try {
-    if (file_exists($helpersPath)) {
-        require_once $helpersPath;
-    }
-} catch (Throwable $e) {
-    // Silent fail
-}
-
-// --- Session ---
-if (session_status() === PHP_SESSION_NONE) {
-    @session_start();
-}
-
-// --- Deteksi login ---
-$isLoggedIn = isset($_SESSION['user']) && !empty($_SESSION['user']['id']);
-$userRole   = $_SESSION['user']['role'] ?? null;
-$userName   = $_SESSION['user']['nama'] ?? null;
-
-// --- Base URL ---
-$base = '';
-if (function_exists('base_url')) {
-    $base = rtrim(base_url(), '/');
-} else {
-    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
-    $base      = rtrim($scriptDir, '/');
-    if ($base === '' || $base === '/') $base = '';
-}
-
-// --- Tentukan halaman "kembali" sesuai role ---
-$targetBeranda = $base . '/';
-$backLabel     = 'Beranda';
-
-if ($isLoggedIn && $userRole) {
-    switch ($userRole) {
-        case 'admin':
-        case 'bendahara':
-        case 'content_admin':
-            $targetBeranda = $base . '/dashboard';
-            $backLabel     = 'Dashboard Pengurus';
-            break;
-        case 'donatur':
-            $targetBeranda = $base . '/portal-donatur';
-            $backLabel     = 'Portal Donatur';
-            break;
-    }
-}
-
-// --- Nama masjid (bisa dari DB jika ada) ---
+$homeUrl = $base . '/';
 $namaMasjid = "Masjid Jami' Nurul Iman";
-if (function_exists('get_profil_masjid')) {
-    try {
-        $profil = get_profil_masjid();
-        if (!empty($profil['nama_masjid'])) {
-            $namaMasjid = $profil['nama_masjid'];
-        }
-    } catch (Throwable $e) {
-        // Biarkan default
-    }
-}
-
-// --- URL halaman yang diminta (untuk debug ringan) ---
-$requestedUri = $_SERVER['REQUEST_URI'] ?? '/';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -96,178 +33,235 @@ $requestedUri = $_SERVER['REQUEST_URI'] ?? '/';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>404 · Halaman Tidak Ditemukan · <?= htmlspecialchars($namaMasjid) ?></title>
 
-    <!-- Fonts -->
+    <title>404 - Halaman Tidak Ditemukan | <?= htmlspecialchars($namaMasjid, ENT_QUOTES, 'UTF-8') ?></title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        cypress: {
-                            50:  '#f2f7f4',
-                            100: '#e1ede6',
-                            200: '#c3dbcd',
-                            600: '#234b38',
-                            700: '#1b3a2b',
-                            800: '#142a1f',
-                            900: '#0d1d15',
-                        },
-                        antique: {
-                            50:  '#fdfbf7',
-                            100: '#f8f4ec',
-                            300: '#dfc896',
-                            500: '#c5a059',
-                            600: '#b08a42',
-                            700: '#8c6b2d',
-                        },
-                        warm: {
-                            50:  '#fbf9f5',
-                            100: '#f5f1e8',
-                            200: '#ebe4d3',
-                            800: '#242b26',
-                            900: '#191f1b',
-                        }
-                    },
-                    fontFamily: {
-                        sans:    ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui'],
-                        classic: ['Cinzel', 'serif'],
-                        arabic:  ['Amiri', 'serif'],
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Custom Classic Theme -->
-    <link rel="stylesheet" href="<?= htmlspecialchars($base) ?>/assets/css/classic-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .pattern-arabesque-light {
-            background-color: #fbf9f5;
-            background-image:
-                radial-gradient(circle at 15% 20%, rgba(197, 160, 89, 0.06) 0%, transparent 45%),
-                radial-gradient(circle at 85% 80%, rgba(24, 55, 40, 0.05) 0%, transparent 45%);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .transition-luxury {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+        :root {
+            --primary: #174b35;
+            --primary-dark: #103725;
+            --text: #202a24;
+            --muted: #89928c;
+            --border: #e9eee9;
+            --background: #fafcfb;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            text-align: center;
+            animation: appear .7s ease both;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 65px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .3px;
+        }
+
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            color: white;
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .brand-icon svg {
+            width: 19px;
+            height: 19px;
+        }
+
+        .error-code {
+            font-size: clamp(110px, 25vw, 170px);
+            font-weight: 800;
+            line-height: .95;
+            letter-spacing: -12px;
+            color: var(--primary);
+            user-select: none;
+        }
+
+        .error-label {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 7px 13px;
+            border: 1px solid #dce9df;
+            border-radius: 50px;
+            background: #f0f6f1;
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin-top: 25px;
+            font-size: clamp(21px, 5vw, 27px);
+            font-weight: 700;
+            letter-spacing: -.8px;
+        }
+
+        .description {
+            max-width: 370px;
+            margin: 13px auto 30px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.9;
+        }
+
+        .home-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-width: 190px;
+            padding: 14px 25px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 7px 20px rgba(23, 75, 53, .13);
+            transition: .25s ease;
+        }
+
+        .home-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(23, 75, 53, .2);
+        }
+
+        .home-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .footer {
+            margin-top: 75px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: #a0aaa3;
+            font-size: 10px;
+            letter-spacing: .3px;
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .brand {
+                margin-bottom: 55px;
+            }
+
+            .error-code {
+                letter-spacing: -8px;
+            }
+
+            .footer {
+                margin-top: 60px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
         }
     </style>
 </head>
-<body class="pattern-arabesque-light min-h-screen flex flex-col justify-between items-center p-4 sm:p-6 lg:p-8 text-warm-900">
 
-    <!-- Header Sederhana -->
-    <header class="w-full max-w-2xl text-center pt-4">
-        <a href="<?= htmlspecialchars($base ?: '/') ?>"
-           class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 border border-antique-300/40 shadow-sm hover:border-cypress-700 transition-luxury">
-            <div class="w-6 h-6 rounded-md bg-cypress-800 flex items-center justify-center text-antique-300">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 0c-3 3-5 6-5 9a5 5 0 0010 0c0-3-2-6-5-9z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M7 21v-4m10 4v-4M9 13h6"/>
+<body>
+
+    <main class="container">
+
+        <!-- Brand -->
+        <a href="<?= htmlspecialchars($homeUrl, ENT_QUOTES, 'UTF-8') ?>" class="brand">
+            <span class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18M5 21V11l7-7 7 7v10"/>
+                    <path d="M9 21v-6h6v6"/>
+                    <path d="M12 4V2"/>
                 </svg>
-            </div>
-            <span class="font-classic text-xs font-bold tracking-wider text-cypress-800 uppercase">
-                <?= htmlspecialchars($namaMasjid) ?>
             </span>
+            <span><?= htmlspecialchars($namaMasjid, ENT_QUOTES, 'UTF-8') ?></span>
         </a>
-    </header>
 
-    <!-- Kartu Utama 404 Klasik -->
-    <main class="w-full max-w-lg my-8">
-        <div class="bg-white rounded-2xl p-8 sm:p-10 border border-antique-300/50 shadow-xl shadow-stone-900/5 text-center relative overflow-hidden">
+        <!-- Error -->
+        <div class="error-code">404</div>
 
-            <!-- Ornamen Aksen Sudut -->
-            <div class="absolute -top-12 -right-12 w-32 h-32 bg-antique-50 rounded-full opacity-60 pointer-events-none"></div>
-            <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-cypress-50 rounded-full opacity-60 pointer-events-none"></div>
+        <span class="error-label">Page Not Found</span>
 
-            <div class="relative z-10">
-                <!-- Ikon Kubah & Kompas Klasik -->
-                <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-antique-50 border border-antique-300/60 shadow-inner flex items-center justify-center text-antique-600">
-                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 0c-3 3-5 6-5 9a5 5 0 0010 0c0-3-2-6-5-9z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M7 21v-4m10 4v-4M9 13h6"/>
-                        <circle cx="12" cy="12" r="9" stroke-dasharray="2 2" opacity="0.5"/>
-                    </svg>
-                </div>
+        <h1>Oops! Halaman tidak ditemukan.</h1>
 
-                <!-- Angka 404 Tipografi Klasik -->
-                <div class="mb-2">
-                    <span class="font-classic text-6xl sm:text-7xl font-bold tracking-wider text-cypress-800 block select-none">
-                        404
-                    </span>
-                    <span class="inline-block mt-1 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold tracking-wider uppercase">
-                        Halaman Tidak Ditemukan
-                    </span>
-                </div>
-
-                <!-- Pesan Penjelasan -->
-                <div class="my-6 space-y-2">
-                    <h1 class="text-xl font-bold text-warm-900">
-                        Afwan, halaman yang Anda cari tidak tersedia.
-                    </h1>
-                    <p class="text-xs sm:text-sm text-warm-800/70 leading-relaxed max-w-sm mx-auto">
-                        Alamat URL yang Anda masukkan mungkin salah ketik, sudah dipindahkan,
-                        atau telah diperbarui dalam portal sistem masjid.
-                    </p>
-
-                    <?php if ($isLoggedIn && $userRole === 'admin'): ?>
-                        <p class="text-[10px] text-gray-400 break-all pt-2">
-                            Requested:
-                            <code class="bg-gray-100 px-2 py-0.5 rounded">
-                                <?= htmlspecialchars($requestedUri) ?>
-                            </code>
-                        </p>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Tombol Navigasi Alternatif -->
-                <div class="space-y-3 pt-2">
-                    <a href="<?= htmlspecialchars($targetBeranda) ?>"
-                       class="w-full py-3 px-5 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white font-semibold text-xs tracking-wide shadow-md shadow-cypress-900/15 flex items-center justify-center gap-2 transition-luxury">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                        </svg>
-                        <span>Kembali ke <?= htmlspecialchars($backLabel) ?></span>
-                    </a>
-
-                    <div class="flex items-center justify-center gap-2 flex-wrap">
-                        <button type="button" onclick="history.back()"
-                                class="px-4 py-2.5 rounded-lg border border-warm-200 hover:bg-warm-50 text-warm-800/80 text-xs font-medium transition-luxury flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                            </svg>
-                            <span>Halaman Sebelumnya</span>
-                        </button>
-
-                        <a href="<?= htmlspecialchars($base . '/') ?>"
-                           class="px-4 py-2.5 rounded-lg border border-antique-300/60 hover:bg-antique-50 text-antique-700 text-xs font-medium transition-luxury">
-                            Beranda
-                        </a>
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="w-full text-center pb-4 text-xs text-warm-800/60">
-        <p>
-            &copy; <?= date('Y') ?>
-            <?= htmlspecialchars($namaMasjid) ?>
-            &middot; Menjaga Amanah, Memakmurkan Masjid
+        <p class="description">
+            Maaf, halaman yang Anda cari mungkin telah dipindahkan,
+            dihapus, atau alamat yang dimasukkan tidak tersedia.
         </p>
-    </footer>
+
+        <!-- Home Button -->
+        <a href="<?= htmlspecialchars($homeUrl, ENT_QUOTES, 'UTF-8') ?>"
+           class="home-button">
+
+            <svg viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 10 9-7 9 7"/>
+                <path d="M5 9v12h14V9"/>
+                <path d="M9 21v-7h6v7"/>
+            </svg>
+
+            Kembali ke Home
+        </a>
+
+        <!-- Footer -->
+        <footer class="footer">
+            &copy; <?= date('Y') ?>
+            <?= htmlspecialchars($namaMasjid, ENT_QUOTES, 'UTF-8') ?>
+            &nbsp;·&nbsp; All Rights Reserved
+        </footer>
+
+    </main>
 
 </body>
 </html>
