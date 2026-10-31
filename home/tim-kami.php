@@ -94,7 +94,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                     <div class="p-6 text-center">
                         <div class="relative inline-block mb-4">
                             <?php if ($avatarUrl): ?>
-                                <img src="<?= e($avatarUrl) ?>" alt="<?= e($staff['nama_lengkap']) ?>" class="w-24 h-24 rounded-full object-cover border-4 border-antique-100 group-hover:border-antique-300 transition-colors">
+                                 <img src="<?= e($avatarUrl) ?>" alt="<?= e($staff['nama_lengkap']) ?>" class="w-24 h-24 rounded-full object-cover border-4 border-antique-100 group-hover:border-antique-300 transition-colors" draggable="false">
                             <?php else: ?>
                                 <div class="w-24 h-24 rounded-full bg-antique-100 flex items-center justify-center text-antique-700 text-3xl font-bold border-4 border-antique-50 group-hover:border-antique-200 transition-colors">
                                     <?= e($initials) ?>

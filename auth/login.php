@@ -3,8 +3,17 @@
 require_once __DIR__ . '/../config/database.php';
 mulai_session();
 
-// Jika sudah login arahkan sesuai role
+$redirect = trim($_GET['redirect'] ?? $_POST['redirect'] ?? '');
+
+// Jika sudah login arahkan sesuai role atau redirect
 if (isset($_SESSION['user'])) {
+    if (!empty($redirect)) {
+        $parsed = parse_url($redirect);
+        if (empty($parsed['host']) || $parsed['host'] === ($_SERVER['HTTP_HOST'] ?? '')) {
+            header('Location: ' . $redirect);
+            exit;
+        }
+    }
     if ($_SESSION['user']['role'] === 'donatur') {
         header('Location: ' . base_url() . '/donatur/portal-donatur');
     } else {
@@ -77,6 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'email'    => $user['email'] ?? '',
                     'no_hp'    => $user['no_hp'] ?? '',
                 ];
+
+                if (!empty($redirect)) {
+                    $parsed = parse_url($redirect);
+                    if (empty($parsed['host']) || $parsed['host'] === ($_SERVER['HTTP_HOST'] ?? '')) {
+                        header('Location: ' . $redirect);
+                        exit;
+                    }
+                }
 
                 if ($user['role'] === 'donatur') {
                     header('Location: ' . base_url() . '/donatur/portal-donatur');
@@ -242,7 +259,10 @@ $tanggalMasehi = $namaHari . ', ' . date('j') . ' ' . $namaBulan . ' ' . date('Y
                     </div>
                     <?php endif; ?>
 
-                    <form method="POST" action="login" class="space-y-5" id="loginForm">
+                    <form method="POST" action="login<?= !empty($redirect) ? '?redirect=' . urlencode($redirect) : '' ?>" class="space-y-5" id="loginForm">
+                        <?php if (!empty($redirect)): ?>
+                            <input type="hidden" name="redirect" value="<?= e($redirect) ?>">
+                        <?php endif; ?>
                         <div>
                             <label for="loginUsername" class="block text-xs font-semibold uppercase tracking-wider text-warm-800/80 mb-2">
                                 Username atau Email

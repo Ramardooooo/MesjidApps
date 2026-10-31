@@ -87,10 +87,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
     if ($kategori_id <= 0) {
         $pesan = 'Silakan pilih kategori transaksi.';
         $tipe  = 'error';
-    } elseif ($nominal <= 0) {
-        $pesan = 'Nominal transaksi harus lebih dari Rp 0.';
-        $tipe  = 'error';
-    } elseif (empty($keterangan)) {
+        } elseif ($nominal <= 0) {
+            $pesan = 'Nominal transaksi harus lebih dari Rp 0.';
+            $tipe  = 'error';
+        } elseif ($nominal > 999999999.99) {
+            $pesan = 'Nominal melebihi batas maksimal Rp 999.999.999,99.';
+            $tipe  = 'error';
+        } elseif (empty($keterangan)) {
         $pesan = 'Keterangan transaksi wajib diisi.';
         $tipe  = 'error';
     } else {
@@ -479,7 +482,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label class="block font-bold text-warm-800 mb-1">Nominal (Rp) <span class="text-red-500">*</span></label>
-                    <input type="number" name="nominal" min="1000" step="500" required placeholder="Contoh: 500000" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-bold text-sm focus:outline-none">
+                    <input type="text" name="nominal" min="1000" max="1000000000" required placeholder="Contoh: 500.000" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-bold text-sm focus:outline-none" oninput="this.value=this.value.replace(/\D/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')">
                 </div>
                 <div>
                     <label class="block font-bold text-warm-800 mb-1">Metode Pembayaran</label>

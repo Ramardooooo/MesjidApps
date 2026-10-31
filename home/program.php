@@ -109,7 +109,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                         <!-- Header Card -->
                         <div class="h-48 bg-gradient-to-br from-cypress-900 to-cypress-950 relative overflow-hidden flex items-center justify-center p-6 text-center">
                             <?php if (!empty($prog['gambar'])): ?>
-                                <img src="<?= e(upload_url($prog['gambar'])) ?>" alt="<?= e($prog['nama_program']) ?>" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                 <img src="<?= e(upload_url($prog['gambar'])) ?>" alt="<?= e($prog['nama_program']) ?>" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" draggable="false">
                                 <div class="absolute inset-0 bg-gradient-to-t from-cypress-950/90 via-cypress-950/40 to-cypress-950/20"></div>
                             <?php else: ?>
                                 <div class="absolute inset-0 pattern-arabesque-dark opacity-40"></div>

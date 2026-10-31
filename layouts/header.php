@@ -11,7 +11,7 @@ if (!isset($pageTitle)) {
     <title><?= e($pageTitle) ?></title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../assets/css/classic-theme.css">
+    <link rel="stylesheet" href="<?= base_url() ?>/assets/css/classic-theme.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Chart.js CDN -->

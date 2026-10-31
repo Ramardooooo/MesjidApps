@@ -80,7 +80,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
         <div class="flex flex-col lg:flex-row items-center lg:items-start gap-10">
             <div class="flex-shrink-0">
                 <?php if ($avatarUrl): ?>
-                    <img src="<?= e($avatarUrl) ?>" alt="<?= e($staff['nama_lengkap']) ?>" class="w-40 h-40 lg:w-48 lg:h-48 rounded-3xl object-cover border-4 border-antique-500/40 shadow-2xl">
+                     <img src="<?= e($avatarUrl) ?>" alt="<?= e($staff['nama_lengkap']) ?>" class="w-40 h-40 lg:w-48 lg:h-48 rounded-3xl object-cover border-4 border-antique-500/40 shadow-2xl" draggable="false">
                 <?php else: ?>
                     <div class="w-40 h-40 lg:w-48 lg:h-48 rounded-3xl bg-antique-600 flex items-center justify-center text-white text-5xl font-bold border-4 border-antique-500/40 shadow-2xl">
                         <?= e($initials) ?>

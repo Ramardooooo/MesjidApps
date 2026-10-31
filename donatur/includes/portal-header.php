@@ -497,7 +497,7 @@
         >
 
             <a
-                href="../index.php"
+                href="/"
 
                 class="
                     w-10
@@ -696,7 +696,7 @@
 
 
             <a
-                href="portal-donatur.php"
+                href="/donatur/portal-donatur"
 
                 class="
                     flex
@@ -851,7 +851,7 @@
     <div class="px-3 pb-5">
 
         <a
-            href="../auth/logout.php"
+            href="/auth/logout"
             onclick="return confirm('Apakah kamu yakin ingin keluar?')"
             class="
                 w-full
@@ -1022,7 +1022,7 @@
 
                 <!-- KEMBALI KE BERANDA -->
                 <a
-                    href="../index.php"
+                    href="/"
                     class="
                         inline-flex
                         items-center
@@ -1205,7 +1205,7 @@
 
 
                             <a
-                                href="portal-donatur.php?baca_notif=1"
+                                href="/donatur/portal-donatur?baca_notif=1"
 
                                 class="
                                     text-[10px]

@@ -50,7 +50,7 @@ if (empty($staffList)) {
         ?>
             <div class="bg-white rounded-2xl p-6 border border-antique-300/40 shadow-xs hover:shadow-md transition flex flex-col items-center text-center">
                 <?php if ($avatarUrl): ?>
-                    <img src="<?= e($avatarUrl) ?>" alt="<?= e($s['nama_lengkap']) ?>" class="w-16 h-16 rounded-full object-cover border-2 border-antique-300 mb-4 shadow-sm">
+                     <img src="<?= e($avatarUrl) ?>" alt="<?= e($s['nama_lengkap']) ?>" class="w-16 h-16 rounded-full object-cover border-2 border-antique-300 mb-4 shadow-sm" draggable="false">
                 <?php else: ?>
                     <div class="w-16 h-16 rounded-full bg-cypress-900 border-2 border-antique-300 flex items-center justify-center text-antique-300 font-bold text-xl mb-4 shadow-sm">
                         <?= e($initials) ?>

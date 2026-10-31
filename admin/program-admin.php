@@ -250,7 +250,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 </div>
                 <div>
                     <label class="block font-bold text-warm-800 mb-1">Target Donasi (Rp)</label>
-                    <input type="number" id="progTarget" name="target_donasi" min="0" step="10000" placeholder="0" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-bold focus:outline-none">
+                    <input type="text" id="progTarget" name="target_donasi" min="0" max="99999999" placeholder="0" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-bold focus:outline-none" oninput="this.value=this.value.replace(/\D/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')">
                 </div>
             </div>
 

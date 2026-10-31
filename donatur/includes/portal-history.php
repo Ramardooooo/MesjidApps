@@ -128,7 +128,7 @@
 
 
                         <a
-                            href="../home/donasi-online.php"
+                            href="/donasi-online"
 
                             class="
                                 inline-flex
@@ -457,7 +457,7 @@
                                             "
                                         >
                                             <a
-                                                href="kwitansi.php?no=<?= urlencode($r['no_donasi']) ?>"
+                                                href="/donatur/kwitansi?no=<?= urlencode($r['no_donasi']) ?>"
                                                 class="
                                                     inline-flex
                                                     items-center

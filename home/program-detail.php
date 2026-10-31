@@ -22,7 +22,7 @@ $persen = $prog['target_donasi'] > 0 ? min(100, round(($prog['dana_terkumpul'] /
 $sisaTarget = max(0, (float)$prog['target_donasi'] - (float)$prog['dana_terkumpul']);
 
 // Ambil Donatur Terverifikasi untuk Program Ini
-$stmtDonatur = $pdo->prepare("SELECT * FROM donasi_online WHERE program_id = ? AND status = 'diverifikasi' ORDER BY tanggal_donasi DESC, id DESC LIMIT 10");
+        $stmtDonatur = $pdo->prepare("SELECT d.*, u.avatar FROM donasi_online d LEFT JOIN users u ON d.user_id = u.id WHERE d.program_id = ? AND d.status = 'diverifikasi' ORDER BY d.tanggal_donasi DESC, d.id DESC LIMIT 10");
 $stmtDonatur->execute([$id]);
 $donaturList = $stmtDonatur->fetchAll();
 $totalDonatur = count($donaturList);
@@ -150,9 +150,17 @@ require_once __DIR__ . '/../layouts/public_header.php';
                         <?php foreach ($donaturList as $d): ?>
                             <div class="py-3.5 flex items-start justify-between gap-4">
                                 <div class="flex items-start gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-cypress-50 border border-cypress-100 flex items-center justify-center text-cypress-700 font-bold text-xs shrink-0">
-                                        <?= $d['is_anonim'] ? '?' : strtoupper(substr($d['nama_donatur'], 0, 1)) ?>
-                                    </div>
+                                    <?php
+$avatarPath = trim((string)($d['avatar'] ?? ''));
+$avatarUrl = $avatarPath !== '' ? upload_url($avatarPath) : '';
+?>
+<?php if ($avatarUrl): ?>
+    <img src="<?= e($avatarUrl) ?>" alt="<?= e($d['nama_donatur']) ?>" class="w-10 h-10 rounded-full object-cover border border-cypress-100 shrink-0" draggable="false">
+<?php else: ?>
+    <div class="w-10 h-10 rounded-full bg-cypress-50 border border-cypress-100 flex items-center justify-center text-cypress-700 font-bold text-xs shrink-0">
+        <?= $d['is_anonim'] ? '?' : strtoupper(substr($d['nama_donatur'], 0, 1)) ?>
+    </div>
+<?php endif; ?>
                                     <div>
                                         <h5 class="text-xs font-bold text-warm-900">
                                             <?= $d['is_anonim'] ? 'Hamba Allah (Anonim)' : e($d['nama_donatur']) ?>

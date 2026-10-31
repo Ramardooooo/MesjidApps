@@ -62,7 +62,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
         <article class="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-10 border border-antique-300/50 shadow-sm space-y-6">
             
             <?php if (!empty($berita['thumbnail'])): ?>
-                <img src="<?= e(upload_url($berita['thumbnail'])) ?>" alt="<?= e($berita['judul']) ?>" class="w-full rounded-2xl object-cover max-h-[420px] border border-antique-200">
+                <img src="<?= e(upload_url($berita['thumbnail'])) ?>" alt="<?= e($berita['judul']) ?>" class="w-full rounded-2xl object-cover max-h-[420px] border border-antique-200" draggable="false">
             <?php endif; ?>
 
             <div class="prose prose-stone max-w-none text-warm-900 text-sm sm:text-base leading-relaxed space-y-4">

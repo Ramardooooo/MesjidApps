@@ -45,6 +45,13 @@ $stmtTrx = $pdo->prepare("SELECT t.*, k.nama_kategori
                           ORDER BY t.tanggal_transaksi DESC, t.id DESC");
 $stmtTrx->execute([$tanggalAwalBulan, $tanggalAkhirBulan]);
 $daftarTransaksi = $stmtTrx->fetchAll();
+// Pagination 5 per page
+$page = max(1, (int)($_GET['page'] ?? 1));
+$perPage = 5;
+$totalTransaksi = count($daftarTransaksi);
+$totalPages = (int)ceil($totalTransaksi / $perPage);
+$daftarTransaksi = array_slice($daftarTransaksi, ($page - 1) * $perPage, $perPage);
+
 
 // Rekapitulasi per Kategori Publik
 $stmtRekap = $pdo->prepare("SELECT k.nama_kategori, t.jenis, SUM(t.nominal) as total 
@@ -200,6 +207,29 @@ require_once __DIR__ . '/../layouts/public_header.php';
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                </div>
+            <?php endif; ?>
+
+            <!-- Pagination UI -->
+            <?php if (isset($totalPages) && $totalPages > 1): ?>
+                <div class="flex items-center justify-center gap-1.5 pt-4 border-t border-antique-200">
+                    <?php if ($page > 1): ?>
+                        <a href="?bulan=<?= $bulanDipilih ?>&tahun=<?= $tahunDipilih ?>&page=<?= $page - 1 ?>" class="px-3 py-1.5 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-800 font-bold text-xs transition">
+                            <i class="fa-solid fa-chevron-left"></i> Prev
+                        </a>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <a href="?bulan=<?= $bulanDipilih ?>&tahun=<?= $tahunDipilih ?>&page=<?= $i ?>" class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs transition <?= $i === $page ? 'bg-cypress-700 text-white shadow-xs' : 'bg-warm-100 hover:bg-warm-200 text-warm-800' ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endfor; ?>
+
+                    <?php if ($page < $totalPages): ?>
+                        <a href="?bulan=<?= $bulanDipilih ?>&tahun=<?= $tahunDipilih ?>&page=<?= $page + 1 ?>" class="px-3 py-1.5 rounded-xl bg-warm-100 hover:bg-warm-200 text-warm-800 font-bold text-xs transition">
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </div>

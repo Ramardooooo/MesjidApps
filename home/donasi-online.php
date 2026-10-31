@@ -209,7 +209,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                            placeholder="Contoh: 100.000" 
                            class="w-full pl-12 pr-4 py-3 rounded-xl bg-warm-50 border border-antique-300 text-sm sm:text-base font-bold text-cypress-900 focus:ring-2 focus:ring-antique-500 focus:outline-none font-mono">
                 </div>
-                <span class="text-[11px] text-warm-800/60 block mt-1">Minimal Rp 10.000 - Maksimal Rp 100.000.000 (Otomatis berformat titik ribuan)</span>
+                <span class="text-[11px] text-warm-800/60 block mt-1">Minimal Rp 10.000 - Maksimal Rp 100.000.000</span>
             </div>
         </div>
 
@@ -259,7 +259,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
 
                 <!-- Box QR Code Mockup Cantik & Terbaca -->
                 <div class="bg-white p-4 rounded-2xl shadow-xl flex flex-col items-center border-4 border-antique-500">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=<?= urlencode('https://masjidnuruliman.id/donasi?n=' . $profil['nama_masjid']) ?>" alt="QRIS Masjid Nurul Iman" class="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=<?= urlencode('https://masjidnuruliman.id/donasi?n=' . $profil['nama_masjid']) ?>" alt="QRIS Masjid Nurul Iman" class="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg" draggable="false">
                     <span class="text-sm font-bold text-warm-900 mt-3">Scan dengan aplikasi bank / e-wallet apa saja</span>
                 </div>
 

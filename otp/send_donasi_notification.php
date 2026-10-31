@@ -49,11 +49,27 @@ function kirim_notif_donasi($email, $nama, $status, $noDonasi, $nominal, $progra
                     </table>
                     <p style='font-size: 14px; color: #555;'>Jazakumullahu khairan atas kepercayaan dan dukungan Anda dalam memakmurkan masjid.</p>
                     <div style='text-align: center; margin: 30px 0;'>
-                        <a href='$baseUrl/kwitansi?no=$noDonasi' style='display: inline-block; padding: 12px 30px; background: #1b3a2b; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;'>Lihat e-Kwitansi Resmi</a>
+                        <a href='$baseUrl/donatur/kwitansi?no=$noDonasi' style='display: inline-block; padding: 12px 30px; background: #1b3a2b; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;'>Lihat e-Kwitansi Resmi</a>
                     </div>
-                    <p style='font-size: 12px; color: #999; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;'>
-                        Email ini dikirim otomatis oleh sistem. Jika ada pertanyaan, hubungi pengurus masjid.
-                    </p>
+                </div>
+            </div>
+            ";
+        } elseif ($status === 'pending') {
+            $mail->Subject = "⏳ Konfirmasi Pengajuan Donasi - $noDonasi";
+            $body = "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;'>
+                <div style='background: #d97706; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;'>
+                    <h2 style='margin: 0;'>Pengajuan Donasi Diterima</h2>
+                </div>
+                <div style='background: white; padding: 30px; border-radius: 0 0 10px 10px;'>
+                    <p style='font-size: 16px;'>Assalamu'alaikum <strong>$nama</strong>,</p>
+                    <p style='font-size: 14px; color: #555;'>Terima kasih telah berdonasi. Pengajuan donasi Anda telah kami terima dan saat ini sedang dalam proses verifikasi oleh Bendahara.</p>
+                    <div style='background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+                        <strong>No. Donasi:</strong> $noDonasi<br>
+                        <strong>Program:</strong> $program<br>
+                        <strong>Nominal:</strong> <span style='color: #d97706;'>$nominal</span>
+                    </div>
+                    <p style='font-size: 14px; color: #555;'>Kami akan segera mengirimkan notifikasi kembali setelah dana berhasil diverifikasi.</p>
                 </div>
             </div>
             ";

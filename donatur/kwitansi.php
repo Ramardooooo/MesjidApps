@@ -195,7 +195,6 @@ $isPending  = ($donasi['status'] === 'pending');
             <?php endif; ?>
         </div>
 
-        <!-- Tabel Rincian Donasi -->
         <div class="bg-warm-50 rounded-2xl p-6 border border-antique-200 space-y-3.5 text-xs sm:text-sm">
             <div class="flex items-center justify-between border-b border-antique-200/70 pb-2">
                 <span class="text-warm-800/70">Telah Terima Dari:</span>

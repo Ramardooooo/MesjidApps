@@ -141,9 +141,17 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                     <tr class="hover:bg-warm-50/60 transition">
                         <td class="py-3.5 px-4 align-top">
                             <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-full bg-cypress-900 text-antique-300 font-bold flex items-center justify-center text-xs shrink-0">
-                                    <?= strtoupper(substr($u['nama_lengkap'], 0, 1)) ?>
-                                </div>
+                                <?php
+                                    $avatarPath = trim((string)($u['avatar'] ?? ''));
+                                    $avatarUrl = $avatarPath !== '' ? upload_url($avatarPath) : '';
+                                ?>
+                                <?php if ($avatarUrl): ?>
+                                    <img src="<?= e($avatarUrl) ?>" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-cypress-100 shrink-0" draggable="false">
+                                <?php else: ?>
+                                    <div class="w-9 h-9 rounded-full bg-cypress-900 text-antique-300 font-bold flex items-center justify-center text-xs shrink-0">
+                                        <?= strtoupper(substr($u['nama_lengkap'], 0, 1)) ?>
+                                    </div>
+                                <?php endif; ?>
                                 <div>
                                     <strong class="font-bold text-sm text-warm-900 block leading-tight"><?= e($u['nama_lengkap']) ?></strong>
                                     <span class="text-[11px] font-mono text-warm-800/60 block mt-0.5">@<?= e($u['username']) ?></span>

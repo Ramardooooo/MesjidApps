@@ -55,6 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (strlen($password) < 6) {
         $pesan = 'Kata sandi minimal 6 karakter demi keamanan.';
         $tipe  = 'error';
+    } elseif (!preg_match('/^08[0-9]{8,11}$/', $no_hp)) {
+        $pesan = 'Nomor WhatsApp harus diawali 08 dan minimal 10 digit (contoh: 081234567890).';
+        $tipe  = 'error';
     } else {
         $clientIP = get_client_ip();
         $rate_key = 'register_' . md5($clientIP . '_' . strtolower($email));
@@ -71,11 +74,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0])) . rand(10, 99);
             }
 
-            // Cek apakah username atau email sudah terdaftar
-            $stmtCek = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1");
-            $stmtCek->execute([$username, $email]);
+            // Cek apakah username, email, atau no_hp sudah terdaftar
+            $stmtCek = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ? OR no_hp = ? LIMIT 1");
+            $stmtCek->execute([$username, $email, $no_hp]);
             if ($stmtCek->fetch()) {
-                $pesan = 'Username atau email tersebut sudah terdaftar. Silakan gunakan akun lain atau login.';
+                $pesan = 'Username, email, atau nomor HP tersebut sudah terdaftar. Silakan gunakan data lain atau login.';
                 $tipe  = 'error';
             } else {
                 // Check OTP cooldown

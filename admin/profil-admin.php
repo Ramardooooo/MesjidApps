@@ -209,7 +209,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Saldo Awal Kas Master (Rp)</label>
-                <input type="number" name="saldo_awal_kas" value="<?= (float)$profil['saldo_awal_kas'] ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-bold focus:outline-none">
+                <input type="text" name="saldo_awal_kas" value="<?= number_format((float)$profil['saldo_awal_kas'], 0, ',', '.') ?>" max="1000000000" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-bold focus:outline-none" oninput="this.value=this.value.replace(/\D/g,'').replace(/\B(?=(\d{3})+(?!\d))/g,'.')">
             </div>
         </div>
 

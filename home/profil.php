@@ -121,7 +121,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                 <div class="bg-white rounded-2xl p-6 border border-antique-300/40 shadow-xs hover:shadow-md transition">
                     <div class="flex items-start gap-4 mb-3">
                         <?php if ($avatarUrl): ?>
-                            <img src="<?= e($avatarUrl) ?>" alt="<?= e($namaDisplay) ?>" class="w-16 h-16 rounded-2xl object-cover border-2 border-antique-300 shrink-0">
+                            <img src="<?= e($avatarUrl) ?>" alt="<?= e($namaDisplay) ?>" class="w-16 h-16 rounded-2xl object-cover border-2 border-antique-300 shrink-0" draggable="false">
                         <?php else: ?>
                             <div class="w-16 h-16 rounded-2xl bg-cypress-900 border-2 border-antique-500/40 flex items-center justify-center text-antique-300 font-bold text-xl shrink-0">
                                 <?= e($initials) ?>

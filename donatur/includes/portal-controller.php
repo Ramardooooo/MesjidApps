@@ -6,7 +6,7 @@ cek_login();
 $user = $_SESSION['user'];
 
 if (($user['role'] ?? '') !== 'donatur') {
-    header('Location: ../admin/dashboard.php');
+    header('Location: /admin/dashboard');
     exit;
 }
 
@@ -46,7 +46,7 @@ $userDb = $stmtUser->fetch();
 if (!$userDb) {
     session_destroy();
 
-    header('Location: ../auth/login.php');
+    header('Location: /auth/login');
     exit;
 }
 
