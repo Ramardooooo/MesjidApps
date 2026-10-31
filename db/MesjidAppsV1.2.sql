@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `banners` (
   PRIMARY KEY (`id`),
   KEY `idx_banner_active` (`is_active`),
   KEY `idx_banner_type` (`tipe`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `donasi_online` (
   KEY `idx_donasi_program` (`program_id`),
   KEY `idx_donasi_user` (`user_id`),
   KEY `idx_donasi_created` (`created_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS `notifikasi` (
   `is_read` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS `notifikasi` (
 CREATE TABLE IF NOT EXISTS `otp_codes` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `email` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `otp_code` char(6) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `otp_code` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `purpose` enum('register','forgot_password') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `expires_at` datetime NOT NULL,
   `used` tinyint(1) NOT NULL DEFAULT '0',
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS `otp_codes` (
   KEY `idx_email_purpose` (`email`,`purpose`),
   KEY `idx_otp_expires` (`expires_at`),
   KEY `idx_otp_email_code` (`email`,`otp_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS `pengurus_masjid` (
   PRIMARY KEY (`id`),
   KEY `fk_pengurus_user_id` (`user_id`),
   CONSTRAINT `fk_pengurus_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS `pesan_kontak` (
   `is_read` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -248,7 +248,7 @@ CREATE TABLE IF NOT EXISTS `program_donasi` (
   UNIQUE KEY `slug` (`slug`),
   KEY `idx_program_status` (`status`),
   KEY `idx_program_featured` (`is_featured`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -282,7 +282,7 @@ CREATE TABLE IF NOT EXISTS `rekening_donasi` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_rekening_active` (`is_active`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -312,7 +312,7 @@ CREATE TABLE IF NOT EXISTS `transaksi_keuangan` (
   KEY `idx_transaksi_jenis` (`jenis`),
   KEY `idx_transaksi_published` (`is_published`),
   KEY `idx_transaksi_program` (`program_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -343,7 +343,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   UNIQUE KEY `email` (`email`),
   KEY `idx_users_email` (`email`),
   KEY `idx_users_public_profile` (`is_public_profile`,`status`,`role`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -358,7 +358,7 @@ CREATE TABLE IF NOT EXISTS `youtube_videos` (
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
