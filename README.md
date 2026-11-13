@@ -456,15 +456,20 @@ Desain antarmuka memadukan keanggunan arsitektur Islam klasik dengan kesederhana
 
 ---
 
-## Catatan Rilis
+## Catatan Rilis Terbaru
 
-### v1.2.0 *(2026-10-20)*
-- **Security Hardening**: Cloudflare Turnstile CAPTCHA di semua form, Database Rate Limiting dengan countdown timer, CSRF Token protection, dan Session Idle Timeout.
-- **Email Notifications**: Otomatisasi pengiriman email verifikasi dan penolakan donasi via PHPMailer.
-- **Direktori Pengurus DKM & Staff**: Halaman Tim Kami publik, detail staff individual, counter view profil, dan panel Profil Saya pengurus.
-- **Arsitektur Modular Portal Donatur**: Pemecahan modul `donatur/includes/` (controller, header, status, history, profile, account, modal, scripts).
-- **Pusat Dokumentasi**: Halaman Panduan Pengguna, Panduan Admin, Kebijakan Privasi, dan Syarat Ketentuan di folder `docs/`.
-- **UX & Interaktivitas**: Multi-slide hero banner interaktif, widget jadwal shalat WITA, live copy nomor rekening, one-click toggle status banner, dan server-side pagination.
+### v1.3.0 *(2026-11-13)*
+- **Security Hardening**: Password-reset token OTP disimpan menggunakan hash SHA-256 dan diverifikasi sebelum password diubah.
+- **SQL Injection Hardening**: Query yang menerima input dinamis, termasuk filter laporan, transaksi, pencarian, serta ekspor CSV/Excel, menggunakan prepared statements dengan placeholder.
+- **Secure Session Management**: Cookie sesi menggunakan `HttpOnly`, `Secure` (jika HTTPS), dan `SameSite=Lax`; `session_regenerate_id(true)` dipanggil setelah login berhasil.
+- **HTTP Security Headers**: Penambahan Strict-Transport-Security, X-XSS-Protection, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, dan Content-Security-Policy.
+- **Input Validation**: Validasi nominal transaksi, target donasi, saldo awal kas, email, nomor telepon, integer, float, dan panjang karakter maksimum.
+- **Pagination & Transparansi**: Sanitasi parameter halaman dan pagination halaman transparansi sebanyak 5 item per halaman.
+- **Data Donatur**: Detail program mengambil avatar donatur melalui `LEFT JOIN` ke tabel `users`, dengan placeholder inisial jika avatar tidak tersedia.
+- **Error Handling**: Pesan exception dicatat melalui `error_log()` dan pengguna menerima pesan kesalahan umum.
+- **Branding**: Logo kustom `uploads/logo/logo.png` digunakan pada favicon, header publik, footer, dan sidebar admin.
+- **Mobile Navigation**: Bottom navigation bertema Islami untuk Home, Donasi, Artikel, dan Akun, termasuk penyesuaian posisi floating WhatsApp.
+- **Admin Mobile UX**: Penyempurnaan tampilan tabel admin, ukuran padding dan font, serta interaksi edit berita.
 
 Rincian lengkap riwayat pembaruan dapat dibaca pada [release.md](release.md).
 
