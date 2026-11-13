@@ -56,6 +56,12 @@ Dibangun dengan arsitektur PHP murni modern tanpa framework (*vanilla PHP*), apl
 | **Verifikasi Donasi Otomatis** | Verifikasi satu klik yang otomatis mencatat donasi ke kas masuk, memperbarui dana terkumpul pada program terkait, dan mengirim email ke donatur |
 | **Inbox Pesan Jamaah** | Admin menerima pesan dari form kontak, notifikasi badge unread di sidebar, dan fasilitas Quick Reply via WhatsApp Web atau Email |
 | **Keamanan & Sesi** | Proteksi CSRF token terpadu, regenerasi session ID, auto-logout idle 2 jam, sanitasi input XSS (`e()`), PDO prepared statements, dan upload validation (MIME check) |
+| **Hardening Keamanan v1.3.0** | Password-reset token disimpan sebagai hash SHA-256, prepared statements untuk query dinamis, konfigurasi cookie sesi `HttpOnly`, `Secure` (jika HTTPS), `SameSite=Lax`, dan regenerasi session ID setelah login |
+| **Validasi Nominal & Input** | Validasi nominal transaksi, target donasi, saldo awal kas, format angka dengan pemisah ribuan, validasi email/telepon/integer/float, dan batas panjang karakter |
+| **HTTP Security Headers** | Penambahan HSTS, X-XSS-Protection, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, dan Content-Security-Policy melalui `.htaccess` |
+| **Transparansi & Data Donatur** | Halaman transparansi dengan pagination 5 item per halaman serta avatar donatur pada detail program (avatar atau placeholder inisial) |
+| **Branding & Navigasi Mobile** | Logo kustom `uploads/logo/logo.png` untuk favicon, header publik, footer, dan sidebar admin; bottom navigation mobile bertema Islami untuk Home, Donasi, Artikel, dan Akun |
+| **Penyempurnaan Admin Mobile** | Optimasi tabel admin untuk perangkat mobile, penyesuaian posisi floating WhatsApp, dan penyempurnaan area klik untuk edit berita |
 
 ---
 
@@ -98,14 +104,10 @@ mesjid-donasi-main/
 |
 |-- db/                             Skema Database & Migrasi
 |   |-- MesjidApps.sql              Skema database utama
-|   |-- MesjidAppsV1.1.sql          Skema update V1.1 terintegrasi
+|   |-- MesjidAppsV1.1.0.sql        Skema update V1.1.0 terintegrasi
+|   |-- MesjidAppsV1.2.0sql         Skema update V1.2.0 terintegrasi
+|   |-- MesjidAppsV1.3.0sql         Skema update V1.3.0 terintegrasi
 |   |-- DataMesjidApps.sql          Data seeder & contoh awal
-|   |-- create_rate_limits_table.sql Tabel proteksi rate limiting
-|   |-- add_staff_profile_columns.sql Kolom profil pengurus/staff
-|   |-- add_columns.sql             Kolom tracking notifikasi & metadata
-|   |-- add_indexes.sql             Index performa query
-|   |-- add_foreign_keys.sql        Relasi integritas foreign key
-|   |-- README_MIGRATIONS.md        Panduan eksekusi migrasi database
 |
 |-- docs/                           Pusat Dokumentasi & Legalitas
 |   |-- panduan-user.php            Panduan interaktif jamaah & donatur
@@ -155,7 +157,7 @@ mesjid-donasi-main/
 |-- vendor/                         Dependensi Pustaka PHPMailer
 |-- index.php                       Beranda utama dengan multi-slide hero & jadwal shalat
 |-- .htaccess                       Apache rewrite URL bersih, HTTPS & proteksi berkas
-|-- release.md                      Catatan rilis lengkap per versi
+|-- RELEASE.md                      Catatan rilis lengkap per versi
 |-- WALKTHROUGH.md                  Panduan alur navigasi & alur pengguna
 |-- PROGRESS.md                     Status fitur & roadmap pengembangan
 |-- README.md                       Dokumentasi proyek ini
