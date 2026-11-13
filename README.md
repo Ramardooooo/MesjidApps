@@ -471,7 +471,7 @@ Desain antarmuka memadukan keanggunan arsitektur Islam klasik dengan kesederhana
 - **Mobile Navigation**: Bottom navigation bertema Islami untuk Home, Donasi, Artikel, dan Akun, termasuk penyesuaian posisi floating WhatsApp.
 - **Admin Mobile UX**: Penyempurnaan tampilan tabel admin, ukuran padding dan font, serta interaksi edit berita.
 
-Rincian lengkap riwayat pembaruan dapat dibaca pada [release.md](release.md).
+Rincian lengkap riwayat pembaruan dapat dibaca pada [RELEASE.md](RELEASE.md).
 
 ---
 
@@ -479,7 +479,7 @@ Rincian lengkap riwayat pembaruan dapat dibaca pada [release.md](release.md).
 
 | Dokumen | Deskripsi |
 |---------|-----------|
-| [release.md](release.md) | Catatan rilis lengkap dan changelog per versi |
+| [RELEASE.md](RELEASE.md) | Catatan rilis lengkap dan changelog per versi |
 | [WALKTHROUGH.md](WALKTHROUGH.md) | Panduan lengkap alur penggunaan dan peran sistem |
 | [PROGRESS.md](PROGRESS.md) | Status perkembangan fitur dan roadmap masa depan |
 ---
