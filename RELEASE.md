@@ -1,4 +1,4 @@
-# 📋 RELEASE NOTES — Masjid Jami' Nurul Iman
+# RELEASE NOTES — Masjid Jami' Nurul Iman
 **Sistem Informasi, Pembukuan Kas & Platform Donasi Digital Masjid**
 
 ## v1.3.0 — Comprehensive Security Hardening & Bug Fixes *(2026-10-23)*
@@ -30,7 +30,7 @@
 
 ---
 
-### 🎨 Pembaruan Aset Visual & Branding
+### Pembaruan Aset Visual & Branding
 - **Custom Favicon & Logo**: Mengganti ikon default/masjid SVG dengan file logo kustom dari `uploads/logo/logo.png` pada ikon browser (favicon), header publik, footer, dan sidebar admin.
 
 ---
@@ -40,20 +40,20 @@
 
 ---
 
-### 📱 Peningkatan Navigasi
+### Peningkatan Navigasi
 - **Bottom Navigation Mobile**: Menambahkan navigasi akses cepat (Home, Donasi, Artikel, Akun) yang menempel di bagian bawah layar khusus perangkat mobile (menyesuaikan dengan safe area notch).
 - **UX Refinement**: Tombol WhatsApp floating kini otomatis menyesuaikan posisi (naik sedikit) jika Bottom Nav aktif agar tidak bertumpuk.
 
 ---
 
-### 🌙 Peningkatan UI & Mobile Experience
+### Peningkatan UI & Mobile Experience
 - **Islamic Header Mobile**: Menyesuaikan topbar mobile admin dengan tema ornamen Islami (`bg-cypress-900 pattern-arabesque-dark`) selaras dengan halaman publik.
 - **Optimasi Tabel & Touch Action**: Memperlebar padding dan ukuran font tabel agar lebih nyaman dilihat di Android tanpa terlalu rapat.
 - **Targeted Click Edit**: Membatasi trigger modal edit berita hanya pada kolom judul berita, sehingga tidak memicu pop-up di area baris kosong.
 
 ---
 
-### 📱 Peningkatan Antarmuka & Perbaikan Mobile UI
+### Peningkatan Antarmuka & Perbaikan Mobile UI
 - **Full Mobile Responsiveness**: Optimasi layout tabel admin di perangkat Android/mobile dengan kontainer `overflow-x-auto`, padding ringkas (`4px 2px`), dan ukuran font optimal (`9px`).
 - **Direct Row Tap for Edit**: Integrasi interaksi klik baris tabel di modul admin (`berita-admin.php`, dll.) untuk langsung memicu modal edit secara instan.
 - **Table Layout Optimization**: Tabel admin disesuaikan agar rapi dan mudah diakses tanpa harus repot menggeser layar secara horizontal.
