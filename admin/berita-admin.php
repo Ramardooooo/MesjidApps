@@ -164,8 +164,8 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Artikel</span>
     </div>
 
-    <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
+    <div class="overflow-x-auto -mx-5 px-5">
+        <table class="w-full text-left text-xs min-w-[700px]">
             <thead>
                 <tr class="border-b border-antique-200 bg-warm-50/70 text-warm-800/70 uppercase text-[10px] font-bold">
                     <th class="py-3 px-4">Judul Artikel &amp; Penulis</th>
@@ -177,9 +177,11 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 </tr>
             </thead>
             <tbody class="divide-y divide-antique-100">
-                <?php foreach ($beritaList as $b): ?>
+                <?php foreach ($beritaList as $b): 
+                    $dataJson = htmlspecialchars(json_encode($b, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                ?>
                     <tr class="hover:bg-warm-50/60 transition">
-                        <td class="py-3 px-4 align-middle max-w-sm">
+                        <td class="py-3 px-4 align-middle max-w-sm" onclick='bukaModalEditBeritaSafe(this.parentElement)' data-berita='<?= $dataJson ?>'>
                             <div class="flex items-center gap-3">
                                 <?php if (!empty($b['thumbnail'])): ?>
                                     <img src="<?= e(upload_url($b['thumbnail'])) ?>" alt="Thumbnail" class="w-16 h-12 rounded-lg object-cover shrink-0 border border-antique-200">
@@ -308,9 +310,9 @@ function bukaModalBerita() {
     document.getElementById('modalBerita').classList.remove('hidden');
 }
 
-function bukaModalEditBeritaSafe(btn) {
+function bukaModalEditBeritaSafe(el) {
     try {
-        const b = JSON.parse(btn.getAttribute('data-berita'));
+        const b = JSON.parse(el.getAttribute('data-berita'));
         document.getElementById('beritaAksi').value = 'edit';
         document.getElementById('beritaId').value = b.id;
         document.getElementById('modalBeritaTitle').textContent = 'Edit Berita #' + b.id;

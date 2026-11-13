@@ -11,13 +11,41 @@ $base = base_url();
 ?>
 <!DOCTYPE html>
 <html lang="id" class="scroll-smooth">
-<head>
+<!-- Visitor Tracking (gratis - pengguna gagal izin lokasi diambil dari IP via ip-api.com) -->
+<script>
+(function() {
+    if (sessionStorage.getItem('visitor_tracked')) return; // pernah terekam, tidak spamming
+
+    function send(lat, lng) {
+        fetch('<?= base_url() ?>/visitor.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ lat: lat, lng: lng })
+        }).then(function(r) { return r.json(); })
+          .then(function(d) {
+              if (d && d.status === 'success') sessionStorage.setItem('visitor_tracked', '1');
+          })
+          .catch(function() {});
+    }
+
+    // Geolocation native API
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(p) { send(p.coords.latitude, p.coords.longitude); },
+            function()  { send(null, null); } // tolak izin -> kirim tanpa GPS
+        );
+    } else {
+        send(null, null);
+    }
+})();
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com;">
     <title><?= e($pageTitle) ?></title>
-    <!-- Favicon & Icons -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23c5a059'><path d='M12 2v2m0 0c-3 3-5 6-5 9a5 5 0 0010 0c0-3-2-6-5-9z M4 21h16M7 21v-4m10 4v-4M9 13h6'/></svg>">
+    <!-- Favicon & Logo -->
+    <link rel="icon" type="image/png" href="<?= base_url() ?>/uploads/logo/logo.png">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -92,10 +120,8 @@ $base = base_url();
             <div class="flex items-center justify-between h-16">
                 
                 <!-- Logo & Brand -->
-                <a href="<?= $base ?>/" class="flex items-center gap-2 group shrink-0">
-                    <div class="w-10 h-10 rounded-lg bg-cypress-950 border border-antique-500/40 flex items-center justify-center text-antique-400 group-hover:scale-105 transition-transform">
-                        <i class="fa-solid fa-mosque text-base"></i>
-                    </div>
+                <a href="<?= $base ?>/" class="flex items-center gap-2.5 group shrink-0">
+                    <img src="<?= $base ?>/uploads/logo/logo.png" alt="Logo" class="w-10 h-10 rounded-lg object-contain border border-antique-500/40 bg-cypress-950 p-1 group-hover:scale-105 transition-transform">
                     <div>
                         <span class="font-classic text-sm font-bold tracking-wide block text-white leading-tight">
                             MASJID JAMI'

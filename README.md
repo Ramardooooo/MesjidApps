@@ -96,11 +96,16 @@ mesjid-donasi-main/
 |   |-- helpers.php                 Helper global (app_url, CSRF, pagination, sanitasi)
 |   |-- mail.php                    Konfigurasi SMTP PHPMailer
 |
-|-- db/                                  Skema Database & Migrasi
-|   |-- MesjidAppsV1.0.sql               Skema Database Utama
-|   |-- MesjidAppsV1.1.sql               Migrasi Database V1.1
-|   |-- MesjidAppsV1.2.sql               Migrasi Database V1.2
-|   |-- DataMesjidApps.sql               Data Seeder & Contoh Awal
+|-- db/                             Skema Database & Migrasi
+|   |-- MesjidApps.sql              Skema database utama
+|   |-- MesjidAppsV1.1.sql          Skema update V1.1 terintegrasi
+|   |-- DataMesjidApps.sql          Data seeder & contoh awal
+|   |-- create_rate_limits_table.sql Tabel proteksi rate limiting
+|   |-- add_staff_profile_columns.sql Kolom profil pengurus/staff
+|   |-- add_columns.sql             Kolom tracking notifikasi & metadata
+|   |-- add_indexes.sql             Index performa query
+|   |-- add_foreign_keys.sql        Relasi integritas foreign key
+|   |-- README_MIGRATIONS.md        Panduan eksekusi migrasi database
 |
 |-- docs/                           Pusat Dokumentasi & Legalitas
 |   |-- panduan-user.php            Panduan interaktif jamaah & donatur
@@ -329,11 +334,32 @@ Sistem secara dinamis mendeteksi prefix path melalui fungsi helper `base_url()` 
    cd /path/to/mesjid-donasi-main
 
    # Eksekusi via terminal mysql
-   mysql -u root -p mesjid_website < db/MesjidAppsV1.2.sql
+   mysql -u root -p mesjid_website < db/MesjidAppsV1.1.sql
    mysql -u root -p mesjid_website < db/DataMesjidApps.sql
    ```
    *(Atau impor kedua file `.sql` di atas melalui tab Import di phpMyAdmin).*
 
+#### Opsi B: Migrasi Database dari Versi Sebelumnya (v1.0.0 ke v1.2.0)
+Jika Anda sudah memiliki database berjalan dan ingin memperbarui struktur tanpa menghapus data yang ada, ikuti urutan migrasi berikut (sesuai panduan `db/README_MIGRATIONS.md`):
+
+1. **Lakukan Backup Database Terlebih Dahulu!**
+   ```bash
+   mysqldump -u root -p mesjid_website > backup_mesjid_sebelum_migrasi.sql
+   ```
+2. **Jalankan Skrip Migrasi Secara Bertahap**:
+   ```bash
+   # 1. Tabel Rate Limiting untuk proteksi brute force
+   mysql -u root -p mesjid_website < db/create_rate_limits_table.sql
+
+   # 2. Tambahkan Index untuk mempercepat performa query
+   mysql -u root -p mesjid_website < db/add_indexes.sql
+
+   # 3. Tambahkan Kolom Profil Pengurus & Staff
+   mysql -u root -p mesjid_website < db/add_staff_profile_columns.sql
+
+   # 4. Tambahkan Kolom Tracking Notifikasi Email
+   mysql -u root -p mesjid_website < db/add_columns.sql
+   ```
 3. **Pembersihan Data Orphaned (Sebelum Menambahkan Foreign Key)**:
    ```sql
    -- Bersihkan foreign key user_id jika ada data donatur yang user-nya sudah terhapus
@@ -449,6 +475,10 @@ Rincian lengkap riwayat pembaruan dapat dibaca pada [release.md](release.md).
 | [release.md](release.md) | Catatan rilis lengkap dan changelog per versi |
 | [WALKTHROUGH.md](WALKTHROUGH.md) | Panduan lengkap alur penggunaan dan peran sistem |
 | [PROGRESS.md](PROGRESS.md) | Status perkembangan fitur dan roadmap masa depan |
+| [db/README_MIGRATIONS.md](db/README_MIGRATIONS.md) | Panduan migrasi skema database |
+| [docs/panduan-user.php](docs/panduan-user.php) | Halaman panduan tata cara donasi untuk jamaah |
+| [docs/panduan-admin.php](docs/panduan-admin.php) | Halaman panduan pengelolaan kas & konten untuk admin |
+
 ---
 
 ## Lisensi

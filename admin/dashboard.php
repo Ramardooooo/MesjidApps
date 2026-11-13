@@ -77,7 +77,17 @@ $donasiPending = $pdo->query("SELECT d.*, p.nama_program FROM donasi_online d JO
 // 4. 5 Transaksi Kas Terbaru
 $transaksiTerbaru = $pdo->query("SELECT t.*, k.nama_kategori FROM transaksi_keuangan t JOIN kategori_transaksi k ON t.kategori_id = k.id ORDER BY t.tanggal_transaksi DESC, t.id DESC LIMIT 5")->fetchAll();
 
-// 5. Data Grafik 6 Bulan Terakhir (Single query optimization)
+// Visitor stats (live)
+$visitorStats = $pdo->query("SELECT COUNT(*) AS total,
+    COUNT(DISTINCT ip) AS unique_ips,
+    SUM(device_type = 'mobile') AS mobile,
+    SUM(device_type = 'desktop') AS desktop,
+    SUM(device_type = 'tablet') AS tablet,
+    SUM(device_type = 'bot') AS bots
+    FROM visitors")->fetch();
+
+$recentVisitors = $pdo->query("SELECT * FROM visitors ORDER BY created_at DESC LIMIT 10")->fetchAll();
+
 $stmtChart = $pdo->prepare("
     SELECT 
         DATE_FORMAT(tanggal_transaksi, '%Y-%m') as bulan,
@@ -183,7 +193,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         </a>
 
         <!-- Custom Date Range Form -->
-        <form method="GET" action="dashboard" class="flex items-center gap-1.5 pl-2 border-l border-antique-200">
+        <form method="GET" action="dashboard" class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 pl-0 sm:pl-2 pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-l border-antique-200">
             <input type="hidden" name="periode" value="custom">
             <input type="date" name="start_date" value="<?= e($startDate ?: $tglMulai) ?>" class="px-2 py-1 rounded-lg bg-warm-50 border border-antique-300 text-[11px] focus:ring-1 focus:ring-antique-500">
             <span class="text-xs text-stone-400">-</span>
@@ -445,5 +455,93 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
+
+<!-- Live Visitor (Google Maps integration & user-agent) -->
+<div class="bg-white rounded-3xl p-6 sm:p-8 border border-antique-300/50 shadow-sm space-y-5">
+    <div class="flex items-center justify-between border-b border-antique-200 pb-3">
+        <h3 class="font-classic text-base font-bold text-warm-900 flex items-center gap-2">
+            <i class="fa-solid fa-users text-antique-500"></i> Pengunjung Terakhir (Real-time)
+        </h3>
+        <span class="text-[10px] text-stone-500 font-semibold uppercase tracking-wider">Update otomatis</span>
+    </div>
+
+    <!-- Statistik Singkat Visitor -->
+    <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 text-center">
+        <div class="p-3 bg-cypress-50 rounded-2xl border border-cypress-100">
+            <div class="text-xl font-bold text-cypress-700"><?= (int)$visitorStats['total'] ?></div>
+            <div class="text-[9px] text-warm-800/60 font-bold uppercase">Total Hits</div>
+        </div>
+        <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+            <div class="text-xl font-bold text-emerald-700"><?= (int)$visitorStats['unique_ips'] ?></div>
+            <div class="text-[9px] text-warm-800/60 font-bold uppercase">Unique IP</div>
+        </div>
+        <div class="p-3 bg-blue-50 rounded-2xl border border-blue-100">
+            <div class="text-xl font-bold text-blue-700"><?= (int)$visitorStats['mobile'] ?></div>
+            <div class="text-[9px] text-warm-800/60 font-bold uppercase">Mobile</div>
+        </div>
+        <div class="p-3 bg-amber-50 rounded-2xl border border-amber-100">
+            <div class="text-xl font-bold text-amber-700"><?= (int)$visitorStats['desktop'] ?></div>
+            <div class="text-[9px] text-warm-800/60 font-bold uppercase">Desktop</div>
+        </div>
+        <div class="p-3 bg-purple-50 rounded-2xl border border-purple-100">
+            <div class="text-xl font-bold text-purple-700"><?= (int)$visitorStats['tablet'] ?></div>
+            <div class="text-[9px] text-warm-800/60 font-bold uppercase">Tablet</div>
+        </div>
+        <div class="p-3 bg-stone-50 rounded-2xl border border-stone-100">
+            <div class="text-xl font-bold text-stone-600"><?= (int)$visitorStats['bots'] ?></div>
+            <div class="text-[9px] text-warm-800/60 font-bold uppercase">Bots/AI</div>
+        </div>
+    </div>
+
+    <!-- Tabel Detail Visitor -->
+    <div class="overflow-x-auto pt-2">
+        <table class="w-full text-left text-[11px] border-collapse">
+            <thead>
+                <tr class="border-b border-antique-200 text-warm-800/60">
+                    <th class="pb-2 font-bold uppercase tracking-wider">IP Address</th>
+                    <th class="pb-2 font-bold uppercase tracking-wider">Lokasi Klien</th>
+                    <th class="pb-2 font-bold uppercase tracking-wider">Device/Browser</th>
+                    <th class="pb-2 font-bold uppercase tracking-wider">ISP / Provider</th>
+                    <th class="pb-2 font-bold uppercase tracking-wider">Google Maps</th>
+                    <th class="pb-2 font-bold uppercase tracking-wider text-right">Waktu</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-antique-100">
+                <?php if(empty($recentVisitors)): ?>
+                    <tr><td colspan="6" class="py-10 text-center italic text-stone-400">Belum ada data pengunjung terekam.</td></tr>
+                <?php else: ?>
+                    <?php foreach($recentVisitors as $v): ?>
+                    <tr class="hover:bg-warm-50/50 transition">
+                        <td class="py-2.5 font-mono font-bold text-warm-900"><?= e($v['ip']) ?></td>
+                        <td class="py-2.5">
+                            <span class="block font-semibold"><?= e($v['city'] ?? '-') ?></span>
+                            <span class="text-[10px] text-stone-500 uppercase"><?= $v['region'] ? e($v['region']) . ', ' : '' ?><?= e($v['country'] ?? '-') ?></span>
+                        </td>
+                        <td class="py-2.5">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-stone-100 text-stone-700 font-bold">
+                                <i class="fa-solid fa-<?= $v['device_type'] === 'mobile' ? 'mobile-screen' : ($v['device_type'] === 'tablet' ? 'tablet' : ($v['device_type'] === 'bot' ? 'robot' : 'desktop')) ?> text-[9px]"></i>
+                                <?= e($v['browser']) ?>
+                            </span>
+                            <span class="block text-[10px] text-stone-400 mt-0.5"><?= e($v['os']) ?></span>
+                        </td>
+                        <td class="py-2.5 text-stone-500 max-w-[150px] truncate" title="<?= e($v['isp']) ?>"><?= e($v['isp'] ?? '-') ?></td>
+                        <td class="py-2.5">
+                            <?php if($v['latitude'] && $v['longitude']): ?>
+                                <a href="https://www.google.com/maps?q=<?= $v['latitude'] ?>,<?= $v['longitude'] ?>" target="_blank" class="inline-flex items-center gap-1 text-cypress-700 hover:text-cypress-900 font-bold hover:underline">
+                                    <i class="fa-solid fa-location-arrow text-[10px]"></i>
+                                    <span>Buka Maps</span>
+                                </a>
+                            <?php else: ?>
+                                <span class="text-stone-400">Tidak ada</span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="py-2.5 text-right font-mono text-stone-500"><?= date('H:i:s d/m', strtotime($v['created_at'])) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

@@ -292,7 +292,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
      FILTER & SEARCH FORM
      ============================================================================== -->
 <div class="bg-white p-5 rounded-3xl border border-antique-300/50 shadow-sm">
-    <form method="GET" action="transaksi" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+    <form method="GET" action="transaksi" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
         
         <!-- Jenis -->
         <div>
@@ -363,8 +363,8 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             <p class="text-xs text-warm-800/60 font-medium">Tidak ada data transaksi yang sesuai filter.</p>
         </div>
     <?php else: ?>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+        <div class="overflow-x-auto -mx-5 px-5">
+        <table class="w-full text-left text-xs min-w-[800px]">
                 <thead>
                     <tr class="border-b border-antique-200 bg-warm-50/70 text-warm-800/70 uppercase text-[10px] font-bold">
                         <th class="py-3 px-4">No. Transaksi / Tgl</th>
@@ -379,7 +379,10 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 </thead>
                 <tbody class="divide-y divide-antique-100">
                     <?php foreach ($daftarTransaksi as $t): ?>
-                        <tr class="hover:bg-warm-50/60 transition">
+                        <tr class="hover:bg-warm-50/60 transition cursor-pointer" onclick="showMobileActions([
+                            {label: 'Lihat Bukti', icon: 'fa-solid fa-file-invoice', class: 'text-cypress-700 bg-cypress-50', href: '<?= e(upload_url($t['bukti_transaksi'])) ?>'},
+                            {label: 'Hapus Transaksi', icon: 'fa-solid fa-trash-can', class: 'text-red-600 bg-red-50', onclick: () => { window.location.href = 'transaksi?hapus=<?= $t['id'] ?>'; }}
+                        ])">
                             <td class="py-3.5 px-4 align-top whitespace-nowrap">
                                 <span class="font-mono font-bold text-cypress-800 block"><?= e($t['no_transaksi']) ?></span>
                                 <span class="text-[11px] text-warm-800/60 block"><?= tanggal_indo($t['tanggal_transaksi']) ?></span>

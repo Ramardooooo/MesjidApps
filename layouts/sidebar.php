@@ -38,7 +38,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $bulanSekarang . ' ' . da
 <!-- ==============================================================================
      TOPBAR KHUSUS MOBILE (< lg)
      ============================================================================== -->
-<header class="lg:hidden sticky top-0 z-30 bg-cypress-900/70 backdrop-blur-md text-white border-b border-antique-500/30 px-4 py-3 flex items-center justify-between shadow-sm no-print">
+<header class="lg:hidden sticky top-0 z-30 bg-cypress-900 pattern-arabesque-dark text-white border-b border-antique-500/30 px-4 py-3 flex items-center justify-between shadow-md no-print">
     <div class="flex items-center gap-2.5">
         <button type="button" id="sidebarToggle" class="p-2 rounded-xl bg-cypress-950 border border-antique-500/40 text-antique-300 hover:text-white transition focus:outline-none" aria-label="Buka Menu">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,17 +50,17 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $bulanSekarang . ' ' . da
                 <i class="fa-solid fa-mosque text-sm"></i>
             </div>
             <div>
-                <span class="font-classic text-xs font-bold tracking-wide block leading-tight">NURUL IMAN</span>
-                <span class="text-[9px] text-antique-300 uppercase tracking-wider block font-semibold"><?= strtoupper($userRole) ?></span>
+                <span class="font-classic text-xs font-bold tracking-wide block leading-tight text-antique-200">NURUL IMAN</span>
+                <span class="text-[9px] text-antique-400 uppercase tracking-wider block font-semibold"><?= strtoupper($userRole) ?></span>
             </div>
         </div>
     </div>
 
     <div class="flex items-center gap-2">
-        <a href="../" target="_blank" class="p-1.5 rounded-lg bg-white/10 text-stone-200 hover:text-white text-xs" title="Lihat Web Publik">
+        <a href="../" target="_blank" class="p-1.5 rounded-lg bg-white/10 text-antique-300 hover:text-white text-xs" title="Lihat Web Publik">
             <i class="fa-solid fa-globe"></i>
         </a>
-        <a href="../auth/logout" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-950/70 border border-red-500/30 text-red-200 text-xs hover:text-white transition">
+        <a href="../auth/logout" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-cypress-950/70 border border-antique-500/30 text-antique-300 text-xs hover:text-white transition">
             <i class="fa-solid fa-arrow-right-from-bracket text-[10px]"></i>
             <span>Keluar</span>
         </a>
@@ -80,9 +80,7 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $bulanSekarang . ' ' . da
         <!-- Header Brand Masjid di Sidebar -->
         <div class="p-5 border-b border-white/10 flex items-center justify-between">
             <a href="../" class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-cypress-900 border border-antique-500/40 flex items-center justify-center text-antique-300 shadow-inner shrink-0">
-                    <i class="fa-solid fa-mosque text-lg"></i>
-                </div>
+                <img src="../uploads/logo/logo.png" alt="Logo" class="w-10 h-10 rounded-xl bg-cypress-900 border border-antique-500/40 object-contain p-1 shadow-inner shrink-0">
                 <div>
                     <span class="font-classic text-sm font-bold tracking-wider block text-white leading-tight">MASJID JAMI'</span>
                     <span class="font-classic text-xs text-antique-300 font-semibold tracking-widest block">NURUL IMAN</span>
@@ -190,16 +188,21 @@ $tanggalLengkap = $namaHari . ', ' . date('j') . ' ' . $bulanSekarang . ' ' . da
                 </div>
             <?php endif; ?>
 
-            <!-- GROUP 4: PENGATURAN SISTEM & USER (Khusus Administrator) -->
+<!-- GROUP 4: PENGATURAN SISTEM & USER (Khusus Administrator) -->
             <?php if ($userRole === 'admin'): ?>
                 <div class="space-y-1">
                     <span class="px-3 text-[10px] uppercase font-bold tracking-widest text-antique-300/70 block mb-1.5">
-                        Administrasi &amp; Akses
+                        Administrasi & Akses
                     </span>
 
                     <a href="users-admin" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'users-admin' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
                         <i class="fa-solid fa-users-gear w-4 text-center <?= $activeMenu === 'users-admin' ? 'text-antique-300' : 'text-antique-300/80' ?>"></i>
                         <span>Kelola Pengguna (RBAC)</span>
+                    </a>
+
+                    <a href="visitors" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl <?= $activeMenu === 'visitors' ? 'bg-cypress-900/90 text-white border-l-4 border-antique-500 shadow-xs font-semibold' : 'text-emerald-100/80 hover:text-white hover:bg-white/5 border-l-4 border-transparent font-medium' ?> text-xs transition-luxury">
+                        <i class="fa-solid fa-chart-line w-4 text-center text-antique-300/80"></i>
+                        <span>Log Visitor</span>
                     </a>
                 </div>
             <?php endif; ?>

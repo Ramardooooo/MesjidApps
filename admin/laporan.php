@@ -226,7 +226,8 @@ if ($isPrint) {
         </div>
 
         <!-- Tabel Rincian Mutasi -->
-        <table class="w-full text-left text-xs border border-stone-300 mb-8">
+        <div class="overflow-x-auto -mx-5 px-5">
+        <table class="w-full text-left text-xs border border-stone-300 mb-8 min-w-[700px]">
             <thead class="bg-stone-100 uppercase text-[10px] border-b border-stone-300">
                 <tr>
                     <th class="p-2 border-r border-stone-300">Tgl / No</th>
@@ -343,7 +344,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
      FORM FILTER BERDASARKAN MODE
      ============================================================================== -->
 <div class="bg-white p-5 rounded-3xl border border-antique-300/50 shadow-sm">
-    <form method="GET" action="" class="flex flex-wrap items-center gap-3 text-xs">
+    <form method="GET" action="" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-xs">
         <input type="hidden" name="tipe" value="<?= e($tipeLaporan) ?>">
 
         <?php if ($tipeLaporan === 'mingguan'): ?>

@@ -313,6 +313,61 @@ function paginate_data($pdo, $sql, $params = [], $perHalaman = 10) {
     ];
 }
 
+// Parse User Agent untuk visitor tracking
+function parse_user_agent($ua = '') {
+    $ua = $ua ?: ($_SERVER['HTTP_USER_AGENT'] ?? '');
+    $browser = 'Unknown';
+    $browser_ver = '';
+    $os = 'Unknown';
+    $device = 'desktop';
+
+    // Browser deteksi
+    if (preg_match('/MSIE|Trident\/7.0/', $ua)) {
+        $browser = 'Internet Explorer';
+    } elseif (preg_match('/Edge\/(\S+)/', $ua, $m)) {
+        $browser = 'Edge'; $browser_ver = $m[1];
+    } elseif (preg_match('/OPR\/(\S+)/', $ua, $m)) {
+        $browser = 'Opera'; $browser_ver = $m[1];
+    } elseif (preg_match('/Chrome\/(\S+)/', $ua, $m)) {
+        $browser = 'Chrome'; $browser_ver = $m[1];
+    } elseif (preg_match('/Firefox\/(\S+)/', $ua, $m)) {
+        $browser = 'Firefox'; $browser_ver = $m[1];
+    } elseif (preg_match('/Safari\/(\S+)/', $ua, $m) && !preg_match('/Chrome/', $ua)) {
+        $browser = 'Safari'; $browser_ver = $m[1];
+    }
+
+    // OS deteksi
+    if (preg_match('/Windows NT (\S+)/', $ua, $m)) {
+        $map = ['10.0' => '11/10', '6.3' => '8.1', '6.2' => '8', '6.1' => '7', '6.0' => 'Vista'];
+        $os = 'Windows ' . ($map[$m[1]] ?? $m[1]);
+    } elseif (preg_match('/Mac OS X (\S+)/', $ua, $m)) {
+        $os = 'macOS ' . str_replace('_', '.', $m[1]);
+    } elseif (preg_match('/Linux/', $ua)) {
+        $os = 'Linux';
+        if (preg_match('/Android (\S+)/', $ua, $m)) {
+            $os = 'Android ' . $m[1]; $device = 'mobile';
+        }
+    } elseif (preg_match('/iPhone OS (\S+)/', $ua, $m)) {
+        $os = 'iOS ' . str_replace('_', '.', $m[1]); $device = 'mobile';
+    } elseif (preg_match('/iPad.*OS (\S+)/', $ua, $m)) {
+        $os = 'iPadOS ' . str_replace('_', '.', $m[1]); $device = 'tablet';
+    }
+
+    // Bot / Mobile / Tablet
+    if (preg_match('/bot|crawl|spider|slurp|facebookexternalhit/i', $ua)) {
+        $device = 'bot';
+    } elseif ($device !== 'tablet' && preg_match('/Mobile|iPhone|Android.*Mobile/i', $ua)) {
+        $device = 'mobile';
+    }
+
+    return [
+        'browser' => $browser,
+        'browser_version' => $browser_ver,
+        'os' => $os,
+        'device_type' => $device
+    ];
+}
+
 // Render navigasi pagination bertema masjid (info kiri + tombol kanan).
 // Mempertahankan seluruh parameter $_GET yang ada, hanya menambah/mengganti 'page'.
 function render_pagination($totalHalaman, $halaman, $total = 0, $dari = 0, $sampai = 0) {

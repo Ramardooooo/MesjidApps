@@ -2,10 +2,36 @@
 
     <!-- Footer Bersama -->
     <footer class="bg-white border-t border-antique-300/30 py-4 mt-8 no-print">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-warm-800/60">
-            <p>© <?= date('Y') ?> Masjid Nurul Iman · Menjaga Amanah, Memakmurkan Masjid</p>
-        </div>
-    </footer>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-warm-800/60">
+        <p>© <?= date('Y') ?> Masjid Nurul Iman · Menjaga Amanah, Memakmurkan Masjid</p>
+    </div>
+</footer>
+
+<!-- Modal Aksi Mobile -->
+<div id="modalAksiMobile" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-stone-950/60 backdrop-blur-xs" onclick="document.getElementById('modalAksiMobile').classList.add('hidden')"></div>
+    <div class="relative bg-white rounded-2xl p-4 w-full max-w-xs shadow-2xl">
+        <h4 class="text-xs font-bold text-stone-500 uppercase tracking-wider mb-4 border-b pb-2">Pilih Aksi</h4>
+        <div id="modalAksiContent" class="space-y-2"></div>
+        <button onclick="document.getElementById('modalAksiMobile').classList.add('hidden')" class="w-full mt-4 py-2 bg-stone-100 text-stone-700 rounded-lg text-xs font-bold">Tutup</button>
+    </div>
+</div>
+<script>
+function showMobileActions(actions) {
+    const container = document.getElementById('modalAksiContent');
+    container.innerHTML = '';
+    actions.forEach(a => {
+        const btn = document.createElement(a.href ? 'a' : 'button');
+        if (a.href) btn.href = a.href;
+        btn.className = `w-full py-2.5 px-3 rounded-lg text-xs font-bold text-left flex items-center gap-3 ${a.class}`;
+        btn.innerHTML = `<i class="${a.icon}"></i> ${a.label}`;
+        if(a.onclick) btn.onclick = a.onclick;
+        container.appendChild(btn);
+        btn.onclick = (e) => { document.getElementById('modalAksiMobile').classList.add('hidden'); if(a.onclick) a.onclick(e); };
+    });
+    document.getElementById('modalAksiMobile').classList.remove('hidden');
+}
+</script>
 
 </div>
 

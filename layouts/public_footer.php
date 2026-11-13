@@ -14,9 +14,7 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
                 <!-- Kolom 1: Profil & Identitas -->
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-2xl bg-cypress-900 border border-antique-500/50 flex items-center justify-center text-antique-400 shadow-inner">
-                            <i class="fa-solid fa-mosque text-xl"></i>
-                        </div>
+                        <img src="<?= $base ?>/uploads/logo/logo.png" alt="Logo" class="w-12 h-12 rounded-2xl bg-cypress-900 border border-antique-500/50 object-contain p-1 shadow-inner">
                         <div>
                             <span class="font-classic text-base font-bold tracking-wider block text-white leading-tight">
                                 <?= strtoupper(e($profil['nama_masjid'])) ?>
@@ -185,10 +183,13 @@ $rekeningFooter = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1
        target="_blank" 
        rel="noopener"
        aria-label="Chat WhatsApp Pengurus"
-       class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-xl shadow-emerald-950/40 hover:scale-105 active:scale-95 border-2 border-white/20 transition-all group">
+       class="fixed bottom-24 md:bottom-8 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-xl shadow-emerald-950/40 hover:scale-105 active:scale-95 border-2 border-white/20 transition-all group">
         <i class="fa-brands fa-whatsapp text-2xl group-hover:rotate-12 transition-transform"></i>
         <span class="text-xs font-bold hidden sm:inline-block">Layanan Jamaah</span>
     </a>
+
+    <!-- Bottom Navigation Mobile -->
+    <?php require_once __DIR__ . '/bottom-nav.php'; ?>
 
     <!-- Copy Button State Change Function - Generic -->
     <script>

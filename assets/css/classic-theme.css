@@ -3,6 +3,12 @@
    Palet Warna: Deep Cypress Green, Antique Brass Gold, Warm Alabaster
    ========================================================= */
 
+@media (max-width: 640px) {
+    .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+    table { font-size: 11px !important; table-layout: auto !important; }
+    td, th { padding: 8px 6px !important; white-space: nowrap; }
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {

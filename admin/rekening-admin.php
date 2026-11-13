@@ -103,8 +103,8 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <span class="text-xs text-warm-800/60 font-semibold"><?= number_format($pag['total']) ?> Rekening</span>
     </div>
 
-    <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
+    <div class="overflow-x-auto -mx-5 px-5">
+        <table class="w-full text-left text-xs min-w-[700px]">
             <thead>
                 <tr class="border-b border-antique-200 bg-warm-50/70 text-warm-800/70 uppercase text-[10px] font-bold">
                     <th class="py-3 px-4 text-center">Urutan</th>
