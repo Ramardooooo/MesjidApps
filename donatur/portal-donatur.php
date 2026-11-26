@@ -418,6 +418,51 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
         }
         .mobile-sidebar-open .sidebar-mobile { transform: translateX(0); }
         .mobile-sidebar-open .sidebar-overlay { display: block; }
+
+        /* Donor dashboard refinement: calm, premium, and readable */
+        :root { color-scheme: light; }
+        body { background-color: #f8f7f1; }
+        .sidebar-mobile {
+            box-shadow: 12px 0 36px rgba(7, 19, 13, .12);
+        }
+        .sidebar-mobile nav a { min-height: 43px; }
+        .sidebar-mobile nav a:focus-visible,
+        button:focus-visible, a:focus-visible, input:focus-visible {
+            outline: 3px solid rgba(197, 160, 89, .55);
+            outline-offset: 2px;
+        }
+        .profile-hero {
+            border-radius: 26px;
+            box-shadow: 0 18px 48px rgba(13, 29, 21, .14);
+        }
+        .dashboard-stat-card {
+            min-height: 112px;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(13, 29, 21, .045);
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+        }
+        .dashboard-stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(197, 160, 89, .55);
+            box-shadow: 0 14px 30px rgba(13, 29, 21, .08);
+        }
+        main > section, main > div > div, main > div > section {
+            scroll-margin-top: 92px;
+        }
+        table thead th { white-space: nowrap; }
+        table tbody tr { transition: background-color .18s ease; }
+        .notification-panel { box-shadow: 0 20px 50px rgba(7, 19, 13, .18); }
+        @media (max-width: 640px) {
+            .profile-hero { padding: 22px 18px; border-radius: 22px; }
+            .profile-hero .flex.items-center.gap-5 { align-items: flex-start; gap: 14px; }
+            .profile-hero h1 { font-size: 1.35rem; line-height: 1.35; }
+            .dashboard-stat-card { padding: 18px; min-height: 94px; }
+            .dashboard-stat-card .w-14 { width: 48px; height: 48px; border-radius: 15px; }
+            main { padding-top: 20px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+        }
     </style>
 </head>
 <body class="min-h-screen text-warm-900 antialiased">
@@ -429,15 +474,11 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
 
     <!-- SIDEBAR -->
     <aside class="sidebar-mobile fixed inset-y-0 left-0 z-50 w-[260px] sidebar-pattern text-white border-r border-antique-500/15 flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-300">
-        <!-- BRAND -->
-        <div class="h-[72px] px-5 border-b border-white/10 flex items-center gap-3.5">
-            <a href="../" class="w-10 h-10 rounded-xl bg-cypress-900 border border-antique-500/25 flex items-center justify-center text-antique-500 shadow-sm">
-                <i class="fa-solid fa-mosque"></i>
+        <!-- BRAND: wordmark only, without mosque logo or Portal Donatur label -->
+        <div class="h-[72px] px-6 border-b border-white/10 flex items-center">
+            <a href="../" class="text-[15px] font-bold tracking-wide text-white leading-snug">
+                <?= e($profil['nama_masjid']) ?>
             </a>
-            <div>
-                <div class="text-[15px] font-bold tracking-wide"><?= e($profil['nama_masjid']) ?></div>
-                <div class="text-[10px] text-antique-500 font-medium tracking-widest uppercase">Portal Donatur</div>
-            </div>
         </div>
 
         <!-- USER MINI PROFILE -->
@@ -452,9 +493,7 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                 <?php endif; ?>
                 <div class="min-w-0">
                     <div class="text-xs font-bold text-white truncate"><?= e($namaDonatur) ?></div>
-                    <div class="text-[10px] text-antique-400 mt-0.5 flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Donatur Terverifikasi
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -594,7 +633,7 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
         </header>
 
         <!-- MAIN CONTENT -->
-        <main class="max-w-[1200px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 space-y-6">
+        <main class="max-w-[1440px] w-full mx-auto px-4 sm:px-7 xl:px-10 py-7 lg:py-9 flex-1 space-y-6 lg:space-y-7">
 
             <!-- ALERT MESSAGE -->
             <?php if ($pesan): ?>
@@ -679,15 +718,18 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                     </div>
                 </div>
 
-                <div class="bg-white/95 rounded-[22px] p-6 border border-antique-200 shadow-soft flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl shrink-0">
-                        <i class="fa-solid fa-shield-check"></i>
+                <div class="dashboard-stat-card bg-white/95 rounded-[22px] p-6 border border-antique-200 shadow-soft flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 3 20 6v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6l8-3Z"/>
+                            <path d="m8.5 12 2.2 2.2 4.8-4.8"/>
+                        </svg>
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <div class="text-xs text-warm-800/60 font-semibold uppercase tracking-wide">Status Akun</div>
                         <div class="text-sm font-bold <?= e($statusText) ?> mt-1 flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full <?= e($statusDot) ?>"></span>
-                            <?= e($statusLabel) ?> (Sejak <?= date('Y', strtotime($tanggalDaftar)) ?>)
+                            <span class="w-2.5 h-2.5 rounded-full <?= e($statusDot) ?> shrink-0"></span>
+                            <span><?= e($statusLabel) ?> (Sejak <?= date('Y', strtotime($tanggalDaftar)) ?>)</span>
                         </div>
                     </div>
                 </div>
