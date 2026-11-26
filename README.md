@@ -103,7 +103,8 @@ mesjid-donasi-main/
 |   |-- mail.php                    Konfigurasi SMTP PHPMailer
 |
 |-- db/                             Skema Database & Migrasi
-|   |-- MesjidApps.sql              Skema database utama
+|   |-- MesjidAppsV1.4.sql          **Skema update V1.4.0 terbaru** (terintegrasi)
+|   |-- MesjidApps.sql              Skema database utama (V1.0)
 |   |-- MesjidAppsV1.1.0.sql        Skema update V1.1.0 terintegrasi
 |   |-- MesjidAppsV1.2.0sql         Skema update V1.2.0 terintegrasi
 |   |-- MesjidAppsV1.3.0sql         Skema update V1.3.0 terintegrasi
@@ -154,6 +155,10 @@ mesjid-donasi-main/
 |   |-- send_donasi_notification.php Fungsi pengiriman email status donasi
 |
 |-- uploads/                        Direktori Unggahan Berkas (Banner, Berita, Bukti, Avatar)
+|   |-- profil/                     Foto profil staff & pengurus
+|   |-- program/                    Gambar program donasi & target dana
+|   |-- bukti/                      Bukti transfer donasi & QRIS
+|   |-- qris/                       File QRIS standar
 |-- vendor/                         Dependensi Pustaka PHPMailer
 |-- index.php                       Beranda utama dengan multi-slide hero & jadwal shalat
 |-- .htaccess                       Apache rewrite URL bersih, HTTPS & proteksi berkas
@@ -167,7 +172,7 @@ mesjid-donasi-main/
 
 ## Database & Skema
 
-Sistem didukung oleh **17 tabel** relasional dengan engine InnoDB dan charset `utf8mb4_unicode_ci`:
+Sistem didukung oleh **20 tabel** relasional dengan engine InnoDB dan charset `utf8mb4_unicode_ci`:
 
 | # | Tabel | Deskripsi |
 |---|-------|-----------|
@@ -177,17 +182,20 @@ Sistem didukung oleh **17 tabel** relasional dengan engine InnoDB dan charset `u
 | 4 | `pengurus_masjid` | Data susunan kepengurusan DKM |
 | 5 | `rekening_donasi` | Rekening bank tujuan dan QRIS resmi |
 | 6 | `program_donasi` | Program donasi (target, dana terkumpul, status) |
-| 7 | `kategori_transaksi` | Kategori pemasukan dan pengeluaran kas |
-| 8 | `transaksi_keuangan` | Buku kas digital terpadu |
-| 9 | `donasi_online` | Catatan transaksi donasi online & metadata notifikasi email |
-| 10 | `berita` | Berita, artikel, dan warta kegiatan masjid |
-| 11 | `banners` | Slider beranda interaktif & banner promosi |
-| 12 | `youtube_videos` | Video kajian, ceramah, dan siaran langsung |
-| 13 | `notifikasi` | Pemberitahuan sistem untuk pengurus & donatur |
-| 14 | `pesan_kontak` | Pesan masuk dari formulir kontak jamaah |
-| 15 | `otp_codes` | Kode token OTP verifikasi email |
-| 16 | `donasi` | *(Legacy)* Pencatatan donasi manual versi awal |
-| 17 | `kegiatan` | *(Legacy)* Jadwal kegiatan versi awal |
+| 7 | `program_updates` | Pembaruan progres dana program donasi |
+| 8 | `kategori_transaksi` | Kategori pemasukan dan pengeluaran kas |
+| 9 | `transaksi_keuangan` | Buku kas digital terpadu |
+| 10 | `donasi_online` | Catatan transaksi donasi online & metadata notifikasi email |
+| 11 | `berita` | Berita, artikel, dan warta kegiatan masjid |
+| 12 | `banners` | Slider beranda interaktif & banner promosi |
+| 13 | `youtube_videos` | Video kajian, ceramah, dan siaran langsung |
+| 14 | `notifikasi` | Pemberitahuan sistem untuk pengurus & donatur |
+| 15 | `pesan_kontak` | Pesan masuk dari formulir kontak jamaah |
+| 16 | `otp_codes` | Kode token OTP verifikasi email |
+| 17 | `donasi` | *(Legacy)* Pencatatan donasi manual versi awal |
+| 18 | `kegiatan` | *(Legacy)* Jadwal kegiatan versi awal |
+| 19 | `visitors` | Log kunjungan visitor website (IP, lokasi, user-agent) |
+| 20 | `pengumuman` | Ticker dan banner pengumuman di halaman publik |
 
 ### Akun Bawaan Pengujian
 
