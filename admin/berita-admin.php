@@ -26,18 +26,27 @@ if (isset($_GET['get_berita'])) {
 
 // 1. TAMBAH BERITA
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah') {
-    $judul     = trim($_POST['judul'] ?? '');
+    $judul     = mb_substr(trim($_POST['judul'] ?? ''), 0, 255);
     $kategori  = $_POST['kategori'] ?? 'Kajian & Kegiatan';
     $tglPublik = $_POST['tanggal_publikasi'] ?? date('Y-m-d');
     $status    = $_POST['status'] ?? 'published';
-    $ringkasan = trim($_POST['ringkasan'] ?? '');
+    $ringkasan = mb_substr(trim($_POST['ringkasan'] ?? ''), 0, 300);
     $isi       = trim($_POST['isi'] ?? '');
 
     if (empty($judul) || empty($isi)) {
         $pesan = 'Judul dan isi berita wajib diisi.';
         $tipe  = 'error';
     } else {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $judul))) . '-' . rand(100, 999);
+        $baseSlug = rtrim(preg_replace('/-+/', '-', preg_replace('/[^a-z0-9]+/', '-', strtolower($judul))), '-');
+        if ($baseSlug === '') $baseSlug = 'berita';
+        $slug = $baseSlug;
+        $suffix = 2;
+        while (true) {
+            $stmtChk = $pdo->prepare("SELECT COUNT(*) FROM berita WHERE slug = ?");
+            $stmtChk->execute([$slug]);
+            if ($stmtChk->fetchColumn() == 0) break;
+            $slug = $baseSlug . '-' . $suffix++;
+        }
         $thumb = null;
         if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
             $thumb = upload_berkas('thumbnail', 'berita');
@@ -59,11 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 // 2. EDIT BERITA
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'edit') {
     $id        = (int)($_POST['id'] ?? 0);
-    $judul     = trim($_POST['judul'] ?? '');
+    $judul     = mb_substr(trim($_POST['judul'] ?? ''), 0, 255);
     $kategori  = $_POST['kategori'] ?? 'Kajian & Kegiatan';
     $tglPublik = $_POST['tanggal_publikasi'] ?? date('Y-m-d');
     $status    = $_POST['status'] ?? 'published';
-    $ringkasan = trim($_POST['ringkasan'] ?? '');
+    $ringkasan = mb_substr(trim($_POST['ringkasan'] ?? ''), 0, 300);
     $isi       = trim($_POST['isi'] ?? '');
 
     if ($id <= 0) {
@@ -74,8 +83,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
         $tipe  = 'error';
     } else {
         try {
-            $stmt = $pdo->prepare("UPDATE berita SET judul = ?, kategori = ?, tanggal_publikasi = ?, status = ?, ringkasan = ?, isi = ? WHERE id = ?");
-            if ($stmt->execute([$judul, $kategori, $tglPublik, $status, $ringkasan, $isi, $id])) {
+            $baseSlug = rtrim(preg_replace('/-+/', '-', preg_replace('/[^a-z0-9]+/', '-', strtolower($judul))), '-');
+            if ($baseSlug === '') $baseSlug = 'berita';
+            $slug = $baseSlug;
+            $suffix = 2;
+            while (true) {
+                $stmtChk = $pdo->prepare("SELECT COUNT(*) FROM berita WHERE slug = ? AND id != ?");
+                $stmtChk->execute([$slug, $id]);
+                if ($stmtChk->fetchColumn() == 0) break;
+                $slug = $baseSlug . '-' . $suffix++;
+            }
+
+            $stmt = $pdo->prepare("UPDATE berita SET judul = ?, slug = ?, kategori = ?, tanggal_publikasi = ?, status = ?, ringkasan = ?, isi = ? WHERE id = ?");
+            if ($stmt->execute([$judul, $slug, $kategori, $tglPublik, $status, $ringkasan, $isi, $id])) {
                 if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
                     $stmt = $pdo->prepare("SELECT thumbnail FROM berita WHERE id = ?");
                     $stmt->execute([$id]);
@@ -122,7 +142,7 @@ if (isset($_GET['hapus'])) {
     }
 }
 
-$pag = paginate_data($pdo, "SELECT b.id, b.judul, b.kategori, b.tanggal_publikasi, b.status, b.views, b.thumbnail, b.isi, b.ringkasan, u.nama_lengkap as penulis FROM berita b LEFT JOIN users u ON b.penulis_id = u.id ORDER BY b.id DESC", [], 10);
+$pag = paginate_data($pdo, "SELECT b.id, b.slug, b.judul, b.kategori, b.tanggal_publikasi, b.status, b.views, b.thumbnail, b.isi, b.ringkasan, u.nama_lengkap as penulis FROM berita b LEFT JOIN users u ON b.penulis_id = u.id ORDER BY b.id DESC", [], 10);
 $beritaList = $pag['items'];
 
 $pageTitle    = 'Kelola Berita & Warta · ' . $profil['nama_masjid'];
@@ -214,7 +234,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                         </td>
                         <td class="py-3.5 px-4 align-middle text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-2">
-                                <a href="../berita-detail?id=<?= $b['id'] ?>" target="_blank" class="p-1.5 rounded-lg text-cypress-700 hover:bg-cypress-50 transition" title="Pratinjau">
+                                <a href="../berita/<?= e($b['slug'] ?? '') ?>" target="_blank" class="p-1.5 rounded-lg text-cypress-700 hover:bg-cypress-50 transition" title="Pratinjau">
                                     <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                                 </a>
                                 <button type="button" data-berita='<?= htmlspecialchars(json_encode($b, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>' onclick="bukaModalEditBeritaSafe(this)" class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition" title="Edit">
@@ -249,8 +269,11 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             <input type="hidden" id="beritaId" name="id" value="0">
 
             <div>
-                <label class="block font-bold text-warm-800 mb-1">Judul Artikel / Berita <span class="text-red-500">*</span></label>
-                <input type="text" id="beritaJudul" name="judul" required placeholder="Contoh: Semarak Maulid Nabi Muhammad SAW..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-warm-800">Judul Artikel / Berita <span class="text-red-500">*</span></label>
+                    <span class="text-[11px] text-stone-500"><span id="beritaJudulCounter">0</span>/255</span>
+                </div>
+                <input type="text" id="beritaJudul" name="judul" maxlength="255" required oninput="updateBeritaJudulCounter()" placeholder="Contoh: Semarak Maulid Nabi Muhammad SAW..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -277,8 +300,11 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             </div>
 
             <div>
-                <label class="block font-bold text-warm-800 mb-1">Ringkasan Singkat (Lead Paragraph)</label>
-                <textarea id="beritaRingkas" name="ringkasan" rows="2" placeholder="Ringkasan 1 kalimat yang memikat pembaca..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none"></textarea>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-warm-800">Ringkasan Singkat (Lead Paragraph)</label>
+                    <span class="text-[11px] text-stone-500"><span id="beritaRingkasCounter">0</span>/300</span>
+                </div>
+                <textarea id="beritaRingkas" name="ringkasan" maxlength="300" rows="2" oninput="updateBeritaRingkasCounter()" placeholder="Ringkasan 1 kalimat yang memikat pembaca..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none"></textarea>
             </div>
 
             <div>
@@ -331,6 +357,19 @@ function bukaModalEditBeritaSafe(el) {
 function tutupModalBerita() {
     document.getElementById('modalBerita').classList.add('hidden');
 }
+
+function updateBeritaJudulCounter() {
+    const input = document.getElementById('beritaJudul');
+    const counter = document.getElementById('beritaJudulCounter');
+    counter.textContent = input.value.length;
+}
+
+function updateBeritaRingkasCounter() {
+    const input = document.getElementById('beritaRingkas');
+    const counter = document.getElementById('beritaRingkasCounter');
+    counter.textContent = input.value.length;
+}
+
 </script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

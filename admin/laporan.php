@@ -11,6 +11,8 @@ $tipeLaporan = $_GET['tipe'] ?? 'bulanan';
 
 // Filter Parameter
 $bulan   = (int)($_GET['bulan'] ?? date('n'));
+// Pastikan bulan tidak 0 (kadang opsi "-- Pilih Bulan --" value="")
+if ($bulan < 1 || $bulan > 12) $bulan = date('n');
 $tahun   = (int)($_GET['tahun'] ?? date('Y'));
 $minggu  = (int)($_GET['minggu'] ?? 1);
 $tglDari = $_GET['tgl_dari'] ?? date('Y-m-01');
@@ -362,7 +364,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Bulan</label>
                 <select name="bulan" class="px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
-                    <option value="">-- Pilih Bulan --</option>
+                    <option value="<?= date('n') ?>">-- Pilih Bulan --</option>
                     <?php 
                     $bulanList = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
                     for ($m = 1; $m <= 12; $m++): 

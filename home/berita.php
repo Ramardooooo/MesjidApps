@@ -109,7 +109,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                                 <i class="fa-regular fa-calendar mr-1"></i> <?= tanggal_indo($b['tanggal_publikasi']) ?>
                             </span>
                             <h3 class="font-bold text-base text-warm-900 font-classic group-hover:text-cypress-700 transition line-clamp-2">
-                                <a href="berita-detail?id=<?= $b['id'] ?>"><?= e($b['judul']) ?></a>
+                                <a href="<?= base_url() ?>/berita/<?= e($b['slug']) ?>"><?= e($b['judul']) ?></a>
                             </h3>
                             <p class="text-xs text-warm-800/70 line-clamp-3 leading-relaxed">
                                 <?= e($b['ringkasan']) ?>
@@ -117,7 +117,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                         </div>
                     </div>
                     <div class="p-6 pt-0">
-                        <a href="berita-detail?id=<?= $b['id'] ?>" class="inline-flex items-center gap-1.5 text-xs font-semibold text-cypress-700 hover:text-antique-600 transition">
+                        <a href="<?= base_url() ?>/berita/<?= e($b['slug']) ?>" class="inline-flex items-center gap-1.5 text-xs font-semibold text-cypress-700 hover:text-antique-600 transition">
                             <span>Baca Selengkapnya</span>
                             <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </a>

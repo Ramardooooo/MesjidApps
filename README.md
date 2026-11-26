@@ -458,20 +458,35 @@ Desain antarmuka memadukan keanggunan arsitektur Islam klasik dengan kesederhana
 
 ## Catatan Rilis Terbaru
 
-### v1.3.0 *(2026-11-13)*
-- **Security Hardening**: Password-reset token OTP disimpan menggunakan hash SHA-256 dan diverifikasi sebelum password diubah.
-- **SQL Injection Hardening**: Query yang menerima input dinamis, termasuk filter laporan, transaksi, pencarian, serta ekspor CSV/Excel, menggunakan prepared statements dengan placeholder.
-- **Secure Session Management**: Cookie sesi menggunakan `HttpOnly`, `Secure` (jika HTTPS), dan `SameSite=Lax`; `session_regenerate_id(true)` dipanggil setelah login berhasil.
-- **HTTP Security Headers**: Penambahan Strict-Transport-Security, X-XSS-Protection, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, dan Content-Security-Policy.
-- **Input Validation**: Validasi nominal transaksi, target donasi, saldo awal kas, email, nomor telepon, integer, float, dan panjang karakter maksimum.
-- **Pagination & Transparansi**: Sanitasi parameter halaman dan pagination halaman transparansi sebanyak 5 item per halaman.
-- **Data Donatur**: Detail program mengambil avatar donatur melalui `LEFT JOIN` ke tabel `users`, dengan placeholder inisial jika avatar tidak tersedia.
-- **Error Handling**: Pesan exception dicatat melalui `error_log()` dan pengguna menerima pesan kesalahan umum.
-- **Branding**: Logo kustom `uploads/logo/logo.png` digunakan pada favicon, header publik, footer, dan sidebar admin.
-- **Mobile Navigation**: Bottom navigation bertema Islami untuk Home, Donasi, Artikel, dan Akun, termasuk penyesuaian posisi floating WhatsApp.
-- **Admin Mobile UX**: Penyempurnaan tampilan tabel admin, ukuran padding dan font, serta interaksi edit berita.
+## Fitur Utama (v1.4.0 Update)
 
-Rincian lengkap riwayat pembaruan dapat dibaca pada [RELEASE.md](RELEASE.md).
+1. **🔗 Clean Slug-Based URLs (SEO & User-Friendly)**:
+   - Rincian Program: `/program/nama-program`
+   - Form Donasi Cepat: `/donasi-online/nama-program`
+   - Warta & Berita: `/berita/judul-artikel`
+   - *Real-time Slug Update*: Pengubahan nama program atau judul artikel di admin langsung memperbarui URL slug secara otomatis tanpa angka acak.
+   - *Backward Compatibility*: Akses tautan lama `?id=X` otomatis dialihkan (*301 Permanent Redirect*) ke URL slug resmi.
+
+2. **🔒 e-Kwitansi Security Token (Anti-Intip & Anti-Enumeration)**:
+   - Tautan tanda terima donasi publik kini dilindungi token acak 32 karakter kriptografis (`/donatur/kwitansi?token=...`), mencegah penebakan nomor urut donasi oleh pihak ketiga.
+   - Akses via nomor donasi (`?no=`) diproteksi ketat hanya untuk Admin/Bendahara dan akun donatur pemilik transaksi.
+
+3. **📱 Optimasi Mobile Admin Transaksi Kas**:
+   - Penghapusan modal *trigger* baris tabel yang tidak disengaja di layar sentuh HP (`showMobileActions`), memberikan pengalaman *scrolling* dan interaksi yang mulus.
+   - Tombol aksi cepat (Lihat Bukti & Hapus) tetap tertata rapi dan presisi di kolom aksi.
+
+4. **🕌 Portal Donatur Interaktif & Bernilai Spiritual**:
+   - **Lencana Kehormatan Donatur**: Pin lencana Islami (*Muhsinin*, *Penyemai Kebaikan*, *Pejuang Infaq Istiqomah*, *Sahabat Utama Masjid*).
+   - **Jejak Sebaran Amal Jariyah**: Visualisasi alokasi dana infaq per program secara transparan.
+   - **Mutiara Hadits Harian**: Hadits shahih bergilir setiap hari lengkap dengan teks Arab dan maknanya.
+   - **Tab Filter & Instant Live Search**: Filter cepat status transaksi (*Semua*, *Sah*, *Menunggu*) dan pencarian instan tanpa perlu memuat ulang halaman.
+
+5. **🛡️ Pengamanan Direktori Internal (`includes/`)**:
+   - Proteksi berkas `.htaccess` di folder komponen `donatur/includes/` untuk memblokir akses langsung HTTP peramban dengan respons *403 Forbidden*.
+
+- **Rate Limiter Autentikasi & Transaksi**: Batas percobaan login, register, lupa password, verifikasi OTP, dan pengajuan donasi (*maksimal 5x per 15 menit / 1 hari*). Mencegah *brute-force* dan spamming.
+- **Validasi Panjang Form**: Semua input form admin dilengkapi atribut `maxlength` sesuai limit kolom database, dengan penampil karakter realtime (*contoh: `0/150`*). Backend dipotong otomatis via `mb_substr()` agar tidak ada error `SQLSTATE[22001]: Data too long`.
+- **Perbaikan Laporan**: Diperbaiki bug `$bulan = 0` pada `admin/laporan.php` yang menyebabkan error `SQLSTATE[HY000]: General error: 1525 Incorrect DATE value`.
 
 ---
 

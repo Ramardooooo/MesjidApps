@@ -41,8 +41,8 @@ if (isset($_GET['toggle'])) {
 
 // 1. TAMBAH BANNER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah') {
-    $judul    = trim($_POST['judul'] ?? '');
-    $subjudul = trim($_POST['subjudul'] ?? '');
+    $judul    = mb_substr(trim($_POST['judul'] ?? ''), 0, 150);
+    $subjudul = mb_substr(trim($_POST['subjudul'] ?? ''), 0, 255);
     $link_url = trim($_POST['link_url'] ?? '');
     $tipeB    = $_POST['tipe'] ?? 'slider';
     $urutan   = (int)($_POST['urutan'] ?? 1);
@@ -84,8 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 // 2. EDIT BANNER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'edit') {
     $id       = (int)($_POST['id'] ?? 0);
-    $judul    = trim($_POST['judul'] ?? '');
-    $subjudul = trim($_POST['subjudul'] ?? '');
+    $judul    = mb_substr(trim($_POST['judul'] ?? ''), 0, 150);
+    $subjudul = mb_substr(trim($_POST['subjudul'] ?? ''), 0, 255);
     $link_url = trim($_POST['link_url'] ?? '');
     $tipeB    = $_POST['tipe'] ?? 'slider';
     $urutan   = (int)($_POST['urutan'] ?? 1);
@@ -167,10 +167,12 @@ $banners = $pag['items'];
 $programMap = [];
 foreach ($daftarProgram as $p) {
     $programMap[$p['id']] = $p;
+    if (!empty($p['slug'])) $programMap[$p['slug']] = $p;
 }
 $beritaMap = [];
 foreach ($daftarBerita as $b) {
     $beritaMap[$b['id']] = $b;
+    if (!empty($b['slug'])) $beritaMap[$b['slug']] = $b;
 }
 
 function label_tautan_banner($url, $programMap, $beritaMap) {
@@ -203,6 +205,22 @@ function label_tautan_banner($url, $programMap, $beritaMap) {
     }
     if ($clean === 'kontak') {
         return ['nama' => 'Kontak Layanan DKM', 'badge' => 'bg-teal-100 text-teal-800', 'icon' => 'fa-address-book'];
+    }
+
+    if (preg_match('#program/([a-z0-9\-]+)#i', $clean, $m)) {
+        $slug = $m[1];
+        $namaP = $programMap[$slug]['nama_program'] ?? "Program";
+        return ['nama' => 'Program: ' . mb_strimwidth($namaP, 0, 28, '...'), 'badge' => 'bg-cyan-100 text-cyan-900', 'icon' => 'fa-handshake-angle'];
+    }
+    if (preg_match('#donasi-online/([a-z0-9\-]+)#i', $clean, $m)) {
+        $slug = $m[1];
+        $namaP = $programMap[$slug]['nama_program'] ?? "Donasi Program";
+        return ['nama' => 'Donasi: ' . mb_strimwidth($namaP, 0, 28, '...'), 'badge' => 'bg-emerald-100 text-emerald-900', 'icon' => 'fa-circle-dollar-to-slot'];
+    }
+    if (preg_match('#berita/([a-z0-9\-]+)#i', $clean, $m)) {
+        $slug = $m[1];
+        $judulB = $beritaMap[$slug]['judul'] ?? "Berita";
+        return ['nama' => 'Berita: ' . mb_strimwidth($judulB, 0, 28, '...'), 'badge' => 'bg-orange-100 text-orange-900', 'icon' => 'fa-file-lines'];
     }
 
     if (preg_match('#program-detail\?id=(\d+)#i', $clean, $m)) {
@@ -401,13 +419,13 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                     <?php if (!empty($daftarProgram)): ?>
                         <optgroup label="🎯 Program Donasi Aktif (Otomatis dari Database)">
                             <?php foreach ($daftarProgram as $prog): ?>
-                                <option value="program-detail?id=<?= $prog['id'] ?>" 
+                                <option value="program/<?= e($prog['slug']) ?>" 
                                         data-tipe="program" 
                                         data-judul="<?= e($prog['nama_program']) ?>" 
                                         data-sub="<?= e(mb_strimwidth(strip_tags($prog['deskripsi']), 0, 110, '...')) ?>">
                                     Detail: <?= e($prog['nama_program']) ?>
                                 </option>
-                                <option value="donasi-online?program_id=<?= $prog['id'] ?>" 
+                                <option value="donasi-online/<?= e($prog['slug']) ?>" 
                                         data-tipe="program" 
                                         data-judul="Infaq &amp; Donasi: <?= e($prog['nama_program']) ?>" 
                                         data-sub="Mari berkontribusi dalam program kebaikan ini untuk kemaslahatan bersama">
@@ -420,7 +438,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                     <?php if (!empty($daftarBerita)): ?>
                         <optgroup label="📰 Berita &amp; Artikel Terkini">
                             <?php foreach ($daftarBerita as $ber): ?>
-                                <option value="berita-detail?id=<?= $ber['id'] ?>" 
+                                <option value="berita/<?= e($ber['slug']) ?>" 
                                         data-tipe="berita" 
                                         data-judul="<?= e($ber['judul']) ?>" 
                                         data-sub="<?= e(mb_strimwidth(strip_tags($ber['ringkasan'] ?? ''), 0, 110, '...')) ?>">
@@ -458,14 +476,20 @@ require_once __DIR__ . '/../layouts/sidebar.php';
 
             <!-- 2. JUDUL UTAMA -->
             <div>
-                <label class="block font-bold text-warm-800 mb-1">Judul Utama Banner <span class="text-red-500">*</span></label>
-                <input type="text" id="bannerJudul" name="judul" required placeholder="Contoh: Selamat Datang di Masjid..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none focus:border-cypress-700 text-warm-900">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-warm-800">Judul Utama Banner <span class="text-red-500">*</span></label>
+                    <span class="text-[11px] text-stone-500"><span id="judulCounter">0</span>/150</span>
+                </div>
+                <input type="text" id="bannerJudul" name="judul" required maxlength="150" placeholder="Contoh: Selamat Datang di Masjid..." oninput="updateJudulCounter()" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none focus:border-cypress-700 text-warm-900">
             </div>
 
             <!-- 3. SUBJUDUL -->
             <div>
-                <label class="block font-bold text-warm-800 mb-1">Subjudul / Deskripsi Pendek</label>
-                <textarea id="bannerSub" name="subjudul" rows="2" placeholder="Pesan inspiratif singkat atau ajakan kebaikan..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none focus:border-cypress-700 text-warm-900"></textarea>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-warm-800">Subjudul / Deskripsi Pendek</label>
+                    <span class="text-[11px] text-stone-500"><span id="subjudulCounter">0</span>/255</span>
+                </div>
+                <textarea id="bannerSub" name="subjudul" rows="2" maxlength="255" placeholder="Pesan inspiratif singkat atau ajakan kebaikan..." oninput="updateSubjudulCounter()" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none focus:border-cypress-700 text-warm-900"></textarea>
             </div>
 
             <!-- 4. TIPE BANNER & URUTAN -->
@@ -567,6 +591,8 @@ function salinInfoHalaman() {
 
     if (j) document.getElementById('bannerJudul').value = j;
     if (s) document.getElementById('bannerSub').value = s;
+    updateJudulCounter();
+    updateSubjudulCounter();
 }
 
 function bukaModalBanner() {
@@ -656,6 +682,18 @@ function previewUploadImage(input) {
 
 function tutupModalBanner() {
     document.getElementById('modalBanner').classList.add('hidden');
+}
+
+function updateJudulCounter() {
+    const input = document.getElementById('bannerJudul');
+    const counter = document.getElementById('judulCounter');
+    counter.textContent = input.value.length;
+}
+
+function updateSubjudulCounter() {
+    const input = document.getElementById('bannerSub');
+    const counter = document.getElementById('subjudulCounter');
+    counter.textContent = input.value.length;
 }
 </script>
 

@@ -4,20 +4,60 @@ require_once __DIR__ . '/../config/database.php';
 mulai_session();
 
 $profil = get_profil_masjid();
-$no = trim($_GET['no'] ?? '');
 
-$stmt = $pdo->prepare("SELECT d.*, p.nama_program 
-                       FROM donasi_online d 
-                       JOIN program_donasi p ON d.program_id = p.id 
-                       WHERE d.no_donasi = ?");
-$stmt->execute([$no]);
-$donasi = $stmt->fetch();
+// Prioritas: token (URL publik) > no_donasi (admin/internal)
+$token = trim($_GET['token'] ?? '');
+$no    = trim($_GET['no'] ?? '');
+
+$donasi = null;
+
+if ($token !== '') {
+    // Akses via token acak (URL aman publik)
+    $stmt = $pdo->prepare("SELECT d.*, p.nama_program
+                           FROM donasi_online d
+                           JOIN program_donasi p ON d.program_id = p.id
+                           WHERE d.kwitansi_token = ?");
+    $stmt->execute([$token]);
+    $donasi = $stmt->fetch();
+} elseif ($no !== '') {
+    // Akses via no_donasi — hanya boleh untuk Admin/Bendahara atau Donatur pemiliknya yang sedang login
+    $stmt = $pdo->prepare("SELECT d.*, p.nama_program
+                           FROM donasi_online d
+                           JOIN program_donasi p ON d.program_id = p.id
+                           WHERE d.no_donasi = ?");
+    $stmt->execute([$no]);
+    $donasi = $stmt->fetch();
+
+    if ($donasi) {
+        $sessionUser = $_SESSION['user'] ?? null;
+        $isAdmin = $sessionUser && in_array($sessionUser['role'] ?? '', ['admin', 'bendahara', 'content_admin']);
+        $isOwner = $sessionUser && !empty($donasi['user_id']) && (int)$donasi['user_id'] === (int)$sessionUser['id'];
+
+        if (!$isAdmin && !$isOwner) {
+            header('Location: ' . base_url() . '/');
+            exit;
+        }
+    }
+} else {
+    header('Location: ' . base_url() . '/');
+    exit;
+}
 
 if (!$donasi) {
     header('Location: ' . base_url() . '/');
     exit;
 }
 
+// Auto-heal: jika token belum terbuat (data lama), generate otomatis
+if (empty($donasi['kwitansi_token'])) {
+    try {
+        $newToken = bin2hex(random_bytes(16));
+        $pdo->prepare("UPDATE donasi_online SET kwitansi_token = ? WHERE id = ?")->execute([$newToken, $donasi['id']]);
+        $donasi['kwitansi_token'] = $newToken;
+    } catch (Exception $e) {}
+}
+
+// Cek kepemilikan untuk role donatur (jika token dibagikan ke orang lain saat belum verifikasi)
 if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'donatur') {
     if ($donasi['user_id'] && $donasi['user_id'] !== $_SESSION['user']['id']) {
         header('Location: ' . base_url() . '/donatur/portal-donatur?error=unauthorized');
@@ -25,7 +65,8 @@ if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'donatur') {
     }
 }
 
-$kwUrl = base_url() . '/donatur/kwitansi?no=' . $donasi['no_donasi'];
+// URL kwitansi selalu pakai token (aman)
+$kwUrl = base_url() . '/donatur/kwitansi?token=' . $donasi['kwitansi_token'];
 $pageTitle = 'Tanda Terima Donasi #' . $donasi['no_donasi'] . ' · ' . $profil['nama_masjid'];
 $isVerified = ($donasi['status'] === 'diverifikasi');
 $isRejected = ($donasi['status'] === 'ditolak');

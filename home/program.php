@@ -160,11 +160,11 @@ require_once __DIR__ . '/../layouts/public_header.php';
                     <!-- Footer Action -->
                     <div class="p-6 pt-0">
                         <div class="pt-4 border-t border-antique-100 flex items-center gap-3">
-                            <a href="program-detail?id=<?= $prog['id'] ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-warm-50 hover:bg-warm-100 border border-antique-300/50 text-warm-800 text-xs font-semibold transition">
+                            <a href="<?= base_url() ?>/program/<?= e($prog['slug']) ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-warm-50 hover:bg-warm-100 border border-antique-300/50 text-warm-800 text-xs font-semibold transition">
                                 Rincian
                             </a>
                             <?php if ($prog['status'] === 'aktif'): ?>
-                                <a href="donasi-online?program_id=<?= $prog['id'] ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md shadow-cypress-900/10 transition">
+                                <a href="<?= base_url() ?>/donasi-online/<?= e($prog['slug']) ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md shadow-cypress-900/10 transition">
                                     Donasi Sekarang
                                 </a>
                             <?php else: ?>

@@ -11,20 +11,41 @@ $pesanAlert = '';
 $tipeAlert = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nama   = trim($_POST['nama'] ?? '');
-    $email  = trim($_POST['email'] ?? '');
-    $no_hp  = trim($_POST['no_hp'] ?? '');
-    $subjek = trim($_POST['subjek'] ?? '');
-    $pesan  = trim($_POST['pesan'] ?? '');
-
-    if (empty($nama) || empty($email) || empty($subjek) || empty($pesan)) {
-        $pesanAlert = 'Mohon lengkapi formulir pesan Anda.';
-        $tipeAlert = 'error';
+    // 1. Validasi Cloudflare Turnstile
+    $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
+    if (!verify_turnstile($turnstileToken, 'kontak')) {
+        $pesanAlert = 'Verifikasi keamanan Cloudflare gagal. Silakan centang kotak verifikasi dan coba lagi.';
+        $tipeAlert  = 'error';
     } else {
-        $stmt = $pdo->prepare("INSERT INTO pesan_kontak (nama, email, no_hp, subjek, pesan) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$nama, $email, $no_hp, $subjek, $pesan]);
-        $pesanAlert = 'Alhamdulillah, pesan Anda telah terkirim kepada sekretariat pengurus DKM.';
-        $tipeAlert = 'success';
+        // 2. Proteksi Rate Limit (Maks 3 pesan per 15 menit per IP - bekerja akurat via Cloudflare CF-Connecting-IP)
+        $rateKey = 'kontak_' . md5(get_client_ip());
+        $rate = rate_limit($rateKey, 3, 15);
+
+        if (!$rate['allowed']) {
+            $menit = ceil($rate['wait_seconds'] / 60);
+            $pesanAlert = "Terlalu banyak pengiriman pesan. Demi keamanan, silakan tunggu {$menit} menit sebelum mengirim kembali.";
+            $tipeAlert  = 'error';
+        } else {
+            // 3. Sanitasi teks dengan batas panjang database
+            $nama   = mb_substr(trim($_POST['nama'] ?? ''), 0, 100);
+            $email  = mb_substr(trim($_POST['email'] ?? ''), 0, 100);
+            $no_hp  = mb_substr(trim($_POST['no_hp'] ?? ''), 0, 25);
+            $subjek = mb_substr(trim($_POST['subjek'] ?? ''), 0, 150);
+            $pesan  = trim($_POST['pesan'] ?? '');
+
+            if (empty($nama) || empty($email) || empty($subjek) || empty($pesan)) {
+                $pesanAlert = 'Mohon lengkapi seluruh kolom wajib pada formulir.';
+                $tipeAlert  = 'error';
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $pesanAlert = 'Format alamat email tidak valid.';
+                $tipeAlert  = 'error';
+            } else {
+                $stmt = $pdo->prepare("INSERT INTO pesan_kontak (nama, email, no_hp, subjek, pesan) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$nama, $email, $no_hp, $subjek, $pesan]);
+                $pesanAlert = 'Alhamdulillah, pesan Anda telah berhasil terkirim kepada sekretariat pengurus DKM.';
+                $tipeAlert  = 'success';
+            }
+        }
     }
 }
 
@@ -32,6 +53,8 @@ $rekeningList = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1 O
 
 require_once __DIR__ . '/../layouts/public_header.php';
 ?>
+<!-- Cloudflare Turnstile API -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <!-- Header Banner -->
 <div class="bg-cypress-950 text-white py-14 relative pattern-arabesque-dark border-b border-antique-500/30">
@@ -143,28 +166,33 @@ require_once __DIR__ . '/../layouts/public_header.php';
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-warm-800 mb-1">Nama Lengkap <span class="text-red-500">*</span></label>
-                            <input type="text" name="nama" required placeholder="Nama Anda..." class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none">
+                            <input type="text" name="nama" maxlength="100" required placeholder="Nama Anda..." class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-warm-800 mb-1">Alamat Email <span class="text-red-500">*</span></label>
-                            <input type="email" name="email" required placeholder="email@anda.com" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none">
+                            <input type="email" name="email" maxlength="100" required placeholder="email@anda.com" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-warm-800 mb-1">Nomor Telepon / WhatsApp</label>
-                            <input type="text" name="no_hp" placeholder="Contoh: 081234567890" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none">
+                            <input type="text" name="no_hp" maxlength="25" placeholder="Contoh: 081234567890" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-warm-800 mb-1">Subjek Pesan <span class="text-red-500">*</span></label>
-                            <input type="text" name="subjek" required placeholder="Contoh: Pertanyaan Infaq / Jadwal Taklim" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none">
+                            <input type="text" name="subjek" maxlength="150" required placeholder="Contoh: Pertanyaan Infaq / Jadwal Taklim" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-warm-800 mb-1">Isi Pesan / Saran <span class="text-red-500">*</span></label>
-                        <textarea name="pesan" rows="5" required placeholder="Tuliskan pesan Anda secara lengkap..." class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none"></textarea>
+                        <textarea name="pesan" rows="5" maxlength="2000" required placeholder="Tuliskan pesan Anda secara lengkap..." class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs focus:ring-2 focus:ring-antique-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <!-- Cloudflare Turnstile Widget -->
+                    <div class="flex justify-center py-1">
+                        <div class="cf-turnstile scale-95" data-sitekey="<?= defined('TURNSTILE_SITE_KEY') ? TURNSTILE_SITE_KEY : '' ?>" data-action="kontak" data-theme="light"></div>
                     </div>
 
                     <button type="submit" class="w-full py-3.5 px-6 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2">

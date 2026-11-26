@@ -200,13 +200,84 @@ $riwayatDonasi = $stmtDonasi->fetchAll();
 $totalDonasiSaya = 0;
 $totalDonasiVerif = 0;
 $jumlahTransaksi = count($riwayatDonasi);
+$sebaranProgram = [];
+$countVerif = 0;
+$countPending = 0;
+$countTolak = 0;
 
 foreach ($riwayatDonasi as $r) {
     if ($r['status'] === 'diverifikasi') {
         $totalDonasiVerif += (float)$r['nominal'];
+        $countVerif++;
+        $pNama = $r['nama_program'] ?: 'Infaq Umum';
+        $sebaranProgram[$pNama] = ($sebaranProgram[$pNama] ?? 0) + (float)$r['nominal'];
+    } elseif ($r['status'] === 'ditolak') {
+        $countTolak++;
+    } else {
+        $countPending++;
     }
     $totalDonasiSaya += (float)$r['nominal'];
 }
+
+// Gamifikasi & Lencana Donatur (Badge Kehormatan Islami)
+if ($totalDonasiVerif >= 2000000 || $countVerif >= 10) {
+    $tier = [
+        'nama'  => 'Sahabat Utama Masjid',
+        'level' => 4,
+        'badge' => 'bg-gradient-to-r from-amber-400 via-antique-500 to-amber-600 text-cypress-950 border border-amber-300 font-extrabold shadow-md',
+        'icon'  => 'fa-crown',
+        'pesan' => 'Pilar utama kebaikan dalam memakmurkan rumah Allah.'
+    ];
+} elseif ($totalDonasiVerif >= 500000 || $countVerif >= 5) {
+    $tier = [
+        'nama'  => 'Pejuang Infaq Istiqomah',
+        'level' => 3,
+        'badge' => 'bg-antique-500/20 text-antique-300 border border-antique-400/50 font-bold',
+        'icon'  => 'fa-medal',
+        'pesan' => 'Istiqomah mengalirkan pahala jariyah tiada putus.'
+    ];
+} elseif ($countVerif >= 2 || $totalDonasiVerif >= 100000) {
+    $tier = [
+        'nama'  => 'Penyemai Kebaikan',
+        'level' => 2,
+        'badge' => 'bg-antique-500/15 text-antique-300 border border-antique-400/40 font-bold',
+        'icon'  => 'fa-hand-holding-heart',
+        'pesan' => 'Benih amal shalih yang terus bertumbuh membawa berkah.'
+    ];
+} else {
+    $tier = [
+        'nama'  => 'Muhsinin',
+        'level' => 1,
+        'badge' => 'bg-white/10 text-stone-200 border border-white/20 font-bold',
+        'icon'  => 'fa-certificate',
+        'pesan' => 'Langkah awal kebaikan yang diridhai Allah SWT.'
+    ];
+}
+
+// Hadits Harian Bergilir
+$haditsKoleksi = [
+    [
+        'arab'    => 'إِذَا مَاتَ ابْنُ آدَمَ انْقَطَعَ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، أَوْ عِلْمٍ يُنْتَفَعُ بِهِ، أَوْ وَلَدٍ صَالِحٍ يَدْعُو لَهُ',
+        'arti'    => 'Jika seseorang meninggal dunia, maka terputuslah amalnya kecuali tiga perkara: sedekah jariyah, ilmu yang bermanfaat, atau doa anak yang shalih.',
+        'riwayat' => 'HR. Muslim no. 1631'
+    ],
+    [
+        'arab'    => 'مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ',
+        'arti'    => 'Harta tidak akan pernah berkurang karena sedekah.',
+        'riwayat' => 'HR. Muslim no. 2588'
+    ],
+    [
+        'arab'    => 'كُلُّ امْرِئٍ فِي ظِلِّ صَدَقَتِهِ حَتَّى يُفْصَلَ بَيْنَ النَّاسِ',
+        'arti'    => 'Setiap orang akan berada di bawah naungan sedekahnya hingga diputuskan perkara di antara manusia pada hari kiamat.',
+        'riwayat' => 'HR. Ahmad no. 17333'
+    ],
+    [
+        'arab'    => 'دَاوُوا مَرْضَاكُمْ بِالصَّدَقَةِ',
+        'arti'    => 'Obatilah orang-orang yang sakit di antara kalian dengan memperbanyak sedekah.',
+        'riwayat' => 'HR. Al-Baihaqi & Ath-Thabrani'
+    ]
+];
+$haditsHariIni = $haditsKoleksi[(int)date('z') % count($haditsKoleksi)];
 
 /*
 |--------------------------------------------------------------------------
@@ -451,13 +522,6 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                 <button type="button" onclick="openSidebar()" class="lg:hidden w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-antique-300 flex items-center justify-center hover:bg-white/10 transition">
                     <i class="fa-solid fa-bars text-sm"></i>
                 </button>
-                <div>
-                    <div class="text-[11px] text-antique-400 font-medium">Selamat Datang di Dashboard</div>
-                    <div class="text-sm font-bold text-white flex items-center gap-2">
-                        <span>Portal Donatur</span>
-                        <span class="px-2 py-0.5 rounded-full text-[9px] bg-antique-500 text-cypress-950 font-bold uppercase tracking-wider">Eksklusif</span>
-                    </div>
-                </div>
             </div>
 
             <!-- RIGHT ACTIONS -->
@@ -502,6 +566,12 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                                                 <span class="text-[9px] text-warm-800/40"><?= date('d/m H:i', strtotime($n['created_at'])) ?></span>
                                             </div>
                                             <p class="text-[11px] text-warm-800/70 mt-0.5 leading-relaxed"><?= e($n['pesan']) ?></p>
+                                            <?php if (!empty($n['link'])): ?>
+                                                <a href="<?= e($n['link']) ?>" class="inline-flex items-center gap-1 text-[10px] text-cypress-700 hover:text-cypress-900 font-bold mt-1.5 hover:underline">
+                                                    <span>Lihat Selengkapnya</span>
+                                                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                                                </a>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -554,9 +624,15 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                             <div class="text-antique-400 text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1">
                                 Assalamu'alaikum, Wr. Wb.
                             </div>
-                            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-wide truncate">
-                                <?= e($namaDonatur) ?>
-                            </h1>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-wide truncate">
+                                    <?= e($namaDonatur) ?>
+                                </h1>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs <?= $tier['badge'] ?>" title="<?= e($tier['pesan']) ?>">
+                                    <i class="fa-solid <?= $tier['icon'] ?>"></i>
+                                    <span><?= e($tier['nama']) ?></span>
+                                </span>
+                            </div>
                             <div class="flex flex-wrap items-center gap-3 mt-3 text-xs text-emerald-100/90 font-medium">
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10">
                                     <i class="fa-solid fa-envelope text-antique-400"></i> <?= e($emailDonatur ?: 'Email belum diatur') ?>
@@ -569,7 +645,7 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                     </div>
 
                     <div class="shrink-0 flex sm:flex-col gap-2 w-full sm:w-auto">
-                        <a href="../home/donasi-online" class="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-antique-500 hover:bg-antique-600 text-cypress-950 text-xs font-bold shadow-lg text-center transition flex items-center justify-center gap-2">
+                        <a href="<?= base_url() ?>/donasi-online" class="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-antique-500 hover:bg-antique-600 text-cypress-950 text-xs font-bold shadow-lg text-center transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-hand-holding-heart"></i>
                             <span>Donasi / Infaq Baru</span>
                         </a>
@@ -617,19 +693,103 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                 </div>
             </div>
 
+            <!-- FITUR EKSKLUSIF DONATUR: JEJAK AMAL JARIYAH & MUTIARA HADITS -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                
+                <!-- KARTU 1: JEJAK SEBARAN AMAL JARIYAH (IMPACT TRACKER) -->
+                <div class="lg:col-span-7 bg-white/95 rounded-[24px] p-6 border border-antique-200 shadow-soft space-y-4">
+                    <div class="flex items-center justify-between border-b border-antique-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-antique-100 text-antique-700 flex items-center justify-center text-sm font-bold">
+                                <i class="fa-solid fa-chart-pie"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-warm-900">Jejak Sebaran Amal Jariyah Anda</h3>
+                                <p class="text-[11px] text-warm-800/60">Alokasi infaq yang telah terverifikasi dan dibukukan resmi.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <?php if (empty($sebaranProgram)): ?>
+                        <div class="py-6 text-center text-xs text-warm-800/50">
+                            <i class="fa-solid fa-seedling text-3xl text-antique-400/50 mb-2 block"></i>
+                            Belum ada infaq terverifikasi. Infaq pertama Anda akan menumbuhkan jejak kebaikan di sini.
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-3 pt-1">
+                            <?php foreach ($sebaranProgram as $progNama => $nominalProg): 
+                                $persenProg = $totalDonasiVerif > 0 ? round(($nominalProg / $totalDonasiVerif) * 100) : 0;
+                            ?>
+                                <div>
+                                    <div class="flex items-center justify-between text-xs mb-1">
+                                        <span class="font-bold text-warm-900 truncate max-w-[220px] sm:max-w-xs"><?= e($progNama) ?></span>
+                                        <span class="font-semibold text-cypress-800"><?= format_rupiah($nominalProg) ?> <span class="text-[10px] text-warm-800/50 font-normal">(<?= $persenProg ?>%)</span></span>
+                                    </div>
+                                    <div class="w-full h-2.5 bg-warm-100 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-antique-500 to-cypress-700 rounded-full transition-all duration-500" style="width: <?= $persenProg ?>%"></div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- KARTU 2: MUTIARA HADITS AMAL HARI INI -->
+                <div class="lg:col-span-5 bg-gradient-to-br from-cypress-950 via-cypress-900 to-cypress-950 text-white rounded-[24px] p-6 border border-antique-500/30 shadow-soft flex flex-col justify-between pattern-arabesque-dark relative overflow-hidden">
+                    <div class="space-y-3 relative z-10">
+                        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                            <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-antique-300 uppercase tracking-wider">
+                                <i class="fa-solid fa-quran"></i>
+                                <span>Mutiara Hadits Hari Ini</span>
+                            </span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-stone-300">
+                                <?= date('d M Y') ?>
+                            </span>
+                        </div>
+                        <p class="font-classic text-sm leading-relaxed text-antique-100 text-right font-medium" dir="rtl">
+                            "<?= $haditsHariIni['arab'] ?>"
+                        </p>
+                        <p class="text-xs text-stone-200 leading-relaxed italic">
+                            "<?= $haditsHariIni['arti'] ?>"
+                        </p>
+                    </div>
+
+                    <div class="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-antique-300 font-semibold relative z-10 mt-3">
+                        <span><?= $haditsHariIni['riwayat'] ?></span>
+                        <span class="text-stone-400 font-normal">Semoga Berkah &amp; Istiqomah</span>
+                    </div>
+                </div>
+
+            </div>
+
             <!-- RIWAYAT DONASI SECTION -->
             <section class="bg-white/95 rounded-[24px] border border-antique-200 shadow-soft overflow-hidden">
-                <div class="px-6 py-5 border-b border-antique-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="px-6 py-5 border-b border-antique-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 class="text-base font-bold text-cypress-900 flex items-center gap-2">
-                            <i class="fa-solid fa-clock-rotate-left text-antique-600"></i> Riwayat Infaq & Donasi Anda
+                            <i class="fa-solid fa-clock-rotate-left text-antique-600"></i> Riwayat Infaq &amp; Donasi Anda
                         </h2>
                         <p class="text-xs text-warm-800/60 mt-0.5">Daftar lengkap transaksi dan status verifikasi e-Kwitansi resmi masjid.</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="px-3.5 py-1.5 rounded-full bg-antique-50 border border-antique-200 text-antique-800 text-xs font-bold">
-                            Total: <?= $jumlahTransaksi ?> Transaksi
-                        </span>
+                    
+                    <!-- FILTER TABS & INSTANT SEARCH -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                        <div class="inline-flex p-1 rounded-xl bg-warm-100 text-xs font-bold text-warm-800 shrink-0">
+                            <button type="button" onclick="setFilterStatus('all')" id="btnTab-all" class="tab-filter-btn px-3 py-1.5 rounded-lg bg-white shadow-xs text-cypress-900 transition">
+                                Semua (<?= $jumlahTransaksi ?>)
+                            </button>
+                            <button type="button" onclick="setFilterStatus('diverifikasi')" id="btnTab-diverifikasi" class="tab-filter-btn px-3 py-1.5 rounded-lg text-warm-800/70 hover:text-warm-900 transition">
+                                Sah (<?= $countVerif ?>)
+                            </button>
+                            <button type="button" onclick="setFilterStatus('pending')" id="btnTab-pending" class="tab-filter-btn px-3 py-1.5 rounded-lg text-warm-800/70 hover:text-warm-900 transition">
+                                Menunggu (<?= $countPending ?>)
+                            </button>
+                        </div>
+
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-stone-400"></i>
+                            <input type="text" id="cariDonasiInput" onkeyup="filterDonasiRealtime()" placeholder="Cari riwayat..." class="w-full sm:w-44 pl-8 pr-3 py-1.5 rounded-xl border border-antique-300 text-xs bg-warm-50/70 focus:bg-white focus:outline-none focus:ring-1 focus:ring-antique-500">
+                        </div>
                     </div>
                 </div>
 
@@ -640,7 +800,7 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                         </div>
                         <h3 class="text-sm font-bold text-warm-900">Belum ada riwayat donasi</h3>
                         <p class="text-xs text-warm-800/60 mt-1 max-w-sm mx-auto">Mari salurkan infaq terbaik Anda untuk kemakmuran masjid dan program sosial.</p>
-                        <a href="../home/donasi-online" class="inline-flex items-center gap-2 mt-5 px-5 py-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md transition">
+                        <a href="<?= base_url() ?>/donasi-online" class="inline-flex items-center gap-2 mt-5 px-5 py-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md transition">
                             <i class="fa-solid fa-plus"></i> Salurkan Infaq Sekarang
                         </a>
                     </div>
@@ -659,7 +819,7 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                             </thead>
                             <tbody class="divide-y divide-antique-100">
                                 <?php foreach ($riwayatDonasi as $r): ?>
-                                    <tr class="hover:bg-warm-50/70 transition">
+                                    <tr class="riwayat-row hover:bg-warm-50/70 transition" data-status="<?= e($r['status']) ?>" data-search="<?= strtolower(e($r['no_donasi'] . ' ' . $r['nama_program'] . ' ' . $r['metode_pembayaran'])) ?>">
                                         <td class="px-6 py-4">
                                             <span class="font-mono font-bold text-cypress-900 block"><?= e($r['no_donasi']) ?></span>
                                             <span class="text-[10px] text-warm-800/50 mt-0.5 block"><?= tanggal_indo($r['tanggal_donasi']) ?></span>
@@ -694,7 +854,12 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                                             <?php endif; ?>
                                         </td>
                                         <td class="px-6 py-4 text-right whitespace-nowrap">
-                                            <a href="kwitansi?no=<?= e($r['no_donasi']) ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cypress-50 hover:bg-cypress-100 text-cypress-800 text-xs font-bold transition border border-cypress-200">
+                                            <?php 
+                                            $kwHref = !empty($r['kwitansi_token']) 
+                                                ? 'kwitansi?token=' . urlencode($r['kwitansi_token']) 
+                                                : 'kwitansi?no=' . urlencode($r['no_donasi']); 
+                                            ?>
+                                            <a href="<?= $kwHref ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cypress-50 hover:bg-cypress-100 text-cypress-800 text-xs font-bold transition border border-cypress-200">
                                                 <i class="fa-solid fa-file-invoice"></i>
                                                 <span>e-Kwitansi</span>
                                             </a>
@@ -703,6 +868,10 @@ $statusText = $statusAktif ? 'text-emerald-700' : 'text-rose-700';
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
+                        <div id="noFilterResult" class="hidden text-center py-12 px-4">
+                            <i class="fa-solid fa-filter-circle-xmark text-3xl text-stone-300 mb-2 block"></i>
+                            <p class="text-xs font-semibold text-stone-600">Tidak ada riwayat donasi yang sesuai filter atau pencarian Anda.</p>
+                        </div>
                     </div>
                 <?php endif; ?>
             </section>
@@ -874,6 +1043,53 @@ function previewPhoto(input) {
 
 function toggleNotification() {
     notificationPanel.classList.toggle('hidden');
+}
+
+// Filter Riwayat Donasi Realtime
+let currentStatusFilter = 'all';
+
+function setFilterStatus(status) {
+    currentStatusFilter = status;
+    document.querySelectorAll('.tab-filter-btn').forEach(b => {
+        b.classList.remove('bg-white', 'shadow-xs', 'text-cypress-900');
+        b.classList.add('text-warm-800/70');
+    });
+    const activeBtn = document.getElementById('btnTab-' + status);
+    if (activeBtn) {
+        activeBtn.classList.add('bg-white', 'shadow-xs', 'text-cypress-900');
+        activeBtn.classList.remove('text-warm-800/70');
+    }
+    filterDonasiRealtime();
+}
+
+function filterDonasiRealtime() {
+    const q = (document.getElementById('cariDonasiInput')?.value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('.riwayat-row');
+    let visibleCount = 0;
+
+    rows.forEach(r => {
+        const rowStatus = r.getAttribute('data-status') || '';
+        const rowSearch = r.getAttribute('data-search') || '';
+        
+        const matchStatus = (currentStatusFilter === 'all') || (rowStatus === currentStatusFilter);
+        const matchSearch = (q === '') || rowSearch.includes(q);
+
+        if (matchStatus && matchSearch) {
+            r.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            r.classList.add('hidden');
+        }
+    });
+
+    const noResultBox = document.getElementById('noFilterResult');
+    if (noResultBox) {
+        if (visibleCount === 0 && rows.length > 0) {
+            noResultBox.classList.remove('hidden');
+        } else {
+            noResultBox.classList.add('hidden');
+        }
+    }
 }
 
 document.addEventListener('click', function(event) {

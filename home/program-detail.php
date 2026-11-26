@@ -4,11 +4,27 @@ require_once __DIR__ . '/../config/database.php';
 mulai_session();
 
 $profil = get_profil_masjid();
-$id = (int)($_GET['id'] ?? 0);
 
-$stmt = $pdo->prepare("SELECT * FROM program_donasi WHERE id = ?");
-$stmt->execute([$id]);
-$prog = $stmt->fetch();
+// Slug-based URL: /program/nama-slug  ATAU  ?id=X (backward compat)
+$_requestUri = $_SERVER['REQUEST_URI'] ?? '';
+$prog = null;
+
+if (preg_match('#/program/([a-z0-9\-]+)#i', $_requestUri, $_m)) {
+    $_slug = $_m[1];
+    $stmt  = $pdo->prepare("SELECT * FROM program_donasi WHERE slug = ?");
+    $stmt->execute([$_slug]);
+    $prog  = $stmt->fetch();
+} elseif (!empty($_GET['id'])) {
+    $id   = (int)$_GET['id'];
+    $stmt = $pdo->prepare("SELECT * FROM program_donasi WHERE id = ?");
+    $stmt->execute([$id]);
+    $prog = $stmt->fetch();
+    // Redirect ke slug URL jika program ditemukan
+    if ($prog) {
+        header('Location: ' . base_url() . '/program/' . $prog['slug'], true, 301);
+        exit;
+    }
+}
 
 if (!$prog) {
     header('Location: program');
@@ -23,9 +39,21 @@ $sisaTarget = max(0, (float)$prog['target_donasi'] - (float)$prog['dana_terkumpu
 
 // Ambil Donatur Terverifikasi untuk Program Ini
         $stmtDonatur = $pdo->prepare("SELECT d.*, u.avatar FROM donasi_online d LEFT JOIN users u ON d.user_id = u.id WHERE d.program_id = ? AND d.status = 'diverifikasi' ORDER BY d.tanggal_donasi DESC, d.id DESC LIMIT 10");
-$stmtDonatur->execute([$id]);
+$stmtDonatur->execute([$prog['id']]);
+$id = (int)$prog['id']; // backward compat untuk sisa kode di bawah
 $donaturList = $stmtDonatur->fetchAll();
 $totalDonatur = count($donaturList);
+
+// Ambil Kabar Penyaluran Dana (Milestones)
+$stmtUpdates = $pdo->prepare("SELECT * FROM program_updates WHERE program_id = ? ORDER BY tanggal_update DESC, id DESC");
+$stmtUpdates->execute([$prog['id']]);
+$updatesList = $stmtUpdates->fetchAll();
+
+$totalDisalurkan = 0;
+foreach ($updatesList as $u) {
+    $totalDisalurkan += (float)$u['dana_disalurkan'];
+}
+$sisaKasProgram = max(0, (float)$prog['dana_terkumpul'] - $totalDisalurkan);
 
 require_once __DIR__ . '/../layouts/public_header.php';
 ?>
@@ -34,9 +62,9 @@ require_once __DIR__ . '/../layouts/public_header.php';
 <div class="bg-cypress-950 text-white py-12 relative pattern-arabesque-dark border-b border-antique-500/30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3 relative z-10">
         <div class="flex items-center gap-2 text-xs text-antique-300">
-            <a href="../" class="hover:underline">Beranda</a>
+            <a href="<?= base_url() ?>/" class="hover:underline">Beranda</a>
             <span>/</span>
-            <a href="program" class="hover:underline">Program Donasi</a>
+            <a href="<?= base_url() ?>/program" class="hover:underline">Program Donasi</a>
             <span>/</span>
             <span class="text-stone-300 truncate max-w-xs sm:max-w-md"><?= e($prog['nama_program']) ?></span>
         </div>
@@ -93,7 +121,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t border-antique-100 text-center">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-4 border-t border-antique-100 text-center">
                     <div class="p-3 rounded-2xl bg-warm-50 border border-antique-200">
                         <span class="text-[10px] uppercase font-bold text-warm-800/60 block">Status Program</span>
                         <span class="text-xs font-bold text-emerald-700 uppercase mt-0.5 block"><?= e($prog['status']) ?></span>
@@ -102,7 +130,11 @@ require_once __DIR__ . '/../layouts/public_header.php';
                         <span class="text-[10px] uppercase font-bold text-warm-800/60 block">Donatur Tercatat</span>
                         <span class="text-xs font-bold text-warm-900 mt-0.5 block"><?= $totalDonatur ?> Donatur</span>
                     </div>
-                    <div class="p-3 rounded-2xl bg-warm-50 border border-antique-200 col-span-2 sm:col-span-1">
+                    <a href="#kabar-penyaluran" class="p-3 rounded-2xl bg-emerald-50/70 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-900 transition block">
+                        <span class="text-[10px] uppercase font-bold text-emerald-800/70 block">Penyaluran</span>
+                        <span class="text-xs font-bold text-emerald-900 mt-0.5 block"><?= count($updatesList) ?> Kabar</span>
+                    </a>
+                    <div class="p-3 rounded-2xl bg-warm-50 border border-antique-200">
                         <span class="text-[10px] uppercase font-bold text-warm-800/60 block">Pengelola</span>
                         <span class="text-xs font-bold text-warm-900 mt-0.5 block">DKM Nurul Iman</span>
                     </div>
@@ -132,6 +164,100 @@ require_once __DIR__ . '/../layouts/public_header.php';
                         <p class="leading-relaxed">Setiap donasi yang masuk diverifikasi oleh bendahara dan langsung dibukukan ke Laporan Kas Masjid yang dapat dipantau di halaman transparansi publik.</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- KABAR PENYALURAN DANA & PROGRES TERKINI (MILESTONE TRACKER) -->
+            <div id="kabar-penyaluran" class="bg-white rounded-3xl p-6 sm:p-8 border border-antique-300/50 shadow-sm space-y-6 scroll-mt-24">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-antique-200 pb-4">
+                    <div>
+                        <div class="flex items-center gap-2 text-emerald-800 text-xs font-bold uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-bullhorn text-antique-500"></i>
+                            <span>Transparansi Penyaluran</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-warm-900 font-classic">
+                            Kabar Terbaru &amp; Penyaluran Dana
+                        </h3>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-stone-50 border border-antique-200 text-stone-800">
+                            <i class="fa-solid fa-hand-holding-dollar text-emerald-600 text-sm"></i>
+                            <div class="text-left">
+                                <div class="text-[9px] uppercase font-bold text-stone-500">Tersalurkan</div>
+                                <div class="text-xs sm:text-sm font-extrabold text-stone-900 font-classic"><?= format_rupiah($totalDisalurkan) ?></div>
+                            </div>
+                        </div>
+                        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900">
+                            <i class="fa-solid fa-wallet text-emerald-600 text-sm"></i>
+                            <div class="text-left">
+                                <div class="text-[9px] uppercase font-bold text-emerald-800/70">Sisa Kas Siap Salur</div>
+                                <div class="text-xs sm:text-sm font-extrabold text-emerald-900 font-classic"><?= format_rupiah($sisaKasProgram) ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <?php if (empty($updatesList)): ?>
+                    <div class="text-center py-10 px-4 rounded-2xl bg-warm-50/60 border border-antique-200/70 space-y-2">
+                        <div class="w-12 h-12 rounded-full bg-antique-100 text-antique-700 flex items-center justify-center mx-auto text-xl">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                        <h4 class="text-sm font-bold text-warm-900">Dana Sedang Dihimpun</h4>
+                        <p class="text-xs text-warm-800/70 max-w-md mx-auto leading-relaxed">
+                            Belum ada penyaluran dana yang dipublikasikan untuk program ini. Pengurus DKM akan mengunggah rincian pembelian, kuitansi belanja, dan foto dokumentasi kegiatan secara berkala di sini.
+                        </p>
+                    </div>
+                <?php else: ?>
+                    <div class="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-2 sm:before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-antique-200">
+                        <?php foreach ($updatesList as $uIdx => $u): ?>
+                            <div class="relative group">
+                                <div class="absolute -left-6 sm:-left-8 top-1 w-5 h-5 rounded-full bg-cypress-800 border-2 border-white shadow-xs flex items-center justify-center text-[10px] font-bold text-antique-300">
+                                    <i class="fa-solid fa-check text-[8px]"></i>
+                                </div>
+
+                                <div class="bg-warm-50/70 rounded-2xl p-5 border border-antique-200/70 shadow-2xs space-y-3 transition hover:bg-warm-50">
+                                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-antique-200/50 pb-2.5">
+                                        <div class="flex items-center gap-2 text-xs">
+                                            <span class="px-2.5 py-0.5 rounded-full bg-cypress-950 text-antique-300 text-[10px] font-bold uppercase tracking-wider">
+                                                Update #<?= count($updatesList) - $uIdx ?>
+                                            </span>
+                                            <span class="text-stone-500 font-medium">
+                                                <i class="fa-regular fa-calendar mr-1"></i> <?= tanggal_indo($u['tanggal_update'], true) ?>
+                                            </span>
+                                        </div>
+
+                                        <?php if ((float)$u['dana_disalurkan'] > 0): ?>
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-bold">
+                                                <i class="fa-solid fa-coins text-emerald-600"></i>
+                                                <span>Pencairan Dana: <?= format_rupiah($u['dana_disalurkan']) ?></span>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <h4 class="text-base font-bold text-warm-900 font-classic">
+                                        <?= e($u['judul']) ?>
+                                    </h4>
+
+                                    <div class="text-xs sm:text-sm text-warm-800/80 leading-relaxed space-y-2">
+                                        <?= nl2br(e($u['isi'])) ?>
+                                    </div>
+
+                                    <?php if (!empty($u['foto'])): ?>
+                                        <div class="pt-2">
+                                            <a href="<?= e(upload_url($u['foto'])) ?>" target="_blank" class="block relative group overflow-hidden rounded-xl border border-antique-300/50 max-w-md">
+                                                <img src="<?= e(upload_url($u['foto'])) ?>" alt="Dokumentasi Penyaluran" class="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition duration-300">
+                                                <div class="absolute inset-0 bg-cypress-950/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold gap-1.5">
+                                                    <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                                                    <span>Buka Foto Dokumentasi</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- List Donatur Terkini -->
@@ -199,7 +325,7 @@ $avatarUrl = $avatarPath !== '' ? upload_url($avatarPath) : '';
                     </p>
                 </div>
 
-                <a href="donasi-online?program_id=<?= $prog['id'] ?>" class="w-full text-center block py-3.5 px-4 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 hover:from-antique-400 hover:to-antique-500 text-cypress-950 font-bold text-sm tracking-wide shadow-lg shadow-antique-500/20 transition-luxury">
+                <a href="<?= base_url() ?>/donasi-online/<?= e($prog['slug']) ?>" class="w-full text-center block py-3.5 px-4 rounded-xl bg-gradient-to-r from-antique-500 to-antique-600 hover:from-antique-400 hover:to-antique-500 text-cypress-950 font-bold text-sm tracking-wide shadow-lg shadow-antique-500/20 transition-luxury">
                     <i class="fa-solid fa-hand-holding-heart mr-2"></i> Donasi Sekarang
                 </a>
 
@@ -222,7 +348,7 @@ $avatarUrl = $avatarPath !== '' ? upload_url($avatarPath) : '';
             <!-- Tombol Bagikan -->
             <div class="bg-white rounded-2xl p-4 border border-antique-300/40 shadow-xs flex items-center justify-between">
                 <span class="text-xs font-semibold text-warm-800/80">Ajak Sahabat Berinfaq:</span>
-                <a href="https://api.whatsapp.com/send?text=<?= urlencode('Mari bersama berinfaq untuk program ' . $prog['nama_program'] . ' di ' . $profil['nama_masjid'] . ': ' . base_url() . '/home/program-detail?id=' . $prog['id']) ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition">
+                <a href="https://api.whatsapp.com/send?text=<?= urlencode('Mari bersama berinfaq untuk program ' . $prog['nama_program'] . ' di ' . $profil['nama_masjid'] . ': ' . base_url() . '/program/' . $prog['slug']) ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition">
                     <i class="fa-brands fa-whatsapp"></i>
                     <span>Share WA</span>
                 </a>

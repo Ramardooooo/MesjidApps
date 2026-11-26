@@ -35,35 +35,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password        = $_POST['password'] ?? '';
     $turnstileToken  = $_POST['cf-turnstile-response'] ?? '';
 
-    // Verifikasi Turnstile ke Cloudflare
-    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-        'secret'   => TURNSTILE_SECRET,
-        'response' => $turnstileToken,
-        'remoteip' => get_client_ip(),
-    ]));
-    $response = curl_exec($ch);
-    $curlError = curl_error($ch);
-    curl_close($ch);
-    
-    // Logika verifikasi yang lebih fleksibel untuk testing lokal
-    $responseData = json_decode($response, true);
-    $isTurnstileValid = ($responseData && ($responseData['success'] ?? false));
-    
-    // Jika di localhost dan gagal koneksi ke Cloudflare, izinkan saja (untuk debug)
-    if (!$isTurnstileValid && ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1') && !$response) {
-        $isTurnstileValid = true;
+    $isTurnstileValid = false;
+    if ($turnstileToken !== '') {
+        // Verifikasi Turnstile ke Cloudflare
+        $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+            'secret'   => TURNSTILE_SECRET,
+            'response' => $turnstileToken,
+            'remoteip' => get_client_ip(),
+        ]));
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        $responseData = json_decode((string)$response, true);
+        $isTurnstileValid = ($responseData && ($responseData['success'] ?? false));
+
+        // Jika di localhost dan token sudah ada tapi koneksi cURL ke Cloudflare gagal (misal offline / SSL lokal)
+        if (!$isTurnstileValid && ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1') && !$response) {
+            $isTurnstileValid = true;
+        }
     }
 
     if (!$isTurnstileValid) {
-        $error = 'Verifikasi captcha gagal';
+        $error = 'Verifikasi captcha gagal. Silakan coba lagi.';
     } elseif ($usernameOrEmail === '' || $password === '') {
         $error = 'Mohon masukkan username / email dan kata sandi Anda.';
     } else {
         $clientIP = get_client_ip();
-        $rate_key = 'login_' . md5($clientIP . '_' . strtolower($usernameOrEmail));
+        $rate_key = 'login_' . md5(strtolower($usernameOrEmail));
         $rate = rate_limit($rate_key, 5, 15);
         
         if (!$rate['allowed']) {
@@ -76,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch();
 
             if ($user && password_verify($password, $user['password'])) {
+                clear_rate_limit($rate_key);
                 session_regenerate_id(true);
                 
                 $_SESSION['user'] = [

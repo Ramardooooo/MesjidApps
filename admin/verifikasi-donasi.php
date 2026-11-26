@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
                 $donasi['user_id'],
                 'Donasi #' . $donasi['no_donasi'] . ' Terverifikasi!',
                 'Alhamdulillah, donasi Anda sebesar ' . format_rupiah($nominal) . ' telah diverifikasi bendahara dan dicatat pada buku kas masjid.',
-                '../donatur/kwitansi?no=' . $donasi['no_donasi']
+                '../donatur/kwitansi?token=' . $donasi['kwitansi_token']
             ]);
         }
         
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 // ==============================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tolak') {
     $idDonasi = (int)($_POST['donasi_id'] ?? 0);
-    $alasan   = trim($_POST['alasan'] ?? 'Bukti transfer tidak valid atau dana belum masuk.');
+    $alasan   = mb_substr(trim($_POST['alasan'] ?? 'Bukti transfer tidak valid atau dana belum masuk.'), 0, 250);
 
     $stmt = $pdo->prepare("SELECT * FROM donasi_online WHERE id = ? AND status = 'pending'");
     $stmt->execute([$idDonasi]);
@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
                 $donasi['user_id'],
                 'Donasi #' . $donasi['no_donasi'] . ' Ditolak',
                 'Mohon maaf, donasi Anda tidak dapat diverifikasi: ' . $alasan,
-                '../donatur/kwitansi?no=' . $donasi['no_donasi']
+                '../donatur/kwitansi?token=' . $donasi['kwitansi_token']
             ]);
         }
         
@@ -330,7 +330,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                     </div>
                                 <?php else: ?>
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <a href="../donatur/kwitansi?no=<?= e($d['no_donasi']) ?>" target="_blank" class="px-2.5 py-1 rounded-lg bg-warm-100 hover:bg-warm-200 text-warm-800 text-[11px] font-semibold transition flex items-center gap-1" title="Lihat & Cetak e-Kwitansi">
+                                        <a href="../donatur/kwitansi?token=<?= e($d['kwitansi_token']) ?>" target="_blank" class="px-2.5 py-1 rounded-lg bg-warm-100 hover:bg-warm-200 text-warm-800 text-[11px] font-semibold transition flex items-center gap-1" title="Lihat & Cetak e-Kwitansi">
                                             <i class="fa-solid fa-receipt text-stone-500"></i>
                                             <span>Kwitansi</span>
                                         </a>
@@ -338,7 +338,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                         <?php if ($d['status'] === 'diverifikasi' && !empty($d['no_hp'])): 
                                             $phone = preg_replace('/\D/', '', $d['no_hp']);
                                             if (str_starts_with($phone, '0')) $phone = '62' . substr($phone, 1);
-                                            $kwitansiUrl = base_url('donatur/kwitansi?no=' . $d['no_donasi']);
+                                            $kwitansiUrl = base_url('donatur/kwitansi?token=' . $d['kwitansi_token']);
                                             $waMsg = "Assalamu’alaikum Wr. Wb. Yth. Bapak/Ibu " . ($d['is_anonim'] ? 'Hamba Allah' : $d['nama_donatur']) . ",\n\nAlhamdulillah, donasi Anda untuk program *" . $d['nama_program'] . "* sebesar *" . format_rupiah($d['nominal']) . "* telah diverifikasi dan dibukukan resmi oleh Bendahara " . $profil['nama_masjid'] . ".\n\nBerikut tautan e-Kwitansi resmi Anda:\n" . $kwitansiUrl . "\n\nSemoga menjadi amal jariyah yang berlipat ganda di sisi Allah SWT. Aamiin.\n\n_Wassalamu’alaikum Wr. Wb._\n*Pengurus " . $profil['nama_masjid'] . "*";
                                             $waLink = "https://wa.me/" . $phone . "?text=" . urlencode($waMsg);
                                         ?>
@@ -372,7 +372,8 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Alasan Penolakan</label>
-                <textarea name="alasan" rows="3" required placeholder="Contoh: Bukti transfer tidak terbaca / dana belum masuk rekening..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none"></textarea>
+                <textarea name="alasan" maxlength="250" rows="3" required placeholder="Contoh: Bukti transfer tidak terbaca / dana belum masuk rekening..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none"></textarea>
+                <span class="text-[10px] text-warm-800/50 mt-1 block">Maksimal 250 karakter.</span>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2">

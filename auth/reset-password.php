@@ -26,26 +26,36 @@ if (!$user) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $password = $_POST['password']         ?? '';
-    $konfirm  = $_POST['password_confirm'] ?? '';
+    $rateKey = 'reset_pwd_' . md5(get_client_ip() . '_' . $user['id']);
+    $rate    = rate_limit($rateKey, 5, 15);
 
-    if (empty($password) || strlen($password) < 6) {
-        $pesan = 'Kata sandi baru minimal 6 karakter.';
-        $tipe  = 'error';
-    } elseif ($password !== $konfirm) {
-        $pesan = 'Konfirmasi kata sandi tidak cocok.';
+    if (!$rate['allowed']) {
+        $menit = ceil($rate['wait_seconds'] / 60);
+        $pesan = "Terlalu banyak permintaan reset kata sandi. Silakan tunggu {$menit} menit.";
         $tipe  = 'error';
     } else {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-        $pdo->prepare("UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?")
-            ->execute([$hash, $user['id']]);
+        $password = $_POST['password']         ?? '';
+        $konfirm  = $_POST['password_confirm'] ?? '';
 
-        // Hapus session otorisasi
-        unset($_SESSION['otp_verified_email']);
+        if (empty($password) || strlen($password) < 6) {
+            $pesan = 'Kata sandi baru minimal 6 karakter.';
+            $tipe  = 'error';
+        } elseif ($password !== $konfirm) {
+            $pesan = 'Konfirmasi kata sandi tidak cocok.';
+            $tipe  = 'error';
+        } else {
+            clear_rate_limit($rateKey);
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $pdo->prepare("UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?")
+                ->execute([$hash, $user['id']]);
+
+            // Hapus session otorisasi
+            unset($_SESSION['otp_verified_email']);
 
         header('Location: login?reset=success');
         exit;
     }
+}
 }
 
 // Konfigurasi Tanggal

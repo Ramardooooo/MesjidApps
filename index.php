@@ -358,10 +358,10 @@ require_once __DIR__ . '/layouts/public_header.php';
                 <!-- Footer Card Action -->
                 <div class="p-6 pt-0">
                     <div class="pt-4 border-t border-antique-100 flex items-center gap-3">
-                        <a href="<?= e(app_url('program-detail?id=' . $prog['id'])) ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-warm-50 hover:bg-warm-100 border border-antique-300/50 text-warm-800 text-xs font-semibold transition">
+                        <a href="<?= e(app_url('program/' . $prog['slug'])) ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-warm-50 hover:bg-warm-100 border border-antique-300/50 text-warm-800 text-xs font-semibold transition">
                             Rincian Program
                         </a>
-                        <a href="<?= e(app_url('donasi-online?program_id=' . $prog['id'])) ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md shadow-cypress-900/10 transition">
+                        <a href="<?= e(app_url('donasi-online/' . $prog['slug'])) ?>" class="flex-1 text-center py-2.5 px-3 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white text-xs font-bold shadow-md shadow-cypress-900/10 transition">
                             Donasi
                         </a>
                     </div>
@@ -550,7 +550,7 @@ require_once __DIR__ . '/layouts/public_header.php';
                                 <i class="fa-regular fa-calendar mr-1"></i> <?= tanggal_indo($b['tanggal_publikasi']) ?>
                             </span>
                             <h3 class="font-bold text-base text-warm-900 font-classic group-hover:text-cypress-700 transition line-clamp-2">
-                                <a href="<?= e(app_url('berita-detail?id=' . $b['id'])) ?>"><?= e($b['judul']) ?></a>
+                                <a href="<?= e(app_url('berita/' . $b['slug'])) ?>"><?= e($b['judul']) ?></a>
                             </h3>
                             <p class="text-xs text-warm-800/70 line-clamp-3 leading-relaxed">
                                 <?= e($b['ringkasan']) ?>
@@ -558,7 +558,7 @@ require_once __DIR__ . '/layouts/public_header.php';
                         </div>
                     </div>
                     <div class="p-6 pt-0">
-                        <a href="<?= e(app_url('berita-detail?id=' . $b['id'])) ?>" class="inline-flex items-center gap-1.5 text-xs font-semibold text-cypress-700 hover:text-antique-600 transition">
+                        <a href="<?= e(app_url('berita/' . $b['slug'])) ?>" class="inline-flex items-center gap-1.5 text-xs font-semibold text-cypress-700 hover:text-antique-600 transition">
                             <span>Baca Selengkapnya</span>
                             <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </a>

@@ -10,73 +10,98 @@ $activeNav = 'program';
 // Cloudflare Turnstile Script
 echo '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>';
 
-$selectedProgramId = (int)($_GET['program_id'] ?? 0);
-$programs = $pdo->query("SELECT id, nama_program, target_donasi, dana_terkumpul FROM program_donasi WHERE status = 'aktif' ORDER BY is_featured DESC, id DESC")->fetchAll();
+// --- Slug-based URL: /donasi-online/nama-slug ---
+// Ambil slug dari path URL jika ada (e.g. /donasi-online/renovasi-masjid)
+$_slugFromUrl = '';
+$_requestUri  = $_SERVER['REQUEST_URI'] ?? '';
+if (preg_match('#/donasi-online/([a-z0-9\-]+)#i', $_requestUri, $_m)) {
+    $_slugFromUrl = $_m[1];
+}
+
+$programs = $pdo->query("SELECT id, slug, nama_program, target_donasi, dana_terkumpul FROM program_donasi WHERE status = 'aktif' ORDER BY is_featured DESC, id DESC")->fetchAll();
 $rekeningList = $pdo->query("SELECT * FROM rekening_donasi WHERE is_active = 1 ORDER BY urutan ASC")->fetchAll();
+
+// Resolve program yang dipilih: prioritas slug URL > GET program_id (backward compat)
+$selectedProgramId = 0;
+if ($_slugFromUrl !== '') {
+    foreach ($programs as $_p) {
+        if ($_p['slug'] === $_slugFromUrl) {
+            $selectedProgramId = (int)$_p['id'];
+            break;
+        }
+    }
+    // Slug tidak ditemukan / program tidak aktif → redirect ke daftar program
+    if ($selectedProgramId === 0) {
+        header('Location: ' . base_url() . '/program');
+        exit;
+    }
+} elseif (!empty($_GET['program_id'])) {
+    $selectedProgramId = (int)$_GET['program_id'];
+}
 
 $user = $_SESSION['user'] ?? null;
 
 // Wajib login untuk donasi online
 if (!$user) {
-    header('Location: ' . base_url() . '/auth/login?redirect=' . urlencode(base_url() . '/home/donasi-online' . ($selectedProgramId ? '?program_id=' . $selectedProgramId : '')));
+    // Simpan URL slug-based sebagai redirect target
+    $_redirectTarget = $_slugFromUrl !== ''
+        ? base_url() . '/donasi-online/' . $_slugFromUrl
+        : base_url() . '/donasi-online' . ($selectedProgramId ? '?program_id=' . $selectedProgramId : '');
+    header('Location: ' . base_url() . '/auth/login?redirect=' . urlencode($_redirectTarget));
     exit;
 }
 $pesan = '';
 $tipe = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $program_id   = (int)($_POST['program_id'] ?? 0);
-    $nominalRaw   = $_POST['nominal'] ?? '0';
-    $nominal      = (float)str_replace(['Rp', '.', ' ', ','], '', $nominalRaw);
-    $is_anonim    = isset($_POST['is_anonim']) ? 1 : 0;
-    $nama_donatur = trim($_POST['nama_donatur'] ?? '');
-    $no_wa        = trim($_POST['no_wa'] ?? '');
-    $email        = trim($_POST['email'] ?? '');
-    $metode       = $_POST['metode_pembayaran'] ?? 'qris';
-    $bank_tujuan  = trim($_POST['bank_tujuan'] ?? 'QRIS Standar');
-    $doa_donatur  = trim($_POST['doa_donatur'] ?? '');
     $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
 
-    // Verifikasi Turnstile
-    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-        'secret'   => TURNSTILE_SECRET,
-        'response' => $turnstileToken,
-        'remoteip' => get_client_ip(),
-    ]));
-    $response = curl_exec($ch);
-    curl_close($ch);
-    $responseData = json_decode($response, true);
-    $isTurnstileValid = ($responseData && ($responseData['success'] ?? false));
-    if (!$isTurnstileValid && ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1') && !$response) {
-        $isTurnstileValid = true;
-    }
-
-    if (!$isTurnstileValid) {
-        $pesan = 'Verifikasi captcha gagal';
-        $tipe = 'error';
-    } elseif ($is_anonim && empty($nama_donatur)) {
-        $nama_donatur = 'Hamba Allah';
-    }
-
-    if ($program_id <= 0) {
-        $pesan = 'Silakan pilih program tujuan donasi.';
-        $tipe = 'error';
-    } elseif ($nominal < 10000) {
-        $pesan = 'Nominal donasi minimal Rp 10.000.';
-        $tipe = 'error';
-    } elseif ($nominal > 100000000) {
-        $pesan = 'Nominal donasi maksimal Rp 100.000.000 per transaksi.';
-        $tipe = 'error';
-    } elseif (empty($nama_donatur)) {
-        $pesan = 'Nama donatur wajib diisi (atau centang Hamba Allah).';
-        $tipe = 'error';
-    } elseif (empty($no_wa)) {
-        $pesan = 'Nomor WhatsApp aktif wajib diisi untuk konfirmasi penerimaan.';
-        $tipe = 'error';
+    // 1. Verifikasi Cloudflare Turnstile
+    if (!verify_turnstile($turnstileToken, 'donasi')) {
+        $pesan = 'Verifikasi keamanan Cloudflare Turnstile gagal atau kedaluwarsa. Silakan centang ulang captcha.';
+        $tipe  = 'error';
     } else {
+        // 2. Proteksi Rate Limit Donasi (Maks 5 pengajuan per 1 hari / 1440 menit per IP/User)
+        $rateKey = 'donasi_' . ($user['id'] ?? 0);
+        $rate = rate_limit($rateKey, 5, 1440);
+
+        if (!$rate['allowed']) {
+            $jam = floor($rate['wait_seconds'] / 3600);
+            $menit = ceil(($rate['wait_seconds'] % 3600) / 60);
+            $pesan = "Maksimal 5x pengajuan donasi dalam 1 hari. Silakan tunggu {$jam} jam {$menit} menit sebelum mencoba kembali.";
+            $tipe  = 'error';
+        } else {
+            $program_id   = (int)($_POST['program_id'] ?? 0);
+            $nominalRaw   = $_POST['nominal'] ?? '0';
+            $nominal      = (float)str_replace(['Rp', '.', ' ', ','], '', $nominalRaw);
+            $is_anonim    = isset($_POST['is_anonim']) ? 1 : 0;
+            $nama_donatur = mb_substr(trim($_POST['nama_donatur'] ?? ''), 0, 100);
+            $no_wa        = mb_substr(trim($_POST['no_wa'] ?? ''), 0, 25);
+            $email        = mb_substr(trim($_POST['email'] ?? ''), 0, 100);
+            $metode       = $_POST['metode_pembayaran'] ?? 'qris';
+            $bank_tujuan  = mb_substr(trim($_POST['bank_tujuan'] ?? 'QRIS Standar'), 0, 100);
+            $doa_donatur  = mb_substr(trim($_POST['doa_donatur'] ?? ''), 0, 1000);
+            
+            if ($is_anonim) {
+                $nama_donatur = 'Hamba Allah';
+            }
+
+            if ($program_id <= 0) {
+                $pesan = 'Silakan pilih program tujuan donasi.';
+                $tipe = 'error';
+            } elseif ($nominal < 10000) {
+                $pesan = 'Nominal donasi minimal Rp 10.000.';
+                $tipe = 'error';
+            } elseif ($nominal > 100000000) {
+                $pesan = 'Nominal donasi maksimal Rp 100.000.000 per transaksi.';
+                $tipe = 'error';
+            } elseif (empty($nama_donatur)) {
+                $pesan = 'Nama donatur wajib diisi (atau centang Hamba Allah).';
+                $tipe = 'error';
+            } elseif (empty($no_wa)) {
+                $pesan = 'Nomor WhatsApp aktif wajib diisi untuk konfirmasi penerimaan.';
+                $tipe = 'error';
+            } else {
         // Validasi upload bukti transfer & MIME type
         $buktiPath = null;
         if (!isset($_FILES['bukti_pembayaran']) || $_FILES['bukti_pembayaran']['error'] !== UPLOAD_ERR_OK) {
@@ -109,15 +134,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nextNum = $lastTrx ? str_pad((int)substr($lastTrx['no_donasi'], -4) + 1, 4, '0', STR_PAD_LEFT) : '0001';
             $noDonasi = "DON-$blnThn-$nextNum";
 
+            // Token acak 32-char untuk URL kwitansi (tidak bisa ditebak)
+            $kwitansiToken = bin2hex(random_bytes(16));
+
             $userId = ($user && isset($user['id'])) ? $user['id'] : null;
 
             $stmt = $pdo->prepare("INSERT INTO donasi_online (
-                no_donasi, user_id, nama_donatur, is_anonim, email, no_wa, program_id,
+                no_donasi, kwitansi_token, user_id, nama_donatur, is_anonim, email, no_wa, program_id,
                 nominal, metode_pembayaran, bank_tujuan, bukti_pembayaran, doa_donatur, status, tanggal_donasi
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURDATE())");
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', CURDATE())");
 
             $stmt->execute([
-                $noDonasi, $userId, $nama_donatur, $is_anonim, $email, $no_wa, $program_id,
+                $noDonasi, $kwitansiToken, $userId, $nama_donatur, $is_anonim, $email, $no_wa, $program_id,
                 $nominal, $metode, $bank_tujuan, $buktiPath, $doa_donatur
             ]);
 
@@ -127,14 +155,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $userId,
                     'Donasi Baru Tercatat #' . $noDonasi,
                     'Donasi Anda sebesar ' . format_rupiah($nominal) . ' berhasil diajukan dan sedang menunggu verifikasi bendahara.',
-                    '../donatur/kwitansi?no=' . $noDonasi
+                    '/donatur/kwitansi?token=' . $kwitansiToken
                 ]);
             }
 
-            header('Location: ' . base_url() . '/donatur/kwitansi?no=' . $noDonasi . '&baru=1');
+            header('Location: ' . base_url() . '/donatur/kwitansi?token=' . $kwitansiToken . '&baru=1');
             exit;
         }
     }
+}
+}
 }
 
 require_once __DIR__ . '/../layouts/public_header.php';
@@ -209,7 +239,7 @@ require_once __DIR__ . '/../layouts/public_header.php';
                            placeholder="Contoh: 100.000" 
                            class="w-full pl-12 pr-4 py-3 rounded-xl bg-warm-50 border border-antique-300 text-sm sm:text-base font-bold text-cypress-900 focus:ring-2 focus:ring-antique-500 focus:outline-none font-mono">
                 </div>
-                <span class="text-[11px] text-warm-800/60 block mt-1">Minimal Rp 10.000 - Maksimal Rp 100.000.000</span>
+                <span class="text-[11px] text-warm-800/60 block mt-1">Minimal Rp 10.000 - Mak   simal Rp 100.000.000</span>
             </div>
         </div>
 
@@ -310,24 +340,24 @@ require_once __DIR__ . '/../layouts/public_header.php';
                 <!-- Nama Lengkap -->
                 <div id="namaContainer">
                     <label class="block text-xs font-bold text-warm-800 mb-1">Nama Lengkap Donatur <span class="text-red-500">*</span></label>
-                    <input type="text" id="namaDonatur" name="nama_donatur" value="<?= e($user['nama'] ?? '') ?>" placeholder="Masukkan nama Anda..." class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none">
+                    <input type="text" id="namaDonatur" name="nama_donatur" maxlength="100" value="<?= e($user['nama'] ?? '') ?>" placeholder="Masukkan nama Anda..." class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-warm-800 mb-1">Nomor WhatsApp (Aktif) <span class="text-red-500">*</span></label>
-                        <input type="text" name="no_wa" value="<?= e($user['no_hp'] ?? '') ?>" <?= !empty($user['no_hp']) ? 'readonly class="w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-300 text-xs sm:text-sm text-gray-500 cursor-not-allowed"' : 'required placeholder="Contoh: 081234567890" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none"' ?>>
+                        <input type="text" name="no_wa" maxlength="25" value="<?= e($user['no_hp'] ?? '') ?>" <?= !empty($user['no_hp']) ? 'readonly class="w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-300 text-xs sm:text-sm text-gray-500 cursor-not-allowed"' : 'required placeholder="Contoh: 081234567890" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none"' ?>>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-warm-800 mb-1">Alamat Email (Opsional)</label>
-                        <input type="email" name="email" value="<?= e($user['email'] ?? '') ?>" <?= !empty($user['email']) ? 'readonly class="w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-300 text-xs sm:text-sm text-gray-500 cursor-not-allowed"' : 'placeholder="nama@email.com" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none"' ?>>
+                        <input type="email" name="email" maxlength="100" value="<?= e($user['email'] ?? '') ?>" <?= !empty($user['email']) ? 'readonly class="w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-gray-300 text-xs sm:text-sm text-gray-500 cursor-not-allowed"' : 'placeholder="nama@email.com" class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none"' ?>>
                     </div>
                 </div>
 
                 <!-- Doa / Harapan -->
                 <div>
                     <label class="block text-xs font-bold text-warm-800 mb-1">Doa / Harapan / Pesan Kebaikan (Opsional)</label>
-                    <textarea name="doa_donatur" rows="2" placeholder="Tuliskan doa kebaikan atau hajat yang ingin didoakan oleh para jamaah..." class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none"></textarea>
+                    <textarea name="doa_donatur" rows="2" maxlength="1000" placeholder="Tuliskan doa kebaikan atau hajat yang ingin didoakan oleh para jamaah..." class="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-antique-300 text-xs sm:text-sm text-warm-900 focus:ring-2 focus:ring-antique-500 focus:outline-none"></textarea>
                 </div>
 
                 <!-- Upload Bukti Transfer -->

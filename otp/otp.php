@@ -49,6 +49,8 @@ function send_otp_email(string $email, string $nama, string $otp, string $purpos
     require_once __DIR__ . '/../config/mail.php';
 
     $label    = $purpose === 'register' ? 'Aktivasi Akun' : 'Reset Kata Sandi';
+    $keterangan = $purpose === 'register' ? 'Berikut adalah kode verifikasi untuk aktivasi akun baru Anda di portal masjid.' : 'Berikut adalah kode verifikasi untuk mereset kata sandi akun Anda.';
+    $tahun = date('Y');
     
     $konten = require __DIR__ . '/email-template.php';
     $htmlBody = $konten['html'];

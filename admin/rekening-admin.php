@@ -15,10 +15,10 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
 
 // 1. TAMBAH REKENING
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah') {
-    $bank     = trim($_POST['nama_bank'] ?? '');
-    $noRek    = trim($_POST['nomor_rekening'] ?? '');
-    $atasNama = trim($_POST['atas_nama'] ?? '');
-    $kategori = trim($_POST['kategori_donasi'] ?? 'Kas Umum & Infaq');
+    $bank     = mb_substr(trim($_POST['nama_bank'] ?? ''), 0, 50);
+    $noRek    = mb_substr(trim($_POST['nomor_rekening'] ?? ''), 0, 50);
+    $atasNama = mb_substr(trim($_POST['atas_nama'] ?? ''), 0, 100);
+    $kategori = mb_substr(trim($_POST['kategori_donasi'] ?? 'Kas Umum & Infaq'), 0, 100);
     $urutan   = (int)($_POST['urutan'] ?? 1);
     $active   = isset($_POST['is_active']) ? 1 : 0;
 
@@ -37,10 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 // 2. EDIT REKENING
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'edit') {
     $id       = (int)($_POST['id'] ?? 0);
-    $bank     = trim($_POST['nama_bank'] ?? '');
-    $noRek    = trim($_POST['nomor_rekening'] ?? '');
-    $atasNama = trim($_POST['atas_nama'] ?? '');
-    $kategori = trim($_POST['kategori_donasi'] ?? 'Kas Umum & Infaq');
+    $bank     = mb_substr(trim($_POST['nama_bank'] ?? ''), 0, 50);
+    $noRek    = mb_substr(trim($_POST['nomor_rekening'] ?? ''), 0, 50);
+    $atasNama = mb_substr(trim($_POST['atas_nama'] ?? ''), 0, 100);
+    $kategori = mb_substr(trim($_POST['kategori_donasi'] ?? 'Kas Umum & Infaq'), 0, 100);
     $urutan   = (int)($_POST['urutan'] ?? 1);
     $active   = isset($_POST['is_active']) ? 1 : 0;
 
@@ -175,24 +175,36 @@ require_once __DIR__ . '/../layouts/sidebar.php';
             <input type="hidden" id="rekId" name="id" value="0">
 
             <div>
-                <label class="block font-bold text-warm-800 mb-1">Nama Bank / Dompet Digital <span class="text-red-500">*</span></label>
-                <input type="text" id="rekBank" name="nama_bank" required placeholder="Contoh: Bank Syariah Indonesia (BSI)" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-warm-800">Nama Bank / Dompet Digital <span class="text-red-500">*</span></label>
+                    <span class="text-[11px] text-stone-500"><span id="rekBankCounter">0</span>/50</span>
+                </div>
+                <input type="text" id="rekBank" name="nama_bank" maxlength="50" required oninput="updateRekBankCounter()" placeholder="Contoh: Bank Syariah Indonesia (BSI)" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
             </div>
 
             <div>
-                <label class="block font-bold text-warm-800 mb-1">Nomor Rekening / No. Virtual Account <span class="text-red-500">*</span></label>
-                <input type="text" id="rekNo" name="nomor_rekening" required placeholder="Contoh: 7123-4567-89" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-mono font-bold focus:outline-none">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-warm-800">Nomor Rekening / No. Virtual Account <span class="text-red-500">*</span></label>
+                    <span class="text-[11px] text-stone-500"><span id="rekNoCounter">0</span>/50</span>
+                </div>
+                <input type="text" id="rekNo" name="nomor_rekening" maxlength="50" required oninput="updateRekNoCounter()" placeholder="Contoh: 7123-4567-89" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-mono font-bold focus:outline-none">
             </div>
 
             <div>
-                <label class="block font-bold text-warm-800 mb-1">Atas Nama Rekening <span class="text-red-500">*</span></label>
-                <input type="text" id="rekNama" name="atas_nama" required placeholder="Contoh: MASJID JAMI NURUL IMAN" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block font-bold text-warm-800">Atas Nama Rekening <span class="text-red-500">*</span></label>
+                    <span class="text-[11px] text-stone-500"><span id="rekNamaCounter">0</span>/100</span>
+                </div>
+                <input type="text" id="rekNama" name="atas_nama" maxlength="100" required oninput="updateRekNamaCounter()" placeholder="Contoh: MASJID JAMI NURUL IMAN" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                    <label class="block font-bold text-warm-800 mb-1">Kategori / Peruntukan Donasi</label>
-                    <input type="text" id="rekKat" name="kategori_donasi" placeholder="Contoh: Kas Umum / Yatim" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-warm-800">Kategori / Peruntukan Donasi</label>
+                        <span class="text-[11px] text-stone-500"><span id="rekKatCounter">0</span>/100</span>
+                    </div>
+                    <input type="text" id="rekKat" name="kategori_donasi" maxlength="100" oninput="updateRekKatCounter()" placeholder="Contoh: Kas Umum / Yatim" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
                 </div>
                 <div>
                     <label class="block font-bold text-warm-800 mb-1">Urutan Tampil</label>
@@ -249,6 +261,30 @@ function editRekeningSafe(btn) {
 
 function tutupModalRekening() {
     document.getElementById('modalRekening').classList.add('hidden');
+}
+
+function updateRekBankCounter() {
+    const input = document.getElementById('rekBank');
+    const counter = document.getElementById('rekBankCounter');
+    counter.textContent = input.value.length;
+}
+
+function updateRekNoCounter() {
+    const input = document.getElementById('rekNo');
+    const counter = document.getElementById('rekNoCounter');
+    counter.textContent = input.value.length;
+}
+
+function updateRekNamaCounter() {
+    const input = document.getElementById('rekNama');
+    const counter = document.getElementById('rekNamaCounter');
+    counter.textContent = input.value.length;
+}
+
+function updateRekKatCounter() {
+    const input = document.getElementById('rekKat');
+    const counter = document.getElementById('rekKatCounter');
+    counter.textContent = input.value.length;
 }
 </script>
 

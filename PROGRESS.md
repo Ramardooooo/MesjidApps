@@ -1,3 +1,54 @@
+# 📊 PROGRESS — Masjid Jami' Nurul Iman (v1.4.0)
+
+Status pengerjaan pengembangan sistem informasi, modul keuangan, dan portal donasi hingga rilis **v1.4.0**.
+
+---
+
+## ✅ Selesai (Completed — v1.4.0)
+
+- [x] **Clean Slug-Based URLs & Routing**:
+  - Implementasi routing `/program/{slug}`, `/donasi-online/{slug}`, dan `/berita/{slug}` via `.htaccess`.
+  - Dukungan fallback otomatis 301 Permanent Redirect dari parameter query lama (`?id=X`, `?program_id=X`).
+  - Regenerasi slug bersih secara realtime di `program-admin.php` dan `berita-admin.php` saat nama/judul diedit.
+- [x] **Penguatan Keamanan e-Kwitansi (Anti-Enumeration Token)**:
+  - Penerapan token acak 32 karakter kriptografis (`kwitansi?token=...`) pada tabel `donasi_online`.
+  - Pembatasan ketat parameter `?no=` hanya untuk Admin/Bendahara dan pemilik sah donasi.
+  - Mekanisme *auto-heal* generate token otomatis untuk data lama.
+- [x] **Penyempurnaan Tampilan Mobile Admin Kas**:
+  - Penghapusan modal popup `showMobileActions` saat baris tabel kas disentuh di layar HP (`admin/transaksi.php`).
+- [x] **Peningkatan Fitur Portal Donatur**:
+  - Penambahan Lencana Donatur Islami (*Muhsinin*, *Penyemai Kebaikan*, *Pejuang Infaq Istiqomah*, *Sahabat Utama Masjid*).
+  - Kartu visualisasi *Jejak Sebaran Amal Jariyah Anda* (alokasi dana per program).
+  - Kartu *Mutiara Hadits Amal Harian* bergilir harian dengan teks Arab dan terjemahan.
+  - Tab filter cepat (*Semua*, *Sah*, *Menunggu*) dan *live search* instan tanpa reload halaman.
+  - Pembersihan header topbar agar lebih lapang dan minimalis.
+- [x] **Pengamanan Folder Komponen Internal**:
+  - Pembuatan aturan `.htaccess` di folder `donatur/includes/` dengan respons *403 Forbidden* untuk akses HTTP langsung.
+- [x] **Sinkronisasi Dokumentasi**:
+  - Pembaruan berkas `README.md`, `RELEASE.md`, `WALKTHROUGH.md`, dan `PROGRESS.md` ke versi **v1.4.0**.
+- [x] **Rate Limiting & Anti-Brute-Force**:
+  - Login, Register, Forgot Password, Verifikasi OTP → maks 5x / 15 menit per IP + User.
+  - Pengajuan Donasi → maks 5x / 24 jam per User.
+  - Verifikasi Donasi → maks 5x / 10 menit per User.
+  - Kontak → maks 3x / 15 menit per IP.
+- [x] **Validasi Panjang Form Semua Admin**:
+  - Atribut `maxlength` ditambahkan ke semua input form admin sesuai kolom DB.
+  - Live Character Counter (`x/max`) otomatis muncul di setiap input.
+  - Backend `mb_substr()` mencegah error `SQLSTATE[22001]: Data too long`.
+- [x] **Perbaikan Bug Laporan**:
+  - `$bulan = 0` pada `laporan.php` divalidasi agar tidak error `SQLSTATE[HY000]: General error: 1525 Incorrect DATE value`.
+
+---
+
+## 🗺️ Roadmap Selanjutnya (v1.5.0+)
+
+- [ ] Integrasi Payment Gateway otomatis (QRIS Dinamis / Midtrans / Duitku).
+- [ ] Fitur Kalkulator Zakat Interaktif langsung di Portal Donatur (Zakat Profesi, Maal, Fidyah).
+- [ ] Fitur Pojok Doa & Counter "Aamiin" antar sesama donatur jamaah masjid.
+- [ ] Integrasi API Publik Jadwal Sholat Otomatis Kemenag.
+- [ ] Export Laporan Keuangan Kas ke format PDF terformat rapi (Dompdf).
+
+
 # 📊 PROGRESS — Masjid Jami' Nurul Iman
 **Catatan Perkembangan & Status Fitur Sistem**
 
@@ -124,4 +175,4 @@
 
 ---
 
-*Terakhir diperbarui: 2026-10-20*
+*Terakhir diperbarui: 2026-11-25*

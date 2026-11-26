@@ -456,8 +456,13 @@
                                                 pr-5
                                             "
                                         >
+                                            <?php 
+                                            $kwLink = !empty($r['kwitansi_token']) 
+                                                ? '/donatur/kwitansi?token=' . urlencode($r['kwitansi_token']) 
+                                                : '/donatur/kwitansi?no=' . urlencode($r['no_donasi']); 
+                                            ?>
                                             <a
-                                                href="/donatur/kwitansi?no=<?= urlencode($r['no_donasi']) ?>"
+                                                href="<?= $kwLink ?>"
                                                 class="
                                                     inline-flex
                                                     items-center

@@ -23,13 +23,14 @@ function extractYouTubeId($url) {
 
 // 1. TAMBAH VIDEO
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah') {
-    $judul     = trim($_POST['judul'] ?? '');
-    $urlInput  = trim($_POST['url_youtube'] ?? '');
+    $judul     = mb_substr(trim($_POST['judul'] ?? ''), 0, 200);
+    $urlInput  = mb_substr(trim($_POST['url_youtube'] ?? ''), 0, 255);
     $kategori  = $_POST['kategori'] ?? 'kajian';
     $deskripsi = trim($_POST['deskripsi'] ?? '');
     $active    = isset($_POST['is_active']) ? 1 : 0;
 
     $videoId = extractYouTubeId($urlInput);
+    $videoId = mb_substr($videoId, 0, 50);
 
     if (empty($judul) || empty($videoId)) {
         $pesan = 'Judul dan URL / ID video YouTube wajib diisi.';
@@ -47,13 +48,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 // 2. EDIT VIDEO
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'edit') {
     $id        = (int)($_POST['id'] ?? 0);
-    $judul     = trim($_POST['judul'] ?? '');
-    $urlInput  = trim($_POST['url_youtube'] ?? '');
+    $judul     = mb_substr(trim($_POST['judul'] ?? ''), 0, 200);
+    $urlInput  = mb_substr(trim($_POST['url_youtube'] ?? ''), 0, 255);
     $kategori  = $_POST['kategori'] ?? 'kajian';
     $deskripsi = trim($_POST['deskripsi'] ?? '');
     $active    = isset($_POST['is_active']) ? 1 : 0;
 
     $videoId = extractYouTubeId($urlInput);
+    $videoId = mb_substr($videoId, 0, 50);
 
     if ($id > 0 && !empty($judul) && !empty($videoId)) {
         $urlEmbed = 'https://www.youtube.com/embed/' . $videoId;

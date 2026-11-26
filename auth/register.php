@@ -26,21 +26,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $konfirm  = $_POST['password_confirm'] ?? '';
     $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
 
-    // Verifikasi Turnstile
-    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-        'secret'   => TURNSTILE_SECRET,
-        'response' => $turnstileToken,
-        'remoteip' => get_client_ip(),
-    ]));
-    $response = curl_exec($ch);
-    curl_close($ch);
-    $responseData = json_decode($response, true);
-    $isTurnstileValid = ($responseData && ($responseData['success'] ?? false));
-    if (!$isTurnstileValid && ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1') && !$response) {
-        $isTurnstileValid = true;
+    $isTurnstileValid = false;
+    if ($turnstileToken !== '') {
+        $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+            'secret'   => TURNSTILE_SECRET,
+            'response' => $turnstileToken,
+            'remoteip' => get_client_ip(),
+        ]));
+        $response = curl_exec($ch);
+        curl_close($ch);
+        $responseData = json_decode((string)$response, true);
+        $isTurnstileValid = ($responseData && ($responseData['success'] ?? false));
+
+        if (!$isTurnstileValid && ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1') && !$response) {
+            $isTurnstileValid = true;
+        }
     }
 
     if (!$isTurnstileValid) {

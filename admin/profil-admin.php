@@ -15,23 +15,23 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
 
 // 1. UPDATE PROFIL MASJID
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'update_profil') {
-    $nama   = trim($_POST['nama_masjid'] ?? '');
-    $sebut  = trim($_POST['sebutan'] ?? '');
-    $slogan = trim($_POST['slogan'] ?? '');
+    $nama   = mb_substr(trim($_POST['nama_masjid'] ?? ''), 0, 150);
+    $sebut  = mb_substr(trim($_POST['sebutan'] ?? ''), 0, 100);
+    $slogan = mb_substr(trim($_POST['slogan'] ?? ''), 0, 255);
     $sejarah= trim($_POST['sejarah'] ?? '');
     $visi   = trim($_POST['visi'] ?? '');
     $misi   = trim($_POST['misi'] ?? '');
     $alamat = trim($_POST['alamat'] ?? '');
-    $kota   = trim($_POST['kota'] ?? '');
+    $kota   = mb_substr(trim($_POST['kota'] ?? ''), 0, 100);
     $maps   = trim($_POST['google_maps_embed'] ?? '');
-    $wa     = trim($_POST['whatsapp'] ?? '');
-    $email  = trim($_POST['email'] ?? '');
-    $ig     = trim($_POST['instagram'] ?? '');
-    $yt     = trim($_POST['youtube'] ?? '');
-    $fb     = trim($_POST['facebook'] ?? '');
-    $tt     = trim($_POST['tiktok'] ?? '');
-    $tw     = trim($_POST['twitter'] ?? '');
-    $tg     = trim($_POST['telegram'] ?? '');
+    $wa     = mb_substr(trim($_POST['whatsapp'] ?? ''), 0, 25);
+    $email  = mb_substr(trim($_POST['email'] ?? ''), 0, 100);
+    $ig     = mb_substr(trim($_POST['instagram'] ?? ''), 0, 100);
+    $yt     = mb_substr(trim($_POST['youtube'] ?? ''), 0, 100);
+    $fb     = mb_substr(trim($_POST['facebook'] ?? ''), 0, 100);
+    $tt     = mb_substr(trim($_POST['tiktok'] ?? ''), 0, 255);
+    $tw     = mb_substr(trim($_POST['twitter'] ?? ''), 0, 255);
+    $tg     = mb_substr(trim($_POST['telegram'] ?? ''), 0, 255);
     $saldo  = (float)str_replace(['Rp', '.', ' ', ','], '', $_POST['saldo_awal_kas'] ?? '0');
 
     // Cek column mana saja yang ada di database (MySQL)
@@ -76,9 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 // 2. TAMBAH PENGURUS DKM (pilih User manual)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah_pengurus') {
     $userId  = (int)($_POST['user_id'] ?? 0);
-    $jabatan = trim($_POST['jabatan'] ?? '');
-    $bidang  = trim($_POST['bidang'] ?? '');
-    $noHp    = trim($_POST['no_hp'] ?? '');
+    $jabatan = mb_substr(trim($_POST['jabatan'] ?? ''), 0, 100);
+    $bidang  = mb_substr(trim($_POST['bidang'] ?? ''), 0, 100);
+    $noHp    = mb_substr(trim($_POST['no_hp'] ?? ''), 0, 25);
     $urutan  = (int)($_POST['urutan'] ?? 1);
     if ($userId > 0 && !empty($jabatan)) {
         $u = $pdo->prepare("SELECT nama_lengkap FROM users WHERE id = ? AND status = 'aktif'");
@@ -154,17 +154,17 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Nama Resmi Masjid <span class="text-red-500">*</span></label>
-                <input type="text" name="nama_masjid" value="<?= e($profil['nama_masjid']) ?>" required class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
+                <input type="text" name="nama_masjid" value="<?= e($profil['nama_masjid']) ?>" maxlength="150" required class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 font-semibold focus:outline-none">
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Sebutan / Tagline Pendek</label>
-                <input type="text" name="sebutan" value="<?= e($profil['sebutan']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="sebutan" maxlength="100" value="<?= e($profil['sebutan']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
         </div>
 
         <div>
             <label class="block font-bold text-warm-800 mb-1">Slogan Masjid</label>
-            <input type="text" name="slogan" value="<?= e($profil['slogan']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+            <input type="text" name="slogan" maxlength="255" value="<?= e($profil['slogan']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
         </div>
 
         <div>
@@ -190,22 +190,22 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="sm:col-span-2">
                 <label class="block font-bold text-warm-800 mb-1">Alamat Lengkap Masjid</label>
-                <input type="text" name="alamat" value="<?= e($profil['alamat']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="alamat" maxlength="255" value="<?= e($profil['alamat']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Kota / Kabupaten</label>
-                <input type="text" name="kota" value="<?= e($profil['kota']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="kota" maxlength="100" value="<?= e($profil['kota']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Nomor WhatsApp Layanan</label>
-                <input type="text" name="whatsapp" value="<?= e($profil['whatsapp']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="whatsapp" maxlength="25" value="<?= e($profil['whatsapp']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Email Resmi</label>
-                <input type="email" name="email" value="<?= e($profil['email']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="email" name="email" maxlength="100" value="<?= e($profil['email']) ?>" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Saldo Awal Kas Master (Rp)</label>
@@ -225,27 +225,27 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Instagram <i class="fa-brands fa-instagram text-pink-500"></i></label>
-                <input type="text" name="instagram" value="<?= e($profil['instagram'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="instagram" maxlength="100" value="<?= e($profil['instagram'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">YouTube <i class="fa-brands fa-youtube text-red-600"></i></label>
-                <input type="text" name="youtube" value="<?= e($profil['youtube'] ?? '') ?>" placeholder="@channelname" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="youtube" maxlength="100" value="<?= e($profil['youtube'] ?? '') ?>" placeholder="@channelname" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Facebook <i class="fa-brands fa-facebook text-blue-600"></i></label>
-                <input type="text" name="facebook" value="<?= e($profil['facebook'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="facebook" maxlength="100" value="<?= e($profil['facebook'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">TikTok <i class="fa-brands fa-tiktok text-black"></i></label>
-                <input type="text" name="tiktok" value="<?= e($profil['tiktok'] ?? '') ?>" placeholder="@username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="tiktok" maxlength="255" value="<?= e($profil['tiktok'] ?? '') ?>" placeholder="@username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Twitter/X <i class="fa-brands fa-x-twitter text-black"></i></label>
-                <input type="text" name="twitter" value="<?= e($profil['twitter'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="twitter" maxlength="255" value="<?= e($profil['twitter'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Telegram <i class="fa-brands fa-telegram text-blue-500"></i></label>
-                <input type="text" name="telegram" value="<?= e($profil['telegram'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
+                <input type="text" name="telegram" maxlength="255" value="<?= e($profil['telegram'] ?? '') ?>" placeholder="username" class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none">
             </div>
         </div>
 
@@ -276,8 +276,8 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                         <option value="<?= $du['id'] ?>"><?= e($du['nama_lengkap']) ?> (<?= e($du['role']) ?>)</option>
                     <?php endforeach; ?>
                 </select>
-                <input type="text" name="jabatan" required placeholder="Jabatan (Ketua DKM)..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
-                <input type="text" name="bidang" placeholder="Bidang..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
+                <input type="text" name="jabatan" maxlength="100" required placeholder="Jabatan (Ketua DKM)..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
+                <input type="text" name="bidang" maxlength="100" placeholder="Bidang..." class="px-3 py-1.5 rounded-xl bg-warm-50 border border-antique-300">
                 <input type="number" name="urutan" value="1" min="1" class="w-16 px-2 py-1.5 rounded-xl bg-warm-50 border border-antique-300 font-bold">
                 <button type="submit" class="px-3 py-1.5 rounded-xl bg-cypress-700 hover:bg-cypress-800 text-white font-bold">
                     + Tambah
@@ -304,5 +304,20 @@ require_once __DIR__ . '/../layouts/sidebar.php';
         <?php render_pagination($pag['totalHalaman'], $pag['halaman'], $pag['total'], $pag['dari'], $pag['sampai']); ?>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[maxlength], textarea[maxlength]').forEach(function(input) {
+        var counter = document.createElement('span');
+        counter.className = 'text-[11px] text-stone-500 ml-1';
+        var maxLen = input.getAttribute('maxlength');
+        counter.innerHTML = '<span>' + input.value.length + '</span>/' + maxLen;
+        input.parentNode.appendChild(counter);
+        input.addEventListener('input', function() {
+            counter.querySelector('span').textContent = this.value.length;
+        });
+    });
+});
+</script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

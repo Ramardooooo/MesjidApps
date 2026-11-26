@@ -78,10 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
     $tanggal      = $_POST['tanggal_transaksi'] ?? date('Y-m-d');
     $kategori_id  = (int)($_POST['kategori_id'] ?? 0);
     $program_id   = !empty($_POST['program_id']) ? (int)$_POST['program_id'] : null;
-    $akun_kas     = trim($_POST['akun_kas'] ?? 'Kas Tunai Utama');
+    $akun_kas     = mb_substr(trim($_POST['akun_kas'] ?? 'Kas Tunai Utama'), 0, 50);
     $nominal      = (float)str_replace(['Rp', '.', ' ', ','], '', $_POST['nominal'] ?? '0');
     $metode       = $_POST['metode_pembayaran'] ?? 'tunai';
-    $keterangan   = trim($_POST['keterangan'] ?? '');
+    $keterangan   = mb_substr(trim($_POST['keterangan'] ?? ''), 0, 500);
     $is_published = isset($_POST['is_published']) ? 1 : 0;
 
     if ($kategori_id <= 0) {
@@ -379,10 +379,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                 </thead>
                 <tbody class="divide-y divide-antique-100">
                     <?php foreach ($daftarTransaksi as $t): ?>
-                        <tr class="hover:bg-warm-50/60 transition cursor-pointer" onclick="showMobileActions([
-                            {label: 'Lihat Bukti', icon: 'fa-solid fa-file-invoice', class: 'text-cypress-700 bg-cypress-50', href: '<?= e(upload_url($t['bukti_transaksi'])) ?>'},
-                            {label: 'Hapus Transaksi', icon: 'fa-solid fa-trash-can', class: 'text-red-600 bg-red-50', onclick: () => { window.location.href = 'transaksi?hapus=<?= $t['id'] ?>'; }}
-                        ])">
+                        <tr class="hover:bg-warm-50/60 transition">
                             <td class="py-3.5 px-4 align-top whitespace-nowrap">
                                 <span class="font-mono font-bold text-cypress-800 block"><?= e($t['no_transaksi']) ?></span>
                                 <span class="text-[11px] text-warm-800/60 block"><?= tanggal_indo($t['tanggal_transaksi']) ?></span>
@@ -396,7 +393,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                 <?php endif; ?>
                             </td>
                             <td class="py-3.5 px-4 align-top max-w-xs">
-                                <p class="text-xs text-warm-900 leading-relaxed"><?= e($t['keterangan']) ?></p>
+                                <p class="text-xs text-warm-900 leading-relaxed line-clamp-2 max-w-sm" title="<?= e($t['keterangan']) ?>"><?= e($t['keterangan']) ?></p>
                                 <span class="text-[10px] text-warm-800/50 block mt-0.5">Oleh: <?= e($t['pencatat'] ?: 'Pengurus') ?> • <?= strtoupper(e($t['metode_pembayaran'])) ?></span>
                             </td>
                             <td class="py-3.5 px-4 align-top whitespace-nowrap">
@@ -435,7 +432,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
                                             <i class="fa-solid fa-file-invoice"></i>
                                         </a>
                                     <?php endif; ?>
-                                    <a href="transaksi?hapus=<?= $t['id'] ?>" data-hapus data-judul="Hapus Transaksi" data-pesan="Catatan transaksi '<?= e($t['keterangan']) ?>' akan dihapus permanen dari buku kas. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus Transaksi">
+                                    <a href="transaksi?hapus=<?= $t['id'] ?>" data-hapus data-judul="Hapus Transaksi" data-pesan="Catatan transaksi '<?= e(mb_strimwidth($t['keterangan'], 0, 60, '...')) ?>' akan dihapus permanen dari buku kas. Lanjutkan?" class="p-1.5 rounded-lg text-red-600 hover:bg-red-50" title="Hapus Transaksi">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </a>
                                 </div>
@@ -522,7 +519,7 @@ require_once __DIR__ . '/../layouts/sidebar.php';
 
             <div>
                 <label class="block font-bold text-warm-800 mb-1">Keterangan Rinci <span class="text-red-500">*</span></label>
-                <textarea name="keterangan" rows="2" required placeholder="Contoh: Penerimaan Infaq Jumat Pekan I September..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none"></textarea>
+                <textarea name="keterangan" maxlength="500" rows="2" required placeholder="Contoh: Penerimaan Infaq Jumat Pekan I September..." class="w-full px-3 py-2 rounded-xl bg-warm-50 border border-antique-300 focus:outline-none"></textarea>
             </div>
 
             <div>

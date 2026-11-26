@@ -73,7 +73,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $otpInput = implode('', $digits);
 
-    if (strlen($otpInput) !== 6 || !ctype_digit($otpInput)) {
+    // Proteksi Rate Limit Anti Brute-Force OTP (Maksimal 5x tebakan salah per 10 menit per IP & Email)
+    $clientIP   = get_client_ip();
+    $rateKeyOtp = 'verify_otp_' . md5($clientIP . '_' . $email . '_' . $purpose);
+    $rateOtp    = rate_limit($rateKeyOtp, 5, 10);
+
+    if (!$rateOtp['allowed']) {
+        $waitMinutes = ceil($rateOtp['wait_seconds'] / 60);
+        $pesan = "Terlalu banyak percobaan kode OTP yang salah. Akun/IP dibatasi sementara selama {$waitMinutes} menit demi keamanan.";
+        $tipe  = 'error';
+    } elseif (strlen($otpInput) !== 6 || !ctype_digit($otpInput)) {
         $pesan = 'Masukkan 6 digit kode OTP yang valid.';
         $tipe  = 'error';
     } else {
@@ -81,6 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pesan = 'Kode OTP tidak valid atau sudah kedaluwarsa. Silakan minta kode baru.';
             $tipe  = 'error';
         } else {
+            // OTP Benar ✓ Bersihkan pembatasan rate limit
+            clear_rate_limit($rateKeyOtp);
             // OTP Benar ✓
             if ($purpose === 'register') {
                 // Buat akun dari session

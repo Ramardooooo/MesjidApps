@@ -102,14 +102,76 @@ function verify_csrf() {
 }
 
 function get_client_ip() {
-    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-        $ip = $_SERVER['HTTP_CLIENT_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
-    } else {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    // 1. Prioritaskan Cloudflare Real Visitor IP jika request melewati Cloudflare Proxy
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        $cfIp = trim($_SERVER['HTTP_CF_CONNECTING_IP']);
+        if (filter_var($cfIp, FILTER_VALIDATE_IP)) {
+            return $cfIp;
+        }
     }
+
+    // 2. HTTP_X_FORWARDED_FOR (Proxy / Load Balancer)
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        foreach ($ips as $candidate) {
+            $candidate = trim($candidate);
+            if (filter_var($candidate, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return $candidate;
+            }
+        }
+        $first = trim($ips[0]);
+        if (filter_var($first, FILTER_VALIDATE_IP)) {
+            return $first;
+        }
+    }
+
+    // 3. HTTP_CLIENT_IP
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        $clientIp = trim($_SERVER['HTTP_CLIENT_IP']);
+        if (filter_var($clientIp, FILTER_VALIDATE_IP)) {
+            return $clientIp;
+        }
+    }
+
+    // 4. Default REMOTE_ADDR
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
     return trim($ip);
+}
+
+// Verifikasi Cloudflare Turnstile CAPTCHA secara aman
+function verify_turnstile($token, $action = '') {
+    if (empty($token) || !is_string($token)) {
+        return false;
+    }
+
+    if (!defined('TURNSTILE_SECRET') || empty(TURNSTILE_SECRET)) {
+        return true; // Jika turnstile belum dikonfigurasi, loloskan
+    }
+
+    $ip = get_client_ip();
+    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'secret'   => TURNSTILE_SECRET,
+        'response' => $token,
+        'remoteip' => $ip,
+    ]));
+    curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+    $response = curl_exec($ch);
+    $curlErr  = curl_errno($ch);
+    curl_close($ch);
+
+    if ($curlErr || !$response) {
+        // Fallback jika offline / localhost gagal konek ke Cloudflare API
+        if (in_array($ip, ['127.0.0.1', '::1'])) {
+            return true;
+        }
+        return false;
+    }
+
+    $data = json_decode($response, true);
+    return !empty($data['success']);
 }
 
 function hapus_file_upload($path) {
@@ -125,7 +187,89 @@ function hapus_file_upload($path) {
 }
 
 function rate_limit($key, $max_attempts = 100, $decay_minutes = 1) {
-    return ['allowed' => true, 'attempts' => 1];
+    global $pdo;
+    $ip = get_client_ip();
+    $identifier = substr($key . '_' . md5($ip), 0, 255);
+    $max_attempts = max(1, (int)$max_attempts);
+    $decay_minutes = max(1, (int)$decay_minutes);
+
+    try {
+        $pdo->prepare("
+            DELETE FROM rate_limits
+            WHERE (locked_until IS NOT NULL AND locked_until <= NOW())
+               OR (key_type = 'ip' AND identifier = ? AND locked_until IS NULL AND last_attempt < DATE_SUB(NOW(), INTERVAL ? MINUTE))
+        ")->execute([$identifier, $decay_minutes]);
+
+        $stmt = $pdo->prepare("
+            SELECT attempts, TIMESTAMPDIFF(SECOND, NOW(), locked_until) AS wait_sec
+            FROM rate_limits
+            WHERE key_type = 'ip' AND identifier = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$identifier]);
+        $row = $stmt->fetch();
+
+        if ($row) {
+            if ($row['wait_sec'] !== null && (int)$row['wait_sec'] > 0) {
+                return [
+                    'allowed' => false,
+                    'wait_seconds' => (int)$row['wait_sec'],
+                    'attempts' => (int)$row['attempts'],
+                ];
+            }
+
+            $attempts = (int)$row['attempts'];
+            if ($attempts >= $max_attempts) {
+                $pdo->prepare("
+                    UPDATE rate_limits
+                    SET locked_until = DATE_ADD(NOW(), INTERVAL ? MINUTE)
+                    WHERE key_type = 'ip' AND identifier = ?
+                ")->execute([$decay_minutes, $identifier]);
+                return [
+                    'allowed' => false,
+                    'wait_seconds' => $decay_minutes * 60,
+                    'attempts' => $attempts,
+                ];
+            }
+
+            $newAttempts = $attempts + 1;
+            if ($newAttempts >= $max_attempts) {
+                $pdo->prepare("
+                    UPDATE rate_limits
+                    SET attempts = ?, locked_until = DATE_ADD(NOW(), INTERVAL ? MINUTE)
+                    WHERE key_type = 'ip' AND identifier = ?
+                ")->execute([$newAttempts, $decay_minutes, $identifier]);
+            } else {
+                $pdo->prepare("
+                    UPDATE rate_limits
+                    SET attempts = ?
+                    WHERE key_type = 'ip' AND identifier = ?
+                ")->execute([$newAttempts, $identifier]);
+            }
+
+            return ['allowed' => true, 'attempts' => $newAttempts];
+        }
+
+        $locked = ($max_attempts <= 1) ? date('Y-m-d H:i:s', time() + ($decay_minutes * 60)) : null;
+        $pdo->prepare("
+            INSERT INTO rate_limits (key_type, identifier, attempts, locked_until)
+            VALUES ('ip', ?, 1, ?)
+        ")->execute([$identifier, $locked]);
+
+        return ['allowed' => true, 'attempts' => 1];
+    } catch (Exception $e) {
+        return ['allowed' => true, 'attempts' => 1];
+    }
+}
+
+function clear_rate_limit($key) {
+    global $pdo;
+    $ip = get_client_ip();
+    $identifier = substr($key . '_' . md5($ip), 0, 255);
+    try {
+        $pdo->prepare("DELETE FROM rate_limits WHERE key_type = 'ip' AND identifier = ?")->execute([$identifier]);
+    } catch (Exception $e) {
+    }
 }
 
 function cleanup_expired_rate_limits() {

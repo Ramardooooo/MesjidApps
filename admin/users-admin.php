@@ -15,10 +15,10 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'deleted') {
 
 // 1. TAMBAH USER BARU
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'tambah') {
-    $username = trim($_POST['username'] ?? '');
-    $nama     = trim($_POST['nama_lengkap'] ?? '');
-    $email    = trim($_POST['email'] ?? '');
-    $noHp     = trim($_POST['no_hp'] ?? '');
+    $username = mb_substr(trim($_POST['username'] ?? ''), 0, 50);
+    $nama     = mb_substr(trim($_POST['nama_lengkap'] ?? ''), 0, 100);
+    $email    = mb_substr(trim($_POST['email'] ?? ''), 0, 100);
+    $noHp     = mb_substr(trim($_POST['no_hp'] ?? ''), 0, 25);
     $role     = $_POST['role'] ?? 'donatur';
     $password = $_POST['password'] ?? '';
     $status   = $_POST['status'] ?? 'aktif';
@@ -46,9 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['ak
 // 2. EDIT USER
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi']) && $_POST['aksi'] === 'edit') {
     $id       = (int)($_POST['id'] ?? 0);
-    $nama     = trim($_POST['nama_lengkap'] ?? '');
-    $email    = trim($_POST['email'] ?? '');
-    $noHp     = trim($_POST['no_hp'] ?? '');
+    $nama     = mb_substr(trim($_POST['nama_lengkap'] ?? ''), 0, 100);
+    $email    = mb_substr(trim($_POST['email'] ?? ''), 0, 100);
+    $noHp     = mb_substr(trim($_POST['no_hp'] ?? ''), 0, 25);
     $role     = $_POST['role'] ?? 'donatur';
     $status   = $_POST['status'] ?? 'aktif';
     $password = $_POST['password'] ?? '';
